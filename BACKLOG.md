@@ -45,6 +45,20 @@ Nothing here blocks a 0.1.0 publish.
   one. The JSON bundle package below is the natural second adapter, which would
   satisfy both items at once.
 
+- [ ] **An injectable id seam**, and a stated rule that ids are opaque. Today
+  `newMeta()` hardcodes UUID v4 and is called from five internal write paths
+  (duplicate device, duplicate SKU, add/update assembly edge); every *create*
+  use case takes a fully formed entity, so a consumer already chooses the id
+  shape there. A `String Function()` typedef passed like `IUnitOfWork`
+  (optional, UUID default) covers those five, so a consumer can mint ids their
+  own way — int-backed, prefixed (`DEV-0007`), or a custom class's string form.
+  Do NOT make the id a type parameter: `String id` appears 50 times across 34
+  files, every contract and use case takes one, and the rule everywhere else in
+  the industry (Salesforce's 15/18-char strings, Odoo's ints) is a fixed opaque
+  id mapped at the adapter. Nothing in `lib/` parses, orders or does arithmetic
+  on an id today, so opacity holds — write it down. Decided 2026-09-19: keep
+  `String` in 0.1.0; this item is the additive 0.2.0 change.
+
 - [ ] BOM aggregation: fold a SKU's assembly tree with quantities (how many of
   each part does this build need). Distinct operation from resolution — that is
   a merge, this is a fold.

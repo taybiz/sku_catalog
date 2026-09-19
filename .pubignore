@@ -1,0 +1,30 @@
+# Pub reads this file INSTEAD of .gitignore for this directory, so it has to
+# restate the .gitignore rules it replaces, in addition to the repo-only trees.
+#
+# What this trims: `sku_catalog` is the front door of a workspace, and the
+# members under packages/ are published as their own packages. Without this
+# file the root's archive also carried a nested copy of all three members
+# (56 KB instead of 15 KB) — source a consumer already gets by version.
+
+# Repo-only: published separately, depended on by version.
+packages/
+
+# Repo-only: instructions for agents working here, and the open-items list.
+AGENTS.md
+BACKLOG.md
+
+# From .gitignore
+.dart_tool/
+.packages
+build/
+pubspec.lock
+doc/api/
+.env*
+*.dart.js
+*.info.json
+*.js
+*.js_
+*.js.deps
+*.js.map
+.flutter-plugins
+.flutter-plugins-dependencies
