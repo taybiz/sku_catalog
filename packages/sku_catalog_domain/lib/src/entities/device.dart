@@ -59,7 +59,7 @@ class Device extends Equatable {
     this.icon,
   });
 
-  /// Shorthand for [meta.id].
+  /// Shorthand for `meta.id`.
   String get deviceId => meta.id;
 
   /// Whether this device is placed at a locate.

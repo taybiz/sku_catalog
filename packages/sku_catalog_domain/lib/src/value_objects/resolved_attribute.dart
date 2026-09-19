@@ -16,14 +16,22 @@ class ResolvedAttribute extends Equatable {
   /// Unit label (e.g., `'amps'`, `'watts'`).
   final String? unit;
 
-  /// Where this value came from: `'device'`, `'device_type'`, `'trait'`, `'default'`.
+  /// Where the value came from:
+  ///
+  /// - `'device'` — this instance set it;
+  /// - `'device_type'` — the SKU, or an ancestor SKU in one of its assemblies,
+  ///   set it (see [inheritedFrom]);
+  /// - `'default'` — nobody set it and [def]'s default applies;
+  /// - `'trait'` — no value anywhere; the entry is the schema definition only.
   final String source;
 
   /// The attribute definition schema (trait metadata).
   /// Required for UI forms to render this attribute correctly.
   final TraitAttributeDefinition def;
 
-  /// Name of the parent trait this attribute was inherited from, if any.
+  /// Model number of the ancestor SKU the value was inherited from, when the
+  /// value came from an assembly. Null when the instance, the SKU itself, or
+  /// [def]'s default supplied it.
   final String? inheritedFrom;
 
   /// Creates a [ResolvedAttribute].

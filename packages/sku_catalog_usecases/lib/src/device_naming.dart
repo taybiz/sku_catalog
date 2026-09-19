@@ -6,7 +6,7 @@ const defaultNameTemplate = '{trait}_{locate}_{sku}_{n}';
 /// Collapses doubled-up separators and trims leading/trailing ones — cleans
 /// up the gaps left behind when an optional naming token is empty.
 ///
-/// Uses [replaceAllMapped] so the group backreference substitutes correctly
+/// Uses `replaceAllMapped` so the group backreference substitutes correctly
 /// (Dart's `replaceAll` treats `$1` as a literal).
 String collapseSeparators(String text) {
   final collapsed = text.replaceAllMapped(

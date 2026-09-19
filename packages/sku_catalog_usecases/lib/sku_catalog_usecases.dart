@@ -52,6 +52,7 @@ export 'src/locate_use_cases.dart';
 export 'src/manufacturer_use_cases.dart';
 export 'src/meta_use_cases.dart';
 export 'src/new_meta.dart';
+export 'src/resolve_effective_attributes.dart';
 export 'src/resolve_locate_path.dart';
 export 'src/resolve_schema.dart';
 export 'src/resolve_trait_chain.dart';

@@ -238,6 +238,6 @@ void main() {
     final back = saved.getOrElse((_) => fail('expected Right'));
 
     back.traitIds.should.be(['calibrated']);
-    expect(back.attributeValues['calibrated_on'], '2026-01-01');
+    (back.attributeValues['calibrated_on'] as String).should.be('2026-01-01');
   });
 }

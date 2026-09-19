@@ -30,6 +30,12 @@ class TraitAttributeDefinition extends Equatable {
   /// Whether this attribute is required.
   final bool isRequired;
 
+  /// Value that applies when neither an instance nor a SKU sets one.
+  ///
+  /// Typed by [dataType]. Null means there is no default, and an attribute
+  /// nobody sets stays unset rather than being invented here.
+  final dynamic defaultValue;
+
   /// Creates a [TraitAttributeDefinition].
   const TraitAttributeDefinition({
     required this.meta,
@@ -40,6 +46,7 @@ class TraitAttributeDefinition extends Equatable {
     this.unit,
     this.enumOptions = const [],
     this.isRequired = false,
+    this.defaultValue,
   });
 
   /// Converts to JSON with snake_case keys.
@@ -52,6 +59,7 @@ class TraitAttributeDefinition extends Equatable {
     if (unit != null) 'unit': unit,
     'enum_options': enumOptions,
     'is_required': isRequired,
+    if (defaultValue != null) 'default_value': defaultValue,
   };
 
   /// Parses a [TraitAttributeDefinition] from the original app's snake_case
@@ -66,6 +74,7 @@ class TraitAttributeDefinition extends Equatable {
         unit: json['unit'] as String?,
         enumOptions: stringListFromWire(json['enum_options']),
         isRequired: json['is_required'] as bool? ?? false,
+        defaultValue: json['default_value'],
       );
 
   @override
@@ -78,5 +87,6 @@ class TraitAttributeDefinition extends Equatable {
     unit,
     enumOptions,
     isRequired,
+    defaultValue,
   ];
 }

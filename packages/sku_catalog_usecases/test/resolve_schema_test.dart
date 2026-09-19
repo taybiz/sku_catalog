@@ -135,7 +135,7 @@ void main() {
 
   test('definitions come back, not values', () async {
     for (final a in await schemaOf(['coated'])) {
-      expect(a.value, isNull);
+      (a.value as Object?).should.beNull();
       a.source.should.be('trait');
     }
   });
