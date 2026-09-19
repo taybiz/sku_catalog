@@ -1,38 +1,71 @@
-name: sku_catalog_workspace
-description: Workspace root for the sku_catalog packages. Never published.
-publish_to: none
+name: sku_catalog
+description: >-
+  A catalog model for physical parts: SKUs with traits and typed attributes,
+  assemblies of SKUs, manufacturers, places, and the devices that instantiate
+  them. Re-exports the domain model and its use cases.
+version: 0.1.0
+repository: https://github.com/taybiz/sku_catalog
+issue_tracker: https://github.com/taybiz/sku_catalog/issues
+topics:
+  - catalog
+  - sku
+  - inventory
+  - domain-model
+  - traits
 
 environment:
   sdk: ^3.12.0
 
+# This repo root is BOTH the front-door package (`sku_catalog`, published) and
+# the pub workspace root. The members below carry `resolution: workspace`.
+#
+# Note: melos does not treat the root as a package — `melos list` shows only the
+# members — so the melos scripts below run the root's own commands explicitly
+# rather than leaving them silently skipped.
 workspace:
-  - packages/sku_catalog
   - packages/sku_catalog_domain
   - packages/sku_catalog_usecases
   - packages/sku_catalog_memory
 
-dev_dependencies:
-  melos: ^8.5.0
+dependencies:
+  # Siblings are depended on by VERSION, not path: pub resolves the constraint
+  # to the workspace member locally, and a consumer of the published package
+  # gets the hosted version (dart.dev/tools/pub/workspaces).
+  sku_catalog_domain: ^0.1.0
+  sku_catalog_usecases: ^0.1.0
 
-# Melos configuration lives here, not in melos.yaml: melos 8 reads scripts from
-# the workspace root's pubspec. Sibling packages depend on each other by VERSION
-# CONSTRAINT, not by path — pub resolves a constraint to the workspace member
-# locally, and a published consumer gets the hosted version
-# (dart.dev/tools/pub/workspaces).
+dev_dependencies:
+  fpdart: ^1.2.0
+  lints: ^6.1.0
+  melos: ^8.5.0
+  sku_catalog_memory: ^0.1.0
+  test: ^1.25.0
+
 melos:
   scripts:
     analyze:
-      description: Zero-diagnostic check, fatal on infos and warnings.
+      description: Zero-diagnostic check for every workspace member.
       exec: dart analyze --fatal-infos --fatal-warnings
     format:
-      description: Format every package.
-      exec: dart format .
+      description: Format the whole repo.
+      run: dart format .
     test:
-      description: Run every package's tests.
+      description: Tests for every workspace member.
       exec: dart test
     publish-check:
-      description: What pub.dev would see for every package, without publishing.
-      exec: dart pub publish --dry-run
+      description: >-
+        What pub.dev would see for the root package and every member. Run it on a
+        committed tree — pub warns about modified checked-in files.
+      run: >-
+        dart pub publish --dry-run
+        && melos exec -- dart pub publish --dry-run
     verify:
-      description: Everything CI runs, in order.
-      run: melos run format && melos run analyze && melos run test && melos run publish-check
+      description: >-
+        Everything CI runs before publish-check: the root package first (melos
+        does not see it), then every workspace member.
+      run: >-
+        dart format --output=none --set-exit-if-changed .
+        && dart analyze --fatal-infos --fatal-warnings
+        && dart test
+        && melos run analyze
+        && melos run test

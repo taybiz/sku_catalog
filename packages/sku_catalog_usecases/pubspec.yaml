@@ -17,7 +17,7 @@ environment:
 
 dependencies:
   sku_catalog_domain: ^0.1.0
-  equatable: ^2.0.7
+  equatable: ^3.0.0
   fpdart: ^1.2.0
 
 dev_dependencies:

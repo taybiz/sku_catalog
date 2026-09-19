@@ -179,14 +179,27 @@ you need one of those, compose it around this package rather than inside it.
 ## Layout
 
 ```
+.                          the front-door package `sku_catalog` (published)
+  lib/sku_catalog.dart     re-exports the model and the operations
+  example/                 a runnable tour, with a copyable in-memory backend
+  test/
 packages/
-  sku_catalog/            the front door: re-exports domain + usecases
-  sku_catalog_domain/     lib/src/{entities,enums,value_objects,failures,contracts}
-  sku_catalog_usecases/   lib/src/  (one file per operation)
-  sku_catalog_memory/     lib/src/memory_*_repository.dart
+  sku_catalog_domain/      lib/src/{entities,enums,value_objects,failures,contracts}
+  sku_catalog_usecases/    lib/src/  (one file per operation)
+  sku_catalog_memory/      lib/src/memory_*_repository.dart
 ```
 
+The repo root is both the front-door package and the pub workspace root, so
+`README.md`, `LICENSE` and `lib/` sit where a reader expects them.
+
 `lib/src/` is internal in every package — import the package barrel.
+
+**One sharp edge, documented rather than discovered:** melos does not treat the
+workspace root as a package (`dart run melos list` shows only the three members,
+and a `packages:` key in the melos config does not change that). So the
+`melos run` scripts cover the members, while the root's own analyze, test and
+publish are run explicitly by `melos run verify` — which is what CI calls.
+Nothing is silently skipped; add any new root-level check to that script.
 
 ## Working on the packages
 
@@ -202,21 +215,32 @@ dart run melos run test
 dart run melos run publish-check   # what pub.dev would see, per package
 ```
 
-### Publishing one package
+### Publishing
 
 Melos publishes unpublished packages, dry-run by default, and `--scope` narrows
-it to one:
+it to one member:
 
 ```bash
-dart run melos publish --dry-run --scope=sku_catalog_domain
-dart run melos publish --scope=sku_catalog_domain --no-dry-run
-# or without melos, from the workspace root:
+dart run melos publish -n -y                                  # validate every member
+dart run melos publish --dry-run --scope=sku_catalog_domain   # validate one
+dart run melos publish --scope=sku_catalog_domain             # the real thing
+# or without melos:
 dart pub -C packages/sku_catalog_domain publish
 ```
 
+Melos does not see the root package, so `sku_catalog` itself is published from
+the root:
+
+```bash
+dart pub publish --dry-run     # validate the front-door package
+dart pub publish
+```
+
 Publish in dependency order — `sku_catalog_domain`, then `sku_catalog_usecases`
-and `sku_catalog_memory`, then `sku_catalog` — because a published package's
-sibling dependency resolves from pub.dev for its consumers.
+and `sku_catalog_memory`, then the root `sku_catalog` — because a published
+package's sibling dependency resolves from pub.dev for its consumers. Note that
+`dart pub publish --dry-run` does **not** warn when a sibling is not on pub.dev
+yet: the ordering is on you.
 
 CI runs those same scripts, so a broken script fails the build rather than
 rotting. Note that melos configuration lives in the **workspace root's
