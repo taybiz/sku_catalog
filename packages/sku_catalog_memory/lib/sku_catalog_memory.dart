@@ -3,6 +3,10 @@
 ///
 /// For tests, prototypes, demos and fixtures: state lives in a map per
 /// repository and disappears with the object.
+///
+/// Presents FP-style tuples: every repository method returns a fpdart
+/// `TaskEither<DomainFailure, T>`; call `.run()` for a
+/// `Future<Either<DomainFailure, T>>`.
 library;
 
 export 'src/memory_device_repository.dart';

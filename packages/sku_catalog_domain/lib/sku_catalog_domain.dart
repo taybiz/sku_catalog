@@ -4,8 +4,8 @@
 /// No operations live here, and no storage: implement the contracts over
 /// whatever you have, or depend on `sku_catalog_usecases` for the operations.
 ///
-/// Every repository method and use case call returns a fpdart
-/// `TaskEither<DomainFailure, T>`; call `.run()` for a
+/// Presents FP-style tuples: every repository method and use case call returns a
+/// fpdart `TaskEither<DomainFailure, T>`; call `.run()` for a
 /// `Future<Either<DomainFailure, T>>`.
 library;
 

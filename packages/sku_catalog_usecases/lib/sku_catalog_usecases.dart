@@ -4,8 +4,8 @@
 /// Everything is typed against the contracts in `sku_catalog_domain`; this
 /// package ships no persistence.
 ///
-/// Every repository method and use case call returns a fpdart
-/// `TaskEither<DomainFailure, T>`; call `.run()` for a
+/// Presents FP-style tuples: every repository method and use case call returns a
+/// fpdart `TaskEither<DomainFailure, T>`; call `.run()` for a
 /// `Future<Either<DomainFailure, T>>`.
 library;
 

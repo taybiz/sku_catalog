@@ -5,8 +5,8 @@
 /// This is the front door: it re-exports the model and the operations, so one
 /// dependency gets you everything.
 ///
-/// Every repository method and use case call returns a fpdart
-/// `TaskEither<DomainFailure, T>`; call `.run()` for a
+/// Presents FP-style tuples: every repository method and use case call returns a
+/// fpdart `TaskEither<DomainFailure, T>`; call `.run()` for a
 /// `Future<Either<DomainFailure, T>>`.
 ///
 /// ```dart
