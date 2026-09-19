@@ -231,11 +231,19 @@ right and no sibling constraint to keep in step. Check the file list the dry run
 prints: `lib/`, `example/`, `README.md`, `CHANGELOG.md`, `LICENSE` and the
 pubspec belong there; `test/support/` does not.
 
-The package holds one structural rule, enforced by `test/boundary_test.dart`:
-**nothing in `lib/` may import or name anything product-specific, and nothing in
-`lib/` may reach for the test doubles.** If a consumer's word shows up in this
-API — or the published library starts depending on the in-memory backend — the
-boundary has moved without anyone deciding it should.
+The package holds its structural rules in `test/boundary_test.dart`, and they fail
+the build rather than waiting for review:
+
+- **nothing in `lib/` may import or name anything product-specific** — if a
+  consumer's word shows up in this API, the boundary has moved without anyone
+  deciding it should;
+- **nothing in `lib/` may reach for the test doubles** — the published library
+  cannot start depending on the in-memory backend;
+- **the areas of `lib/src/` may only depend in the allowed direction** — the
+  dependency table lives in that test (`usecases -> domain`, nothing else), and
+  an import that crosses an area, or reaches the public entry point from inside
+  `lib/src/`, fails. That is the guarantee package separation used to give for
+  free; with one package, the suite says it out loud.
 
 ## License
 
