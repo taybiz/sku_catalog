@@ -7,7 +7,7 @@
 # "The pubspec is hidden, probably by .gitignore or pubignore" plus missing
 # LICENSE/README/CHANGELOG. Verified 2026-09-19 — do not "tidy" this file by
 # adding `packages/`. The root archive does carry a nested copy of the members
-# (56 KB); that is inert for consumers, who get the members by version.
+# (54 KB); that is inert for consumers, who get the members by version.
 #
 # What this excludes: the repo's own agent instructions and open-items list.
 
