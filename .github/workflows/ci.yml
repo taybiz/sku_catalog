@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - name: Analyze (zero diagnostics)
+        run: dart analyze --fatal-infos --fatal-warnings
+      - name: Test
+        run: dart test
+      - name: What pub.dev would see
+        working-directory: packages/sku_catalog
+        run: dart pub publish --dry-run

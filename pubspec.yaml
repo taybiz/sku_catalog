@@ -1,0 +1,12 @@
+name: sku_catalog_workspace
+description: Workspace root for the sku_catalog packages. Never published.
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+workspace:
+  - packages/sku_catalog
+
+dev_dependencies:
+  melos: ^8.5.0
