@@ -14,6 +14,16 @@ dependencies:
   sku_catalog_usecases: ^0.1.0
 ```
 
+## What you get back
+
+This package presents **FP-style tuples**, not exceptions: repository methods and
+use case calls return a **lazy** fpdart `TaskEither<DomainFailure, T>`. Nothing
+runs until you `.run()` it, and `.run()` gives you back a
+`Future<Either<DomainFailure, T>>`.
+`isRight()`/`isLeft()` are methods, and `getOrElse`/`fold` receive the failure.
+Why this seam is a tuple rather than a `Future` is recorded in
+[`AGENTS.md`](https://github.com/taybiz/sku_catalog/blob/main/AGENTS.md).
+
 ## What is here
 
 - **SKUs**: `CreateDeviceType`, `UpdateDeviceType`, `DeleteDeviceType`,

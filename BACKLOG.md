@@ -28,18 +28,17 @@ When complete, mark each off and include a sentence as to disposition.
   than one assembly the edge order decides, which is deterministic but not
   meaningful; a caller that cares must resolve per assembly.
 
+- [x] The public seam is `TaskEither` where the bible's `docs/04` prescribed
+  `Future<Either<...>>`.
+  **Disposition:** decided, not fixed — consumers get the tuple. The bible now
+  requires every package to *declare* its error style loudly (`docs/04`,
+  "Declare the error style, loudly"), so this is compliant rather than a delta:
+  the barrels, all four READMEs and this repo's `AGENTS.md` state it in the same
+  words. Doctrine moved to meet the code, which is the outcome we wanted.
+
 ## Open
 
-None of these block a 0.1.0 publish. The first two are doctrine deltas found in
-the dart-flutter-bible review, not features.
-
-- [ ] **Public seam is `TaskEither`, the bible says `Future<Either>`.** Every
-  repository contract and use case `call()` returns a `TaskEither`, so consumers
-  build and `run()` chains — exactly what §4 ("Where the chain ends") forbids.
-  Fixing it is a signature change across all four packages plus every test, and
-  it is a breaking change for anyone who has already imported the published
-  package, so it belongs in 0.2.0 (`@deprecated` shims) or in 0.1.0 if it
-  happens before the first publish.
+Nothing here blocks a 0.1.0 publish.
 
 - [ ] **One repository adapter, doctrine wants at least two plus a shared
   contract suite** run against all of them. `sku_catalog_memory` is the only

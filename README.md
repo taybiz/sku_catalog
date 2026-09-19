@@ -9,6 +9,16 @@ described by different people in different words — electrical gear, pinball
 machine boards and mechanisms, lab equipment, whatever you happen to be
 assembling and wiring. Nothing in the package is specific to one of those.
 
+## What you get back
+
+This package presents **FP-style tuples**, not exceptions: repository methods and
+use case calls return a **lazy** fpdart `TaskEither<DomainFailure, T>`. Nothing
+runs until you `.run()` it, and `.run()` gives you back a
+`Future<Either<DomainFailure, T>>`.
+`isRight()`/`isLeft()` are methods, and `getOrElse`/`fold` receive the failure.
+Why this seam is a tuple rather than a `Future` is recorded in
+[`AGENTS.md`](https://github.com/taybiz/sku_catalog/blob/main/AGENTS.md).
+
 ## The model in one screen
 
 | Concept | What it is |
