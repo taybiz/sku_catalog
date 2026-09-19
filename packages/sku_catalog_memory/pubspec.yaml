@@ -1,0 +1,25 @@
+name: sku_catalog_memory
+description: >-
+  An in-memory implementation of the sku_catalog repository contracts, for
+  tests, prototypes, demos and fixtures.
+version: 0.1.0
+repository: https://github.com/taybiz/sku_catalog
+issue_tracker: https://github.com/taybiz/sku_catalog/issues
+topics:
+  - catalog
+  - sku
+  - memory
+  - testing
+resolution: workspace
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  sku_catalog_domain: ^0.1.0
+  fpdart: ^1.2.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  shouldly: ^0.5.0+1
+  test: ^1.25.0

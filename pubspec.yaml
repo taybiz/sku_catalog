@@ -7,13 +7,18 @@ environment:
 
 workspace:
   - packages/sku_catalog
+  - packages/sku_catalog_domain
+  - packages/sku_catalog_usecases
+  - packages/sku_catalog_memory
 
 dev_dependencies:
   melos: ^8.5.0
 
 # Melos configuration lives here, not in melos.yaml: melos 8 reads scripts from
-# the workspace root's pubspec, and a second config file that melos silently
-# ignores is worse than no file at all.
+# the workspace root's pubspec. Sibling packages depend on each other by VERSION
+# CONSTRAINT, not by path — pub resolves a constraint to the workspace member
+# locally, and a published consumer gets the hosted version
+# (dart.dev/tools/pub/workspaces).
 melos:
   scripts:
     analyze:
@@ -26,7 +31,7 @@ melos:
       description: Run every package's tests.
       exec: dart test
     publish-check:
-      description: What pub.dev would see, without publishing.
+      description: What pub.dev would see for every package, without publishing.
       exec: dart pub publish --dry-run
     verify:
       description: Everything CI runs, in order.

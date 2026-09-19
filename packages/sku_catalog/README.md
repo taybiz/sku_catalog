@@ -32,19 +32,29 @@ Two ideas do most of the work:
   is a SKU containing boards and mechanisms. The assembly is a graph with a
   quantity per edge, and a cycle guard that refuses to close a loop.
 
-## Install
+## The packages
+
+This repo publishes four packages, so you can take exactly as much as you need:
+
+| Package | What it is |
+|---|---|
+| `sku_catalog` | The front door — re-exports the model **and** the operations. One dependency gets you everything. |
+| [`sku_catalog_domain`](https://pub.dev/packages/sku_catalog_domain) | The model and the repository contracts, no operations. |
+| [`sku_catalog_usecases`](https://pub.dev/packages/sku_catalog_usecases) | The operations, typed against those contracts. |
+| [`sku_catalog_memory`](https://pub.dev/packages/sku_catalog_memory) | An in-memory implementation of every contract, for tests and prototypes. |
 
 ```yaml
 dependencies:
-  sku_catalog: ^0.1.0
+  sku_catalog: ^0.1.0          # everything…
+  # …or pick the halves you want:
+  # sku_catalog_domain: ^0.1.0
+  # sku_catalog_usecases: ^0.1.0
+  # sku_catalog_memory: ^0.1.0
 ```
 
 ```dart
 import 'package:sku_catalog/sku_catalog.dart';
 ```
-
-Need the model without the operations (implementing your own backend, or your
-own application layer)? Import `package:sku_catalog/sku_catalog_domain.dart`.
 
 ## Quick start
 
@@ -140,8 +150,12 @@ abstract interface class IDeviceTypeRepository {
 ```
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
-domain. `IUnitOfWork` is the optional transaction seam for adapters that have
-one.
+domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
+it to the use cases that write more than once (`DeleteDeviceType`,
+`DeleteDevice`) and a failure half-way through rolls back. `runEither` bridges
+the two conventions: a returned `Left` becomes the throw that triggers rollback,
+and is handed back as a `Left` afterwards. `NoOpUnitOfWork` is the honest
+implementation for a store that cannot roll back.
 
 Two deliberate consequences worth knowing:
 
@@ -165,25 +179,16 @@ you need one of those, compose it around this package rather than inside it.
 ## Layout
 
 ```
-lib/
-  sku_catalog.dart            everything (model + use cases)
-  sku_catalog_domain.dart     the model alone
-  src/
-    domain/
-      entities/               Meta, Trait, TraitAttributeDefinition, DeviceType,
-                              SkuComponent, Manufacturer, Locate, Device,
-                              ImageRecord
-      enums/                  DataType, TraitScope, ImageOwner
-      value_objects/          ResolvedAttribute, DeviceReportProperty
-      failures/               DomainFailure and its leaves
-      contracts/              the I*Repository contracts + IUnitOfWork
-    usecases/                 SKUs, assemblies, manufacturers, places, devices,
-                              traits, attribute definitions, images, meta
+packages/
+  sku_catalog/            the front door: re-exports domain + usecases
+  sku_catalog_domain/     lib/src/{entities,enums,value_objects,failures,contracts}
+  sku_catalog_usecases/   lib/src/  (one file per operation)
+  sku_catalog_memory/     lib/src/memory_*_repository.dart
 ```
 
-`lib/src/` is internal — import the two barrels above.
+`lib/src/` is internal in every package — import the package barrel.
 
-## Working on the package
+## Working on the packages
 
 Melos is a dev dependency of the workspace root, so `dart run melos` works with
 nothing installed globally. Each script runs every package in turn, so adding a
@@ -194,8 +199,24 @@ dart pub get
 dart run melos run verify          # format, analyze, test, publish-check — all of it
 dart run melos run analyze         # zero diagnostics, fatal on infos and warnings
 dart run melos run test
-dart run melos run publish-check   # what pub.dev would see
+dart run melos run publish-check   # what pub.dev would see, per package
 ```
+
+### Publishing one package
+
+Melos publishes unpublished packages, dry-run by default, and `--scope` narrows
+it to one:
+
+```bash
+dart run melos publish --dry-run --scope=sku_catalog_domain
+dart run melos publish --scope=sku_catalog_domain --no-dry-run
+# or without melos, from the workspace root:
+dart pub -C packages/sku_catalog_domain publish
+```
+
+Publish in dependency order — `sku_catalog_domain`, then `sku_catalog_usecases`
+and `sku_catalog_memory`, then `sku_catalog` — because a published package's
+sibling dependency resolves from pub.dev for its consumers.
 
 CI runs those same scripts, so a broken script fails the build rather than
 rotting. Note that melos configuration lives in the **workspace root's
