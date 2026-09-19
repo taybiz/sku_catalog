@@ -44,4 +44,4 @@ Two rules that a caller owns and this package therefore takes as arguments:
 
 ## License
 
-BSD 3-Clause.
+MIT.

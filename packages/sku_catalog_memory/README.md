@@ -51,4 +51,4 @@ persisted and nothing is shared between instances.
 
 ## License
 
-BSD 3-Clause.
+MIT.

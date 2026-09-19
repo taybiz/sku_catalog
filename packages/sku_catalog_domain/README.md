@@ -66,4 +66,4 @@ half-way through leaves nothing behind; pass nothing and the first write stands.
 
 ## License
 
-BSD 3-Clause.
+MIT.

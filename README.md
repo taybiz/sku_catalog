@@ -254,4 +254,4 @@ deciding it should.
 
 ## License
 
-BSD 3-Clause — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
