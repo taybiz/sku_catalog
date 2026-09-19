@@ -1,0 +1,29 @@
+# The import graph of `lib/`, enforced by the analyzer through the `import_rules`
+# plugin — wired in `analysis_options.yaml` under `plugins:`, evaluated by
+# `dart analyze` and by the IDE, so a wrong edge shows up while you type it.
+#
+# Separating the model and the operations into their own packages used to give
+# this for free: an area could not reach another's internals. With one published
+# package the graph has to be written down, and this is the one place it lives.
+
+rules:
+  # The model is the bottom of the graph.
+  - target: lib/src/domain/**
+    disallow: "**"
+    exclude_disallow:
+      - lib/src/domain/**
+      - package:equatable/**
+      - package:fpdart/**
+      - dart:**
+    reason: |
+      The model does not depend on the operations, and it does not reach the
+      public entry point from the inside. If the model needs something only the
+      operations know, the edge is pointing the wrong way.
+
+  # Internal files use the internal barrels.
+  - target: lib/src/**
+    disallow: package:sku_catalog/sku_catalog.dart
+    reason: |
+      Import `../domain/domain.dart` or `../usecases/usecases.dart`. The public
+      entry point is for consumers; reaching it from inside lib/src is a cycle
+      through the front door.

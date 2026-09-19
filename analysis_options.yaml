@@ -5,6 +5,12 @@ analyzer:
     # A TODO on a published package is a decision someone dodged.
     todo: error
 
+# The dependency graph of lib/ is enforced as you type, here and in CI: see
+# import_rules.yaml for the rules. No pubspec dependency — the analyzer resolves
+# the plugin itself.
+plugins:
+  import_rules: ^0.0.8
+
 linter:
   rules:
     public_member_api_docs: true
