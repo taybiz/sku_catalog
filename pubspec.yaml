@@ -10,3 +10,24 @@ workspace:
 
 dev_dependencies:
   melos: ^8.5.0
+
+# Melos configuration lives here, not in melos.yaml: melos 8 reads scripts from
+# the workspace root's pubspec, and a second config file that melos silently
+# ignores is worse than no file at all.
+melos:
+  scripts:
+    analyze:
+      description: Zero-diagnostic check, fatal on infos and warnings.
+      exec: dart analyze --fatal-infos --fatal-warnings
+    format:
+      description: Format every package.
+      exec: dart format .
+    test:
+      description: Run every package's tests.
+      exec: dart test
+    publish-check:
+      description: What pub.dev would see, without publishing.
+      exec: dart pub publish --dry-run
+    verify:
+      description: Everything CI runs, in order.
+      run: melos run format && melos run analyze && melos run test && melos run publish-check

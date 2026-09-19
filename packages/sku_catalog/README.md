@@ -185,12 +185,22 @@ lib/
 
 ## Working on the package
 
+Melos is a dev dependency of the workspace root, so `dart run melos` works with
+nothing installed globally. Each script runs every package in turn, so adding a
+sibling package needs no workflow change.
+
 ```bash
 dart pub get
-melos run analyze   # dart analyze --fatal-infos --fatal-warnings, zero diagnostics
-melos run test
-melos run publish-check
+dart run melos run verify          # format, analyze, test, publish-check — all of it
+dart run melos run analyze         # zero diagnostics, fatal on infos and warnings
+dart run melos run test
+dart run melos run publish-check   # what pub.dev would see
 ```
+
+CI runs those same scripts, so a broken script fails the build rather than
+rotting. Note that melos configuration lives in the **workspace root's
+`pubspec.yaml`** under `melos:` — melos 8 does not read a `melos.yaml`, and one
+that looks authoritative but is ignored is worse than none.
 
 The package holds one structural rule, enforced by `test/boundary_test.dart`:
 **nothing in `lib/` may import or name anything product-specific.** If a
