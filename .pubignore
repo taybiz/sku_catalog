@@ -1,15 +1,16 @@
-# Pub reads this file INSTEAD of .gitignore for this directory, so it has to
-# restate the .gitignore rules it replaces, in addition to the repo-only trees.
+# pub reads this file INSTEAD of this directory's .gitignore, so it restates
+# those rules below in addition to what it actually excludes.
 #
-# What this trims: `sku_catalog` is the front door of a workspace, and the
-# members under packages/ are published as their own packages. Without this
-# file the root's archive also carried a nested copy of all three members
-# (56 KB instead of 15 KB) — source a consumer already gets by version.
+# It also applies to SUBDIRECTORIES, which is why `packages/` is NOT listed
+# here: excluding the member tree at the root empties the members' own
+# archives too. `packages/sku_catalog_domain` then fails validation with
+# "The pubspec is hidden, probably by .gitignore or pubignore" plus missing
+# LICENSE/README/CHANGELOG. Verified 2026-09-19 — do not "tidy" this file by
+# adding `packages/`. The root archive does carry a nested copy of the members
+# (56 KB); that is inert for consumers, who get the members by version.
+#
+# What this excludes: the repo's own agent instructions and open-items list.
 
-# Repo-only: published separately, depended on by version.
-packages/
-
-# Repo-only: instructions for agents working here, and the open-items list.
 AGENTS.md
 BACKLOG.md
 
