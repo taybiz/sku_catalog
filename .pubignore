@@ -13,11 +13,13 @@
 AGENTS.md
 BACKLOG.md
 
-# Test doubles. The in-memory backend under test/support/ exists for this repo's
-# own tests; consumers build their own backend against the contracts, so it does
-# not belong in the published archive. It is readable on GitHub at
-# github.com/taybiz/sku_catalog/tree/main/test/support if you want a reference.
-test/support/
+# The whole test tree, not just the doubles it needs. The in-memory backend is
+# TEST-ONLY: it exists for this repo's own tests and consumers build their own
+# against the contracts. Shipping the tests without the doubles they import
+# would leave broken imports in the archive for pub.dev to analyse, so the two
+# leave together. Both are readable on GitHub at
+# github.com/taybiz/sku_catalog/tree/main/test.
+test/
 
 # From .gitignore
 .dart_tool/
