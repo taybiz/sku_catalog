@@ -1,7 +1,7 @@
 name: sku_catalog
 description: >-
   A catalog model for physical parts: SKUs with traits and typed attributes, assemblies of SKUs, manufacturers, places, and the devices that instantiate them.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/taybiz/sku_catalog
 issue_tracker: https://github.com/taybiz/sku_catalog/issues
 topics:

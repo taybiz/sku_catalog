@@ -10,6 +10,7 @@
 library;
 
 export 'add_sku_component.dart';
+export 'aggregate_bill_of_materials.dart';
 export 'assembly_use_cases.dart';
 export 'assert_unique_device_name.dart';
 export 'create_device.dart';

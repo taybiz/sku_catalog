@@ -1,3 +1,17 @@
+## 0.2.0
+
+- `AggregateBillOfMaterials`: folds a SKU's assembly tree into a
+  `BillOfMaterials` — one `BomLine` per distinct part, with the total quantity a
+  build of *n* units needs, the level it sits at, and whether it is itself an
+  assembly. The flip side of resolution: `ResolveEffectiveAttributes` merges the
+  layers that describe one thing, this folds the tree that builds one thing.
+  Quantities multiply down the tree; a part reached by more than one path is one
+  line whose quantity is the sum; a loop in the graph reports
+  `WouldCreateCycleFailure` rather than a finite quantity that looks plausible.
+- `BillOfMaterials` and `BomLine` value objects, exported with the model.
+- An assembly edge pointing at a SKU the catalog does not have is still
+  reported, with no model number, instead of dropping the part from the build.
+
 ## 0.1.0
 
 - First release: the catalog model extracted from Circuit Planner.

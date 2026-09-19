@@ -107,6 +107,10 @@ void main() {
             repository: MemorySkuComponentRepository(),
             deviceTypeRepository: repository,
           ),
+          AggregateBillOfMaterials(
+            deviceTypeRepository: repository,
+            skuComponentRepository: MemorySkuComponentRepository(),
+          ),
           WouldCreateAssemblyCycle(MemorySkuComponentRepository()),
           DeleteDeviceType(
             deviceTypeRepository: repository,
@@ -115,7 +119,7 @@ void main() {
           ),
         ];
 
-        operations.length.should.be(9);
+        operations.length.should.be(10);
       });
     });
   });

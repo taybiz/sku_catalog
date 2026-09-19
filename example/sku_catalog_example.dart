@@ -1,4 +1,5 @@
-// A runnable tour of the package: classify, value, assemble, place, instantiate.
+// A runnable tour of the package: classify, value, assemble, place,
+// instantiate, fold.
 //
 // It ships with a tiny in-memory backend so you can see the whole shape at
 // once. Copy it as a starting point, or implement the same contracts over your
@@ -100,9 +101,17 @@ Future<void> main() async {
   );
   await CreateDeviceType(skuRepository)(breakerModel).run();
   await CreateDeviceType(skuRepository)(panelModel).run();
+  final subPanelModel = DeviceType(
+    meta: _meta('qo-4'),
+    manufacturerId: 'square-d',
+    modelNumber: 'QO-4',
+  );
+  await CreateDeviceType(skuRepository)(subPanelModel).run();
 
-  // 4. Assemble: the panel contains sixteen breakers. On purpose the edge is
-  //    tried twice the other way round, to show the cycle guard refuse it.
+  // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
+  //    sub-panel holds four breakers — so a build consumes the breaker two
+  //    ways. On purpose the edge is then tried the other way round, to show the
+  //    cycle guard refuse it.
   final addComponent = AddSkuComponent(
     repository: assemblyRepository,
     deviceTypeRepository: skuRepository,
@@ -110,7 +119,17 @@ Future<void> main() async {
   await addComponent(
     parentDeviceTypeId: panelModel.meta.id,
     childDeviceTypeId: breakerModel.meta.id,
-    quantity: 16,
+    quantity: 8,
+  ).run();
+  await addComponent(
+    parentDeviceTypeId: panelModel.meta.id,
+    childDeviceTypeId: subPanelModel.meta.id,
+    quantity: 4,
+  ).run();
+  await addComponent(
+    parentDeviceTypeId: subPanelModel.meta.id,
+    childDeviceTypeId: breakerModel.meta.id,
+    quantity: 4,
   ).run();
   final loop = await addComponent(
     parentDeviceTypeId: breakerModel.meta.id,
@@ -153,14 +172,24 @@ Future<void> main() async {
   final partsCount = await FetchSkuComponentsByDeviceType(assemblyRepository)(
     panelModel.meta.id,
   ).run();
+  final breakersDirect = partsCount.fold(
+    (failure) => '?',
+    (rows) =>
+        '${rows.firstWhere((c) => c.childDeviceTypeId == breakerModel.meta.id).quantity}',
+  );
+  final subPanelsDirect = partsCount.fold(
+    (failure) => '?',
+    (rows) =>
+        '${rows.firstWhere((c) => c.childDeviceTypeId == subPanelModel.meta.id).quantity}',
+  );
   final devicesAtPlace = await FetchDevicesByLocate(deviceRepository)(
     panelPlace.meta.id,
   ).run();
 
   print(
-    'SKU        ${panelModel.modelNumber} — contains '
-    '${partsCount.fold((f) => '?', (rows) => rows.first.quantity)} × '
-    '${breakerModel.modelNumber}',
+    'SKU        ${panelModel.modelNumber} — holds $breakersDirect × '
+    '${breakerModel.modelNumber} directly, plus $subPanelsDirect × '
+    '${subPanelModel.modelNumber}',
   );
   print('Schema     ${breakerModel.modelNumber} → $schemaLine');
   print(
@@ -172,7 +201,28 @@ Future<void> main() async {
     '${loop.fold((failure) => 'refused (${failure.message})', (_) => 'allowed — BUG')}',
   );
 
-  // 8. A device carries its own classification and values, independent of the
+  // 8. Fold: what does a build of two panels consume? This is not resolution —
+  //    that merges the layers describing one thing. This folds the tree that
+  //    builds one thing: quantities multiply down the levels, and the breaker,
+  //    reached directly and through a sub-panel, is one line with the total.
+  final bom = await AggregateBillOfMaterials(
+    deviceTypeRepository: skuRepository,
+    skuComponentRepository: assemblyRepository,
+  )(panelModel.meta.id, units: 2).run();
+
+  final bomLine = bom.fold(
+    (failure) => 'failed: ${failure.message}',
+    (bill) => bill.lines
+        .map(
+          (line) =>
+              '${line.quantity} × ${line.modelNumber} '
+              '(level ${line.depth}${line.isAssembly ? ', itself an assembly' : ''})',
+        )
+        .join(', '),
+  );
+  print('Parts      2 × ${panelModel.modelNumber} → $bomLine');
+
+  // 9. A device carries its own classification and values, independent of the
   //    model it came from — which is what lets one SKU be wired two ways.
   final spare = panelDevice.copyWith(
     name: 'Spare Panel',

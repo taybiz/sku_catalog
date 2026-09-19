@@ -48,7 +48,7 @@ Two ideas do most of the work:
 
 ```yaml
 dependencies:
-  sku_catalog: ^0.1.0
+  sku_catalog: ^0.2.0
 ```
 
 ```dart
@@ -130,6 +130,20 @@ await AddSkuComponent(
   childDeviceTypeId: 'qo120',
   quantity: 16,
 ).run();
+```
+
+Folding an assembly into the parts a build needs is a separate operation from
+resolving attributes: resolution *merges* the layers that describe one thing,
+this *folds* the tree that builds one thing.
+
+```dart
+final bom = await AggregateBillOfMaterials(
+  deviceTypeRepository: myDeviceTypeRepository,
+  skuComponentRepository: mySkuComponentRepository,
+)(panel.meta.id, units: 12).run();
+// → one line per distinct part: quantity, level, and whether it is itself
+//   an assembly. A part reached by two paths is one line whose quantity is the
+//   sum of both; a loop is a failure, not a number.
 ```
 
 A runnable end-to-end version — with a small in-memory backend you can copy —

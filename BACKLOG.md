@@ -39,9 +39,27 @@ When complete, mark each off and include a sentence as to disposition.
   the README, the front door's doc comment and this repo's `AGENTS.md` state it in
   the same words. Doctrine moved to meet the code, which is the outcome we wanted.
 
+- [x] BOM aggregation: fold a SKU's assembly tree with quantities (how many of
+  each part does this build need). Distinct operation from resolution — that is
+  a merge, this is a fold.
+  **Disposition:** shipped in 0.2.0 as `AggregateBillOfMaterials` →
+  `BillOfMaterials` of `BomLine`s. One line per distinct part, the quantity
+  summed over every path the tree reaches it by, the level it sits at, and
+  `isAssembly` so a caller can filter to what is bought rather than built.
+  Decisions worth keeping: the level is the **shallowest** one, so a part used
+  directly and inside a sub-assembly reads as a top-level part; lines are level
+  order, then model number, then id, so a report's order does not depend on how
+  a store handed its rows back; `units` below one is `InvalidInputFailure`; a
+  loop is `WouldCreateCycleFailure`, because a walk with a plain visited set
+  answers with a finite quantity that is silently wrong — for a purchase order
+  that is worse than a failure; and an edge pointing at a SKU the catalog does
+  not have is reported with a null model number rather than dropped from the
+  build. Device composition stays out of scope: the ask was SKU assemblies,
+  which `SkuComponent` already covers.
+
 ## Open
 
-Nothing here blocks a 0.1.0 publish.
+Nothing here blocks a publish.
 
 - [ ] **One repository adapter, doctrine wants at least two plus a shared
   contract suite** run against all of them. The in-memory test doubles in
@@ -61,11 +79,7 @@ Nothing here blocks a 0.1.0 publish.
   the industry (Salesforce's 15/18-char strings, Odoo's ints) is a fixed opaque
   id mapped at the adapter. Nothing in `lib/` parses, orders or does arithmetic
   on an id today, so opacity holds — write it down. Decided 2026-09-19: keep
-  `String` in 0.1.0; this item is the additive 0.2.0 change.
-
-- [ ] BOM aggregation: fold a SKU's assembly tree with quantities (how many of
-  each part does this build need). Distinct operation from resolution — that is
-  a merge, this is a fold.
+  `String` in 0.1.0; this item is the next additive change.
 
 - [ ] A JSON bundle adapter: slug-stable export/import of a whole catalog
   (stable ids, referential integrity, idempotent re-import). Currently
