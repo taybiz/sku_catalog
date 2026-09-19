@@ -18,10 +18,12 @@ wiring. Do not restate bible rules below; if you need one, link it.
    plainly what a caller gets back. Decided by Steve, 2026-09-19.
 2. **The backend in this repo is a test double and is deliberately not
    published.** `test/support/` holds in-memory implementations of every
-   repository contract; `.pubignore` keeps them out of the archive. A consumer is
-   expected to build their own backend against the contracts. Enforced by
-   `test/boundary_test.dart` ("none of them reaches for the test doubles"), so
-   the published library can never start depending on them.
+   repository contract; `.pubignore` keeps the whole `test/` tree out of the
+   archive (shipping the tests without the doubles they import would publish
+   broken imports). A consumer is expected to build their own backend against the
+   contracts. Enforced by `test/boundary_test.dart` ("none of them reaches for
+   the test doubles"), so the published library can never start depending on
+   them.
 
 ## One package, on purpose
 
@@ -44,10 +46,21 @@ Measured, not assumed; this shape was decided twice (2026-09-19).
   `dart pub publish --dry-run`. CI runs exactly those, in that order.
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
-- `.pubignore` replaces this directory's `.gitignore` for pub **and applies to
-  subdirectories** — which is how an over-eager rule once hid a member's pubspec
-  and emptied its archive. It exists to keep `AGENTS.md`, `BACKLOG.md` and
-  `test/support/` out; check `dart pub publish --dry-run`'s file list before
-  trusting it.
+- The import graph is enforced twice, deliberately. `import_rules.yaml` (wired via
+  `plugins:` in `analysis_options.yaml`, no pubspec dependency) fails the analyzer
+  — in the IDE as you type and in CI, because Analyze runs `--fatal-infos` — on
+  any wrong-way edge (`usecases -> domain`, never the reverse) or on an internal
+  file importing the public entry point. `test/boundary_test.dart` is the tripwire
+  that cannot fail silently if the plugin ever stops resolving, and it carries the
+  rules the plugin cannot express (a product name in text, `lib/` reaching for the
+  doubles). Prove a rule fires — plant the import, run `dart analyze`, read the
+  reason, revert — instead of assuming it does.
+- `.pubignore` replaces this directory's `.gitignore` for pub, **applies to
+  subdirectories**, and anchors any pattern containing a slash to this directory
+  (`doc/api/` does not reach `sub/doc/api/`). It keeps out `AGENTS.md`,
+  `BACKLOG.md` and the whole `test/` tree; check `dart pub publish --dry-run`'s
+  file list before trusting it — an over-eager rule once hid a member's pubspec
+  and emptied its archive, and stale untracked directories in a working clone get
+  published too.
 - Open items live in `BACKLOG.md`, including the one outstanding doctrine delta
   (a second repository adapter plus a shared contract suite).
