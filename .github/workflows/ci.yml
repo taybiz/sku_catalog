@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
+      - uses: actions/setup-dart@v1
       - run: dart pub get
-
-      # One script, run exactly as a human runs it: the root package (which
-      # melos does not see) first, then every workspace member. A broken script
-      # fails the build instead of rotting.
-      - name: Verify
-        run: dart run melos run verify
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        run: dart analyze --fatal-infos --fatal-warnings
+      - name: Test
+        run: dart test
       - name: What pub.dev would see
-        run: dart run melos run publish-check
+        run: dart pub publish --dry-run

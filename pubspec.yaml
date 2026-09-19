@@ -14,59 +14,12 @@ topics:
 environment:
   sdk: '>=3.10.0 <4.0.0'
 
-# This repo root is BOTH the front-door package (`sku_catalog`, published) and
-# the pub workspace root. The members below carry `resolution: workspace`.
-#
-# Note: melos does not treat the root as a package — `melos list` shows only the
-# members — so the melos scripts below run the root's own commands explicitly
-# rather than leaving them silently skipped.
-workspace:
-  - packages/sku_catalog_domain
-  - packages/sku_catalog_usecases
-  - packages/sku_catalog_memory
 
 dependencies:
-  # Siblings are depended on by VERSION, not path: pub resolves the constraint
-  # to the workspace member locally, and a consumer of the published package
-  # gets the hosted version (dart.dev/tools/pub/workspaces).
-  sku_catalog_domain: ^0.1.0
-  sku_catalog_usecases: ^0.1.0
+  equatable: ^3.0.0
+  fpdart: ^1.2.0
 
 dev_dependencies:
-  fpdart: ^1.2.0
   lints: ^6.1.0
-  melos: ^8.8.0
   shouldly: ^0.5.0+1
-  sku_catalog_memory: ^0.1.0
   test: ^1.25.0
-
-melos:
-  scripts:
-    analyze:
-      description: Zero-diagnostic check for every workspace member.
-      exec: dart analyze --fatal-infos --fatal-warnings
-    format:
-      description: Format the whole repo.
-      run: dart format .
-    test:
-      description: Tests for every workspace member.
-      exec: dart test
-    publish-check:
-      description: >-
-        What pub.dev would see for the root package and every member. Run it on a
-        committed tree — pub warns about modified checked-in files.
-      run: >-
-        dart pub publish --dry-run
-        && dart run melos exec -- dart pub publish --dry-run
-    verify:
-      description: >-
-        Everything CI runs before publish-check: the root package first (melos
-        does not see it), then every workspace member.
-      # `dart run melos`, never bare `melos`: CI has no global melos on PATH,
-      # so a bare call dies with "eval: melos: not found" after the tests pass.
-      run: >-
-        dart format --output=none --set-exit-if-changed .
-        && dart analyze --fatal-infos --fatal-warnings
-        && dart test
-        && dart run melos run analyze
-        && dart run melos run test

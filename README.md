@@ -42,29 +42,23 @@ Two ideas do most of the work:
   is a SKU containing boards and mechanisms. The assembly is a graph with a
   quantity per edge, and a cycle guard that refuses to close a loop.
 
-## The packages
+## One package
 
-This repo publishes four packages, so you can take exactly as much as you need:
-
-| Package | What it is |
-|---|---|
-| `sku_catalog` | The front door — re-exports the model **and** the operations. One dependency gets you everything. |
-| [`sku_catalog_domain`](https://pub.dev/packages/sku_catalog_domain) | The model and the repository contracts, no operations. |
-| [`sku_catalog_usecases`](https://pub.dev/packages/sku_catalog_usecases) | The operations, typed against those contracts. |
-| [`sku_catalog_memory`](https://pub.dev/packages/sku_catalog_memory) | An in-memory implementation of every contract, for tests and prototypes. |
+`sku_catalog` is the whole thing — the model **and** the operations:
 
 ```yaml
 dependencies:
-  sku_catalog: ^0.1.0          # everything…
-  # …or pick the halves you want:
-  # sku_catalog_domain: ^0.1.0
-  # sku_catalog_usecases: ^0.1.0
-  # sku_catalog_memory: ^0.1.0
+  sku_catalog: ^0.1.0
 ```
 
 ```dart
 import 'package:sku_catalog/sku_catalog.dart';
 ```
+
+There are no narrow sibling packages to choose between, and no half of it that
+makes sense on its own: if you take the domain you take the operations with it.
+They are typed against the repository contracts below, and they are what makes
+the model usable.
 
 ## Quick start
 
@@ -143,10 +137,11 @@ is in [`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
 
 ## Bringing your own storage
 
-Every aggregate has a repository contract in `sku_catalog_domain.dart`, and the
-use cases are typed against those contracts only — this package ships **no**
-persistence. Implement the contracts over whatever you have (a map, a file,
-SQLite, an HTTP service, an object store) and pass them in.
+Every aggregate has a repository contract under `lib/src/domain/contracts/`,
+re-exported by the front door, and the use cases are typed against those
+contracts only — this package ships **no** persistence. Implement the contracts
+over whatever you have (a map, a file, SQLite, an HTTP service, an object store)
+and pass them in.
 
 ```dart
 abstract interface class IDeviceTypeRepository {
@@ -158,6 +153,14 @@ abstract interface class IDeviceTypeRepository {
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
 }
 ```
+
+**The backend is yours.** The in-memory implementation in this repo exists for
+this package's own tests: it is a test double under `test/support/`, and it is
+deliberately excluded from the published package (see `.pubignore`). It is
+readable in the repository at
+[`test/support/`](https://github.com/taybiz/sku_catalog/tree/main/test/support)
+if you want a reference for writing your own — consumers are expected to build
+their own backend against these contracts.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
@@ -189,78 +192,50 @@ you need one of those, compose it around this package rather than inside it.
 ## Layout
 
 ```
-.                          the front-door package `sku_catalog` (published)
-  lib/sku_catalog.dart     re-exports the model and the operations
-  example/                 a runnable tour, with a copyable in-memory backend
-  test/
-packages/
-  sku_catalog_domain/      lib/src/{entities,enums,value_objects,failures,contracts}
-  sku_catalog_usecases/    lib/src/  (one file per operation)
-  sku_catalog_memory/      lib/src/memory_*_repository.dart
+lib/sku_catalog.dart        the front door: re-exports the model and the operations
+lib/src/domain/             entities, enums, value objects, failures, contracts
+lib/src/usecases/           one file per operation
+example/                    a runnable tour, with a copyable in-memory backend
+test/                       the suite
+test/support/memory_*.dart  the in-memory test doubles — NOT published
 ```
 
-The repo root is both the front-door package and the pub workspace root, so
-`README.md`, `LICENSE` and `lib/` sit where a reader expects them.
+`lib/src/` is internal — import the package barrel,
+`package:sku_catalog/sku_catalog.dart`. There is exactly one public entry point,
+so there is no question of which half to depend on.
 
-`lib/src/` is internal in every package — import the package barrel.
+## Working on it
 
-**One sharp edge, documented rather than discovered:** melos does not treat the
-workspace root as a package (`dart run melos list` shows only the three members,
-and a `packages:` key in the melos config does not change that). So the
-`melos run` scripts cover the members, while the root's own analyze, test and
-publish are run explicitly by `melos run verify` — which is what CI calls.
-Nothing is silently skipped; add any new root-level check to that script.
-
-## Working on the packages
-
-Melos is a dev dependency of the workspace root, so `dart run melos` works with
-nothing installed globally. Each script runs every package in turn, so adding a
-sibling package needs no workflow change.
+Plain Dart commands, no task runner:
 
 ```bash
 dart pub get
-dart run melos run verify          # format, analyze, test, publish-check — all of it
-dart run melos run analyze         # zero diagnostics, fatal on infos and warnings
-dart run melos run test
-dart run melos run publish-check   # what pub.dev would see, per package
+dart format --output=none --set-exit-if-changed .
+dart analyze --fatal-infos --fatal-warnings
+dart test
+dart pub publish --dry-run     # what pub.dev would see
 ```
+
+CI runs exactly those, in that order, so a broken step fails the build rather
+than rotting.
 
 ### Publishing
 
-Melos publishes unpublished packages, dry-run by default, and `--scope` narrows
-it to one member:
-
 ```bash
-dart run melos publish -n -y                                  # validate every member
-dart run melos publish --dry-run --scope=sku_catalog_domain   # validate one
-dart run melos publish --scope=sku_catalog_domain             # the real thing
-# or without melos:
-dart pub -C packages/sku_catalog_domain publish
-```
-
-Melos does not see the root package, so `sku_catalog` itself is published from
-the root:
-
-```bash
-dart pub publish --dry-run     # validate the front-door package
+dart pub publish --dry-run
 dart pub publish
 ```
 
-Publish in dependency order — `sku_catalog_domain`, then `sku_catalog_usecases`
-and `sku_catalog_memory`, then the root `sku_catalog` — because a published
-package's sibling dependency resolves from pub.dev for its consumers. Note that
-`dart pub publish --dry-run` does **not** warn when a sibling is not on pub.dev
-yet: the ordering is on you.
-
-CI runs those same scripts, so a broken script fails the build rather than
-rotting. Note that melos configuration lives in the **workspace root's
-`pubspec.yaml`** under `melos:` — melos 8 does not read a `melos.yaml`, and one
-that looks authoritative but is ignored is worse than none.
+One package, one version, one publish — there is no dependency order to get
+right and no sibling constraint to keep in step. Check the file list the dry run
+prints: `lib/`, `example/`, `README.md`, `CHANGELOG.md`, `LICENSE` and the
+pubspec belong there; `test/support/` does not.
 
 The package holds one structural rule, enforced by `test/boundary_test.dart`:
-**nothing in `lib/` may import or name anything product-specific.** If a
-consumer's word shows up in this API, the boundary has moved without anyone
-deciding it should.
+**nothing in `lib/` may import or name anything product-specific, and nothing in
+`lib/` may reach for the test doubles.** If a consumer's word shows up in this
+API — or the published library starts depending on the in-memory backend — the
+boundary has moved without anyone deciding it should.
 
 ## License
 

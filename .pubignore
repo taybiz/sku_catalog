@@ -1,18 +1,23 @@
 # pub reads this file INSTEAD of this directory's .gitignore, so it restates
 # those rules below in addition to what it actually excludes.
 #
-# It also applies to SUBDIRECTORIES, which is why `packages/` is NOT listed
-# here: excluding the member tree at the root empties the members' own
-# archives too. `packages/sku_catalog_domain` then fails validation with
-# "The pubspec is hidden, probably by .gitignore or pubignore" plus missing
-# LICENSE/README/CHANGELOG. Verified 2026-09-19 — do not "tidy" this file by
-# adding `packages/`. The root archive does carry a nested copy of the members
-# (54 KB); that is inert for consumers, who get the members by version.
-#
-# What this excludes: the repo's own agent instructions and open-items list.
+# It also applies to SUBDIRECTORIES. That bit us once, back when this repo was a
+# workspace: a `packages/` entry here also hid the members' own pubspecs, so
+# `packages/sku_catalog_domain` failed validation with "The pubspec is hidden,
+# probably by .gitignore or pubignore" while the root still reported 0 warnings.
+# There are no sub-packages any more, so that particular trap is gone — but any
+# rule added here reaches into every child directory, so keep them narrow and
+# check `dart pub publish --dry-run`'s file list.
 
+# Repo-only: agent instructions and the open-items list.
 AGENTS.md
 BACKLOG.md
+
+# Test doubles. The in-memory backend under test/support/ exists for this repo's
+# own tests; consumers build their own backend against the contracts, so it does
+# not belong in the published archive. It is readable on GitHub at
+# github.com/taybiz/sku_catalog/tree/main/test/support if you want a reference.
+test/support/
 
 # From .gitignore
 .dart_tool/

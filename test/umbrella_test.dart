@@ -1,6 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'package:sku_catalog_memory/sku_catalog_memory.dart';
+import 'support/memory_backends.dart';
 import 'package:test/test.dart';
 
 /// The umbrella package exists so one dependency gets you everything. This
