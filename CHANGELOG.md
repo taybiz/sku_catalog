@@ -1,3 +1,21 @@
+## Unreleased
+
+- Audited against the Dart/Flutter Bible (`staylorx/dart-flutter-bible`,
+  `docs/01`–`docs/12`) and rebuilt on the Windows lane, Dart 3.13.1. Gate is
+  green with zero diagnostics: `dart pub get`, `dart format --output=none
+  --set-exit-if-changed .`, `dart analyze --fatal-infos --fatal-warnings`,
+  `dart test` (86 tests) and `dart pub publish --dry-run` (0 warnings, 36 KB
+  archive). `dart pub outdated` reports nothing outdated. No build, analysis or
+  dependency problem was found, so nothing was added to `BACKLOG.md` on that
+  account.
+- Decided: the bible divergences found by that audit are **recorded, not
+  fixed**. Each is a place the code and the bible disagree where the bible may
+  itself be wrong (positional/entity-shaped use-case params, the domain's
+  rollback bridge in `unit_of_work.dart`, `abstract base` failures,
+  `import_rules` as the boundary gate, one package instead of a workspace, no
+  `mocktail`). They live in `BACKLOG.md` under "Deviations from the Bible
+  (flagged for review)" for a human call.
+
 ## 0.2.0
 
 - `AggregateBillOfMaterials`: folds a SKU's assembly tree into a

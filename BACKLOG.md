@@ -92,3 +92,113 @@ Nothing here blocks a publish.
   assembly of devices (a trough is a coil plus switches; a flipper is a
   mechanism plus a button). Deliberately left out of 0.1.0 — the ask was SKU
   assemblies, which `SkuComponent` already covers.
+
+## Deviations from the Bible (flagged for review — do NOT auto-fix)
+
+`dart-flutter-bible` (`staylorx/dart-flutter-bible`, `docs/01`–`docs/12`) is the
+standard this repo is built to. Everything below is a place the code and the
+bible disagree. A deviation is **not** automatically a bug in the code: the
+bible may itself be wrong, so each one is recorded for a human decision rather
+than fixed by the auditor. Nothing here blocks a publish.
+
+- **Deviation: `lib/src/domain/contracts/` (all nine repository contracts)** —
+  methods take **positional** parameters (`fetchById(String id)`,
+  `create(DeviceType deviceType, …)`, `delete(String id, …)`) and pass a whole
+  entity into `create`/`update`. `docs/02` ("Dart parameter style") says named
+  parameters always, "sole exceptions: a single positional `ref` or `message`",
+  and `docs/04` ("business params, not cargo") bans cargo objects. The bible's
+  own `IAccountRepository` sample uses `{required String id}`. Diverges in both
+  directions at once — positional *and* entity-shaped.
+
+- **Deviation: `lib/src/usecases/*.dart` (every use case)** — `call()` is
+  positional: `call(String id)`, `call(DeviceType deviceType)`,
+  `forSku(String deviceTypeId)`. Same `docs/02`/`docs/04` rules as above. The
+  entity-shaped ones (`CreateDeviceType(DeviceType deviceType)`) are the cargo
+  pattern `docs/04` names and bans by example.
+
+- **Deviation: `lib/src/domain/contracts/unit_of_work.dart`** —
+  `UnitOfWorkEither.runEither` does `throw _Rollback<F>(failure)` inside
+  `run()` and recovers with `on _Rollback<F> catch`. That is a hand-rolled
+  `throw` + `try/catch` **inside the domain package**, where `docs/04` ("the
+  exception rule, stated once, loudly") and `docs/10` allow only `tryCatch`
+  around a third-party call at an adapter boundary, or the UI ring. The gap is
+  real — a transactional store rolls back on a *thrown* error while this
+  codebase reports failure as a value, and the bible sanctions no bridge — so
+  the bible may be wrong here rather than the code.
+
+- **Deviation: `lib/src/domain/failures/catalog_failures.dart`** —
+  `DomainFailure` is `abstract base`, not `sealed`. `docs/04` requires failure
+  hierarchies to be **closed** ("abstract base + final/`sealed` leaves where the
+  language allows — a `switch` over them must be exhaustive"). The in-file
+  comment argues the opposite: a sealed root cannot be extended from a product's
+  own library, and this type is the shared root every product's failure family
+  descends from. Exhaustiveness and extensibility are genuinely in tension for a
+  shared package; doctrine may need a carve-out.
+
+- **Deviation: `analysis_options.yaml` (`prefer_initializing_formals: false`)** —
+  a linter rule is disabled in the config file. `docs/02` ("Suppression is
+  per-line or nothing") says never disable a rule in `analysis_options.yaml`;
+  the offending lines should carry `// ignore: <rule>` with a reason, or the
+  code should change. The comment above it records the intent (`: _repository =
+  repository` reads better at the call site) — intent is not a mechanism the
+  bible recognises.
+
+- **Deviation: `analysis_options.yaml` (no `analyzer: language:` block)** —
+  `docs/09` step 8 says to wire "lints, **strict**, `public_member_api_docs`,
+  `todo: error`" at the root; `lints: recommended` is on and `todo: error` is
+  set, but no `strict-casts` / `strict-inference` / `strict-raw-types` is.
+  `docs/02` never names which strict flags it means, so the requirement is
+  underspecified — flagging it rather than guessing a setting.
+
+- **Deviation: repo root / `pubspec.yaml` (single package, no `workspace:`)** —
+  `docs/03` and the `docs/09` bootstrap checklist mandate a pub workspace of
+  `*_domain` + `*_usecases` + ≥2 `*_datasource_*` + the app. Here there is one
+  published package on purpose, argued in `AGENTS.md` ("One package, on
+  purpose"): a published package may not carry a `path:` dependency, so any
+  split means publishing siblings in dependency order with version lockstep and
+  no client-side check that catches a miss. The bible's checklist assumes
+  unbounded publication; for a package whose consumers implement their own
+  backend, the bible may be wrong.
+
+- **Deviation: `import_rules.yaml` + `test/boundary_test.dart`** — the layer
+  graph is enforced by the `import_rules` analyzer plugin (wired in
+  `analysis_options.yaml`; its rule was proved to fire by planting a wrong-way
+  import and reading the reason `dart analyze` reported) plus a
+  hand-rolled text-scanning test. `docs/02` ("Package-boundary rules:
+  `dart_arch_test`, not melos (and not `import_rules`)") says the gate is a
+  `dart_arch_test` test over the **resolved import graph**, and that
+  `import_rules` "is at most an optional as-you-type nicety, never the gate".
+  Doctrine and repo are flatly opposed; note the repo keeps the plugin honest by
+  failing CI at `info` severity (`dart analyze --fatal-infos`), which is the
+  part `docs/02` distrusts about it. With one package there are no cross-package
+  `package:` URIs for `dart_arch_test`'s boundary assertions to key on, so the
+  bible's rule may not fit a single-package repo at all.
+
+- **Deviation: `test/boundary_test.dart` (cycle-freedom)** — cycle-freedom is
+  asserted by area-level import-direction scanning and the plugin's rules, not
+  by `shouldBeFreeOfCycles(allFiles(), graph)` over the resolved graph as
+  `docs/02` prescribes. Same root cause as the item above.
+
+- **Deviation: `test/` (all twelve test files) — no `mocktail`** — the
+  application-layer tests run against the real in-memory doubles instead of
+  mocking the repository interfaces. `docs/06` ("Where tests live" layer matrix)
+  prescribes `mocktail` at the use-case seam, while the same section's mocktail
+  rules say to *prefer* real in-memory doubles where one exists. The bible
+  contradicts itself here; the repo took the second half.
+
+- **Deviation: `test/support/` — one repository adapter, no shared contract
+  suite** — `docs/01` calls the at-least-two-adapter rule "the one we never
+  skip" and `docs/05` requires a shared contract suite run against every
+  adapter; here there is exactly one (test-only, in-memory) implementation and
+  no contract suite. Already an Open item above for the adapter count; listed
+  here because `docs/10`'s review checklist asks for it explicitly.
+
+- **Deviation: `pubspec.yaml` (`equatable: ^3.0.0`)** — the stack table in
+  `docs/00-compact`/`docs/04` pins `equatable ^2.x`. The bible pin looks stale
+  rather than the dependency wrong: 3.x is current, `dart pub outdated` reports
+  nothing outdated, and the entities compile and test clean on it.
+
+- **Deviation: `example/` (singular)** — `docs/02` ("Code placement") and
+  `docs/03` call a published package's example directory `examples/`. Only the
+  name diverges; the directory exists, is analyzer- and format-covered, and is
+  shipped in the archive.
