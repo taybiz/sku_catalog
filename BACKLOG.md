@@ -95,7 +95,7 @@ Nothing here blocks a publish.
 
 ## Deviations from the Bible (flagged for review — do NOT auto-fix)
 
-`dart-flutter-bible` (`staylorx/dart-flutter-bible`, `docs/01`–`docs/12`) is the
+`dart-flutter-bible` (`taybiz/dart-flutter-bible`, `docs/01`–`docs/12`) is the
 standard this repo is built to. Everything below is a place the code and the
 bible disagree. A deviation is **not** automatically a bug in the code: the
 bible may itself be wrong, so each one is recorded for a human decision rather

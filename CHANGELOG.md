@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Audited against the Dart/Flutter Bible (`staylorx/dart-flutter-bible`,
+- Audited against the Dart/Flutter Bible (`taybiz/dart-flutter-bible`,
   `docs/01`–`docs/12`) and rebuilt on the Windows lane, Dart 3.13.1. Gate is
   green with zero diagnostics: `dart pub get`, `dart format --output=none
   --set-exit-if-changed .`, `dart analyze --fatal-infos --fatal-warnings`,

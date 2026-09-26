@@ -1,7 +1,7 @@
 # AGENTS.md — instructions for agents working in this repo
 
 `sku_catalog` is a published package built to the Dart/Flutter Bible
-(`staylorx/dart-flutter-bible`; read `docs/00-compact.md` first). That doctrine is
+(`taybiz/dart-flutter-bible`; read `docs/00-compact.md` first). That doctrine is
 the standard — this file carries only **what is different here** and the local
 wiring. Do not restate bible rules below; if you need one, link it.
 
