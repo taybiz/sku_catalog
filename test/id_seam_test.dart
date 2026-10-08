@@ -110,6 +110,33 @@ void main() {
             .should
             .be('DEV-0008');
       });
+
+      test('Then AddSkuComponent stamps the edge with the injected id', () async {
+        final skus = MemorySkuRepository();
+        final components = MemorySkuComponentRepository();
+        for (final id in ['rack', 'card']) {
+          await CreateSku(skus)(
+            sku: Sku(
+              meta: meta(id),
+              manufacturerId: 'm',
+              modelNumber: id.toUpperCase(),
+            ),
+          ).run();
+        }
+
+        final edge = await AddSkuComponent(
+          repository: components,
+          skuRepository: skus,
+          idGenerator: () => 'EDGE-1',
+        )(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
+
+        edge
+            .getOrElse((_) => fail('expected Right'))
+            .meta
+            .id
+            .should
+            .be('EDGE-1');
+      });
     });
   });
 }

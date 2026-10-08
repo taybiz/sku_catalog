@@ -1,4 +1,5 @@
 import '../domain/domain.dart';
+import 'id_generator.dart';
 import 'new_meta.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -10,11 +11,15 @@ class AddSkuComponent {
   const AddSkuComponent({
     required ISkuComponentRepository repository,
     required ISkuRepository skuRepository,
+    this.idGenerator,
   }) : _repository = repository,
        _skuRepository = skuRepository;
 
   final ISkuComponentRepository _repository;
   final ISkuRepository _skuRepository;
+
+  /// Mints the new edge's id; defaults to a random UUID v4 when null.
+  final IdGenerator? idGenerator;
 
   /// Adds a new SKU component linking [parentSkuId] to
   /// [childSkuId].
@@ -43,7 +48,7 @@ class AddSkuComponent {
         // Ids must be unique even for two edges added in the same millisecond:
         // a timestamp is not an identifier.
         final component = SkuComponent(
-          meta: newMeta(),
+          meta: newMeta(idGenerator: idGenerator),
           parentSkuId: parentSkuId,
           childSkuId: childSkuId,
           quantity: quantity,
