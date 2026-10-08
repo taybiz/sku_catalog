@@ -1,5 +1,16 @@
 ## Unreleased
 
+- Additive: an **injectable id seam**. `newMeta` takes an optional
+  `IdGenerator` (`String Function()`, `lib/src/usecases/id_generator.dart`), and
+  the four use cases that mint ids internally — `DuplicateSku`,
+  `DuplicateInstance`, `AddSkuComponent`, `UpdateSkuComponent` — take an optional
+  `idGenerator` constructor parameter, defaulting to the current random UUID v4.
+  Signature additions only; every `call()` is unchanged. The rule that an id is
+  **opaque** (never parsed, ordered, or arithmetically used) is now written down
+  on `Meta.id`, on the typedef, and in the README's new "Identity" section.
+  Gate green: `analyze` clean, `test` 8 new cases passing, `publish-dry` 0
+  warnings.
+
 - Finished the bible §2.5 parameter pass. The earlier "named params across
   contracts + use cases" refactor left the *helpers* positional; they are named
   now too: every function in `instance_naming.dart`, `sequenceTaskEither`,

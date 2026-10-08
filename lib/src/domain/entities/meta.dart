@@ -2,7 +2,11 @@ import 'package:equatable/equatable.dart';
 
 /// Immutable identity + timestamp record carried by every persistent entity.
 class Meta extends Equatable {
-  /// Globally unique identifier (RFC 4122 v4).
+  /// Opaque identifier. The catalog stores, returns and compares it and never
+  /// parses, orders, or does arithmetic on it, so a consumer may choose the
+  /// shape (a UUID, a prefixed sequence, an int-backed string). The default
+  /// minted by `newMeta()` is a random UUID v4; a create use case takes a
+  /// fully formed entity, so the id there is the consumer's own.
   final String id;
 
   /// Freeform notes.

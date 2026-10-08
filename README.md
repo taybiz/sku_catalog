@@ -185,6 +185,30 @@ unchanged, so **rollback is a value, not a thrown error** — the adapter undoes
 writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
 for a store that cannot roll back.
 
+## Identity
+
+**An id is an opaque string.** The catalog stores, returns and compares ids and
+does nothing else with them: nothing in `lib/` parses an id, sorts on it, or does
+arithmetic on it. So the shape is yours. A repository adapter that wants
+int-backed keys can store the string form; a consumer that wants prefixed ids can
+mint `DEV-0007`.
+
+You already choose the id wherever you build a whole entity and hand it to a
+create use case (`CreateSku`, `CreateInstance`, `CreateSkuComponent`, …). For the
+four operations that mint ids *internally* — `DuplicateSku`, `DuplicateInstance`,
+`AddSkuComponent`, `UpdateSkuComponent` — pass a generator; the default is a
+random UUID v4.
+
+```dart
+var counter = 0;
+String nextDevId() => 'DEV-${(++counter).toString().padLeft(4, '0')}';
+
+await DuplicateSku(mySkuRepository, idGenerator: nextDevId)(id: 'qo120').run();
+```
+
+The one rule the catalog asks of a generator: **stability**. Whatever an adapter
+stores must read back unchanged.
+
 Two deliberate consequences worth knowing:
 
 - **Domain vocabulary stays out.** Which trait means "this SKU lives inside

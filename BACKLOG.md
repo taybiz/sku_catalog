@@ -10,19 +10,12 @@ Nothing here blocks a publish.
   be a consumer's — Circuit Planner's, over SQLite/JSON — and the shared contract
   suite is what proves the two agree.
 
-- [ ] **An injectable id seam**, and a stated rule that ids are opaque. Today
-  `newMeta()` hardcodes UUID v4 and is called from five internal write paths
-  (duplicate instance, duplicate SKU, add/update assembly edge); every *create*
-  use case takes a fully formed entity, so a consumer already chooses the id
-  shape there. A `String Function()` typedef passed like `IUnitOfWork`
-  (optional, UUID default) covers those five, so a consumer can mint ids their
-  own way — int-backed, prefixed (`DEV-0007`), or a custom class's string form.
-  Do NOT make the id a type parameter: `String id` appears 50 times across 34
-  files, every contract and use case takes one, and the rule everywhere else in
-  the industry (Salesforce's 15/18-char strings, Odoo's ints) is a fixed opaque
-  id mapped at the adapter. Nothing in `lib/` parses, orders or does arithmetic
-  on an id today, so opacity holds — write it down. Decided 2026-09-19: keep
-  `String` in 0.1.0; this item is the next additive change.
+- [x] **An injectable id seam, and the rule that ids are opaque** — **done**.
+  `newMeta` and the four internal-minting use cases take an optional
+  `IdGenerator` (`String Function()`, default UUID v4); `Meta.id` and the README
+  state the opacity rule. (The original note said "five internal write paths";
+  the real count is four call sites plus the definition — corrected when the item
+  was closed. `String` stays: an id is opaque, mapped at the adapter.)
 
 - [ ] A JSON bundle adapter: slug-stable export/import of a whole catalog
   (stable ids, referential integrity, idempotent re-import). Currently
