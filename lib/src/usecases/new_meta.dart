@@ -1,15 +1,20 @@
 import 'dart:math';
 
 import '../domain/domain.dart';
+import 'id_generator.dart';
 
 /// Builds a fresh [Meta] with a random id and the current UTC timestamp.
 ///
 /// Use case internals that construct entities (naming flows, duplication,
 /// topology rewrites) share this so every write path gets consistent
 /// created/updated stamps without depending on the UI ring.
-Meta newMeta({String notes = ''}) {
+///
+/// Pass [idGenerator] to mint the id your own way; the default is a random
+/// UUID v4.
+Meta newMeta({String notes = '', IdGenerator? idGenerator}) {
   final now = DateTime.now().toUtc().toIso8601String();
-  return Meta(id: _uuid4(), notes: notes, createdAt: now, updatedAt: now);
+  final id = (idGenerator ?? _uuid4)();
+  return Meta(id: id, notes: notes, createdAt: now, updatedAt: now);
 }
 
 String _uuid4() {

@@ -52,6 +52,7 @@ export 'fetch_meta.dart';
 export 'fetch_components_by_sku.dart';
 export 'fetch_trait_attribute_definition_by_id.dart';
 export 'fetch_trait_by_id.dart';
+export 'id_generator.dart';
 export 'image_record_use_cases.dart';
 export 'locate_use_cases.dart';
 export 'manufacturer_use_cases.dart';
