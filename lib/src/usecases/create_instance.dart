@@ -9,6 +9,6 @@ class CreateInstance {
   final IInstanceRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Instance> call(Instance instance) =>
-      _repository.create(instance);
+  TaskEither<DomainFailure, Instance> call({required Instance instance}) =>
+      _repository.create(instance: instance);
 }

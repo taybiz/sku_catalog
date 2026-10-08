@@ -14,13 +14,13 @@ class DeleteManufacturer {
   final ISkuRepository _skuRepository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call(String id) =>
+  TaskEither<DomainFailure, void> call({required String id}) =>
       _skuRepository.fetchAll().flatMap((types) {
         if (types.any((t) => t.manufacturerId == id)) {
           return TaskEither.left(
             InUseFailure('This manufacturer is in use by one or more SKUs.'),
           );
         }
-        return _manufacturerRepository.delete(id);
+        return _manufacturerRepository.delete(id: id);
       });
 }

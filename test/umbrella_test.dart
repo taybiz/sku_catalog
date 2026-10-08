@@ -68,7 +68,11 @@ void main() {
           // umbrella re-exports both the interface and the memory adapter.
           final ISkuRepository repository = MemorySkuRepository();
           final created = await CreateSku(repository)(
-            Sku(meta: newMeta(), manufacturerId: 'acme', modelNumber: 'NUT-1'),
+            sku: Sku(
+              meta: newMeta(),
+              manufacturerId: 'acme',
+              modelNumber: 'NUT-1',
+            ),
           ).run();
 
           created.isRight().should.be(true);

@@ -24,10 +24,10 @@ class MemoryImageRepository implements IImageRepository, MemoryBacked {
       TaskEither.of(_store.values.map(ImageRecord.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<ImageRecord>> fetchByOwner(
-    ImageOwner owner,
-    String ownerId,
-  ) => TaskEither.of(
+  TaskEither<DomainFailure, List<ImageRecord>> fetchByOwner({
+    required ImageOwner owner,
+    required String ownerId,
+  }) => TaskEither.of(
     _store.values
         .map(ImageRecord.fromJson)
         .where((i) => i.owner == owner && i.ownerId == ownerId)
@@ -35,7 +35,7 @@ class MemoryImageRepository implements IImageRepository, MemoryBacked {
   );
 
   @override
-  TaskEither<DomainFailure, ImageRecord> fetchById(String id) {
+  TaskEither<DomainFailure, ImageRecord> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, ImageRecord>.left(
@@ -46,8 +46,8 @@ class MemoryImageRepository implements IImageRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, ImageRecord> create(
-    ImageRecord image, {
+  TaskEither<DomainFailure, ImageRecord> create({
+    required ImageRecord image,
     IUnitOfWork? uow,
   }) {
     _store[image.id] = image.toJson();
@@ -55,7 +55,10 @@ class MemoryImageRepository implements IImageRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('ImageRecord "$id" not found'),

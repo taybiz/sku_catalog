@@ -10,16 +10,25 @@ abstract interface class ILocateRepository {
   TaskEither<DomainFailure, List<Locate>> fetchAll();
 
   /// Fetch a single locate by id.
-  TaskEither<DomainFailure, Locate> fetchById(String id);
+  TaskEither<DomainFailure, Locate> fetchById({required String id});
 
   /// Create a new locate.
-  TaskEither<DomainFailure, Locate> create(Locate locate, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Locate> create({
+    required Locate locate,
+    IUnitOfWork? uow,
+  });
 
   /// Update an existing locate.
-  TaskEither<DomainFailure, Locate> update(Locate locate, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Locate> update({
+    required Locate locate,
+    IUnitOfWork? uow,
+  });
 
   /// Delete a locate by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

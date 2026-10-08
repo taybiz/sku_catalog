@@ -9,6 +9,6 @@ class CreateTrait {
   final ITraitRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Trait> call(Trait trait) =>
-      _repository.create(trait);
+  TaskEither<DomainFailure, Trait> call({required Trait trait}) =>
+      _repository.create(trait: trait);
 }

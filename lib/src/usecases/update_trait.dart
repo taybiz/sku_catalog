@@ -12,10 +12,10 @@ class UpdateTrait {
   final ITraitRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Trait> call(Trait trait) =>
-      _repository.fetchById(trait.meta.id).flatMap((original) {
+  TaskEither<DomainFailure, Trait> call({required Trait trait}) =>
+      _repository.fetchById(id: trait.meta.id).flatMap((original) {
         final parentChanged = trait.parentTraitId != original.parentTraitId;
-        if (!parentChanged) return _repository.update(trait);
+        if (!parentChanged) return _repository.update(trait: trait);
         return _repository.fetchAll().flatMap((allTraits) {
           return WouldCreateTreeCycle()
               .call(
@@ -32,7 +32,7 @@ class UpdateTrait {
                     ),
                   );
                 }
-                return _repository.update(trait);
+                return _repository.update(trait: trait);
               });
         });
       });

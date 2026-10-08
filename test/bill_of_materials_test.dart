@@ -37,13 +37,13 @@ void main() {
   }
 
   Future<BillOfMaterials> bom(String id, {int units = 1}) async {
-    final result = await aggregate(id, units: units).run();
+    final result = await aggregate(skuId: id, units: units).run();
     result.isRight().should.be(true);
     return result.getOrElse((_) => fail('expected Right'));
   }
 
   Future<DomainFailure> refused(String id, {int units = 1}) async {
-    final result = await aggregate(id, units: units).run();
+    final result = await aggregate(skuId: id, units: units).run();
     result.isLeft().should.be(true);
     return result.fold((failure) => failure, (_) => fail('expected Left'));
   }
@@ -63,7 +63,7 @@ void main() {
     );
 
     for (final id in ['machine', 'rack', 'card', 'shelf', 'bolt']) {
-      await CreateSku(skus)(sku(id)).run();
+      await CreateSku(skus)(sku: sku(id)).run();
     }
   });
 
@@ -202,7 +202,7 @@ void main() {
     group('When an edge points at a SKU the catalog does not have', () {
       test('Then the line still reports what the edge asks for', () async {
         await edge('machine', 'card', 8);
-        (await skus.delete('card').run()).isRight().should.be(true);
+        (await skus.delete(id: 'card').run()).isRight().should.be(true);
 
         final card = line(await bom('machine'), 'card');
 
@@ -243,7 +243,7 @@ void main() {
         // walk would quietly return a finite, wrong quantity here.
         await components
             .create(
-              SkuComponent(
+              component: SkuComponent(
                 meta: meta('edge-rack-machine'),
                 parentSkuId: 'rack',
                 childSkuId: 'machine',

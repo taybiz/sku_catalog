@@ -9,7 +9,7 @@ class UpdateTraitAttributeDefinition {
   final ITraitAttributeDefinitionRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, TraitAttributeDefinition> call(
-    TraitAttributeDefinition definition,
-  ) => _repository.update(definition);
+  TaskEither<DomainFailure, TraitAttributeDefinition> call({
+    required TraitAttributeDefinition definition,
+  }) => _repository.update(attribute: definition);
 }

@@ -9,7 +9,7 @@ class CreateTraitAttributeDefinition {
   final ITraitAttributeDefinitionRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, TraitAttributeDefinition> call(
-    TraitAttributeDefinition attribute,
-  ) => _repository.create(attribute);
+  TaskEither<DomainFailure, TraitAttributeDefinition> call({
+    required TraitAttributeDefinition attribute,
+  }) => _repository.create(attribute: attribute);
 }

@@ -9,6 +9,6 @@ class CreateImageRecord {
   final IImageRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, ImageRecord> call(ImageRecord image) =>
-      _repository.create(image);
+  TaskEither<DomainFailure, ImageRecord> call({required ImageRecord image}) =>
+      _repository.create(image: image);
 }

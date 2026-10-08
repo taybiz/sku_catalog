@@ -24,7 +24,7 @@ class MemoryLocateRepository implements ILocateRepository, MemoryBacked {
       TaskEither.of(_store.values.map(Locate.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Locate> fetchById(String id) {
+  TaskEither<DomainFailure, Locate> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, Locate>.left(
@@ -35,13 +35,19 @@ class MemoryLocateRepository implements ILocateRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, Locate> create(Locate locate, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Locate> create({
+    required Locate locate,
+    IUnitOfWork? uow,
+  }) {
     _store[locate.meta.id] = locate.toJson();
     return TaskEither.of(locate);
   }
 
   @override
-  TaskEither<DomainFailure, Locate> update(Locate locate, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Locate> update({
+    required Locate locate,
+    IUnitOfWork? uow,
+  }) {
     if (!_store.containsKey(locate.meta.id)) {
       return TaskEither<DomainFailure, Locate>.left(
         NotFoundFailure('Locate "${locate.meta.id}" not found'),
@@ -52,7 +58,10 @@ class MemoryLocateRepository implements ILocateRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Locate "$id" not found'),

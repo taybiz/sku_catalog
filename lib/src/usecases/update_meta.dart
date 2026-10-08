@@ -9,5 +9,6 @@ class UpdateMeta {
   final IMetaRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Meta> call(Meta meta) => _repository.update(meta);
+  TaskEither<DomainFailure, Meta> call({required Meta meta}) =>
+      _repository.update(meta: meta);
 }

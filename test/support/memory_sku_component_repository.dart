@@ -25,16 +25,17 @@ class MemorySkuComponentRepository
       TaskEither.of(_store.values.map(SkuComponent.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId) =>
-      TaskEither.of(
-        _store.values
-            .map(SkuComponent.fromJson)
-            .where((c) => c.parentSkuId == skuId)
-            .toList(),
-      );
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku({
+    required String skuId,
+  }) => TaskEither.of(
+    _store.values
+        .map(SkuComponent.fromJson)
+        .where((c) => c.parentSkuId == skuId)
+        .toList(),
+  );
 
   @override
-  TaskEither<DomainFailure, SkuComponent> fetchById(String id) {
+  TaskEither<DomainFailure, SkuComponent> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, SkuComponent>.left(
@@ -45,8 +46,8 @@ class MemorySkuComponentRepository
   }
 
   @override
-  TaskEither<DomainFailure, SkuComponent> create(
-    SkuComponent component, {
+  TaskEither<DomainFailure, SkuComponent> create({
+    required SkuComponent component,
     IUnitOfWork? uow,
   }) {
     _store[component.meta.id] = component.toJson();
@@ -54,7 +55,10 @@ class MemorySkuComponentRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('SkuComponent "$id" not found'),

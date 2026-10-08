@@ -9,6 +9,6 @@ class FetchInstanceById {
   final IInstanceRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Instance> call(String id) =>
-      _repository.fetchById(id);
+  TaskEither<DomainFailure, Instance> call({required String id}) =>
+      _repository.fetchById(id: id);
 }

@@ -12,10 +12,10 @@ class UpdateLocate {
   final ILocateRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Locate> call(Locate locate) =>
-      _repository.fetchById(locate.meta.id).flatMap((original) {
+  TaskEither<DomainFailure, Locate> call({required Locate locate}) =>
+      _repository.fetchById(id: locate.meta.id).flatMap((original) {
         final parentChanged = locate.parentLocateId != original.parentLocateId;
-        if (!parentChanged) return _repository.update(locate);
+        if (!parentChanged) return _repository.update(locate: locate);
         return _repository.fetchAll().flatMap((allLocates) {
           return WouldCreateTreeCycle()
               .call(
@@ -32,7 +32,7 @@ class UpdateLocate {
                     ),
                   );
                 }
-                return _repository.update(locate);
+                return _repository.update(locate: locate);
               });
         });
       });

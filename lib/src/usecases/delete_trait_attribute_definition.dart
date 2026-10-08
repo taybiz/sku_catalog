@@ -9,5 +9,6 @@ class DeleteTraitAttributeDefinition {
   final ITraitAttributeDefinitionRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call(String id) => _repository.delete(id);
+  TaskEither<DomainFailure, void> call({required String id}) =>
+      _repository.delete(id: id);
 }

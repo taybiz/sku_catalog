@@ -59,23 +59,25 @@ void main() {
       scope: const [TraitScope.sku],
     );
 
-    await CreateTrait(traits)(part).run();
-    await CreateTrait(traits)(bolt).run();
-    await CreateTrait(traits)(coated).run();
+    await CreateTrait(traits)(trait: part).run();
+    await CreateTrait(traits)(trait: bolt).run();
+    await CreateTrait(traits)(trait: coated).run();
 
     await CreateTraitAttributeDefinition(attrs)(
-      attr('part', 'size', unit: 'mm', required: true),
+      attribute: attr('part', 'size', unit: 'mm', required: true),
     ).run();
     await CreateTraitAttributeDefinition(attrs)(
-      attr('part', 'mass', unit: 'g'),
+      attribute: attr('part', 'mass', unit: 'g'),
     ).run();
     // The child redeclares `size` with its own unit — the child must win.
     await CreateTraitAttributeDefinition(attrs)(
-      attr('bolt', 'size', unit: 'in'),
+      attribute: attr('bolt', 'size', unit: 'in'),
     ).run();
-    await CreateTraitAttributeDefinition(attrs)(attr('bolt', 'thread')).run();
     await CreateTraitAttributeDefinition(attrs)(
-      attr('coated', 'coating', type: DataType.string),
+      attribute: attr('bolt', 'thread'),
+    ).run();
+    await CreateTraitAttributeDefinition(attrs)(
+      attribute: attr('coated', 'coating', type: DataType.string),
     ).run();
 
     resolve = ResolveSchema(
@@ -85,7 +87,7 @@ void main() {
   });
 
   Future<List<ResolvedAttribute>> schemaOf(List<String> ids) async =>
-      (await resolve(ids).run()).fold((f) => fail('$f'), (v) => v);
+      (await resolve(traitIds: ids).run()).fold((f) => fail('$f'), (v) => v);
 
   test('a child trait inherits its parent attributes', () async {
     final keys = (await schemaOf(['bolt'])).map((a) => a.def.key).toList();

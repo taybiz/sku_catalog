@@ -10,7 +10,10 @@ class WouldCreateAssemblyCycle {
 
   /// Returns `true` if adding an edge from [parentSkuId] to
   /// [childSkuId] would create a cycle.
-  TaskEither<DomainFailure, bool> call(String parentSkuId, String childSkuId) {
+  TaskEither<DomainFailure, bool> call({
+    required String parentSkuId,
+    required String childSkuId,
+  }) {
     if (parentSkuId == childSkuId) return TaskEither.of(true);
 
     return _repository.fetchAll().map((components) {

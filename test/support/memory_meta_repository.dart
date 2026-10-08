@@ -33,7 +33,10 @@ class MemoryMetaRepository implements IMetaRepository, MemoryBacked {
       TaskEither.of(_record == null ? _empty : Meta.fromJson(_record!));
 
   @override
-  TaskEither<DomainFailure, Meta> update(Meta meta, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Meta> update({
+    required Meta meta,
+    IUnitOfWork? uow,
+  }) {
     _record = meta.toJson();
     return TaskEither.of(meta);
   }

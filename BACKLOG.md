@@ -112,57 +112,6 @@ melos mandatory for a single-package repo — a new gap, **met the same day** (t
 `melos:` block in `pubspec.yaml`). The stricken items are kept below with the
 reason, per house style.
 
-- **Deviation: `lib/src/domain/contracts/` (all nine repository contracts)** —
-  methods take **positional** parameters (`fetchById(String id)`,
-  `create(Sku sku, …)`, `delete(String id, …)`) and pass a whole
-  entity into `create`/`update`. `docs/02` ("Dart parameter style") says named
-  parameters always, "sole exceptions: a single positional `ref` or `message`",
-  and `docs/04` ("business params, not cargo") bans cargo objects. The bible's
-  own `IAccountRepository` sample uses `{required String id}`. Diverges in both
-  directions at once — positional *and* entity-shaped.
-
-- **Deviation: `lib/src/usecases/*.dart` (every use case)** — `call()` is
-  positional: `call(String id)`, `call(Sku sku)`,
-  `forSku(String skuId)`. Same `docs/02`/`docs/04` rules as above. The
-  entity-shaped ones (`CreateSku(Sku sku)`) are the cargo
-  pattern `docs/04` names and bans by example.
-
-- **Deviation: `lib/src/domain/contracts/unit_of_work.dart`** —
-  `UnitOfWorkEither.runEither` does `throw _Rollback<F>(failure)` inside
-  `run()` and recovers with `on _Rollback<F> catch`. That is a hand-rolled
-  `throw` + `try/catch` **inside the domain package**, where `docs/04` ("the
-  exception rule, stated once, loudly") and `docs/10` allow only `tryCatch`
-  around a third-party call at an adapter boundary, or the UI ring. The gap is
-  real — a transactional store rolls back on a *thrown* error while this
-  codebase reports failure as a value, and the bible sanctions no bridge — so
-  the bible may be wrong here rather than the code.
-
-- **Deviation: `lib/src/domain/failures/catalog_failures.dart`** —
-  `DomainFailure` is `abstract base`, not `sealed`. `docs/04` requires failure
-  hierarchies to be **closed** ("abstract base + final/`sealed` leaves where the
-  language allows — a `switch` over them must be exhaustive"). The in-file
-  comment argues the opposite: a sealed root cannot be extended from a product's
-  own library, and this type is the shared root every product's failure family
-  descends from. Exhaustiveness and extensibility are genuinely in tension for a
-  shared package; doctrine may need a carve-out.
-
-- **Deviation: `analysis_options.yaml` (`prefer_initializing_formals: false`)** —
-  a linter rule is disabled in the config file. `docs/02` ("Suppression is
-  per-line or nothing") says never disable a rule in `analysis_options.yaml`;
-  the offending lines should carry `// ignore: <rule>` with a reason, or the
-  code should change. The comment above it records the intent (`: _repository =
-  repository` reads better at the call site) — intent is not a mechanism the
-  bible recognises.
-
-- **Deviation: `analysis_options.yaml` (no `analyzer: language:` block)** —
-  `docs/09` step 8 says to wire "lints, **strict**, `public_member_api_docs`,
-  `todo: error`" at the root; `lints: recommended` is on and `todo: error` is
-  set, but no `strict-casts` / `strict-inference` / `strict-raw-types` is.
-  `docs/02` never names which strict flags it means, so the requirement is
-  underspecified — flagging it rather than guessing a setting. **Still stands at
-  2026-10-08:** §9.7 (rule-coded now) names `strict` explicitly but still not
-  which flags, and the repo sets none.
-
 - **[halved 2026-10-08] `pubspec.yaml` — single package, no pub workspace** —
   the old `docs/03`/`docs/09` mandate for a `*_domain` + `*_usecases` + ≥2
   `*_datasource_*` + app workspace is gone: §3.3 "Topology C" now sanctions a

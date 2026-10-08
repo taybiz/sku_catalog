@@ -11,12 +11,12 @@ class DuplicateSku {
   final ISkuRepository _skuRepository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Sku> call(String id) =>
-      _skuRepository.fetchById(id).flatMap((current) {
+  TaskEither<DomainFailure, Sku> call({required String id}) =>
+      _skuRepository.fetchById(id: id).flatMap((current) {
         final copy = current.copyWith(
           meta: newMeta(),
           modelNumber: '${current.modelNumber} (copy)',
         );
-        return _skuRepository.create(copy);
+        return _skuRepository.create(sku: copy);
       });
 }

@@ -26,39 +26,41 @@ void main() {
   });
 
   test('an image record round-trips through create', () async {
-    final result = await CreateImageRecord(repository)(record('img1')).run();
+    final result = await CreateImageRecord(repository)(
+      image: record('img1'),
+    ).run();
 
     result.isRight().should.be(true);
     result.getOrElse((_) => fail('expected Right')).id.should.be('img1');
   });
 
   test('images are returned per owner kind and id', () async {
-    await CreateImageRecord(repository)(record('d1a')).run();
+    await CreateImageRecord(repository)(image: record('d1a')).run();
     await CreateImageRecord(repository)(
-      record('s1', owner: ImageOwner.sku, ownerId: 'sku1'),
+      image: record('s1', owner: ImageOwner.sku, ownerId: 'sku1'),
     ).run();
     await CreateImageRecord(repository)(
-      record('l1', owner: ImageOwner.locate, ownerId: 'loc1'),
+      image: record('l1', owner: ImageOwner.locate, ownerId: 'loc1'),
     ).run();
 
     final skuImages = await FetchImageRecords(repository)(
-      ImageOwner.sku,
-      'sku1',
+      owner: ImageOwner.sku,
+      ownerId: 'sku1',
     ).run();
     skuImages.getOrElse((_) => []).map((i) => i.id).should.be(['s1']);
 
     final instanceImages = await FetchImageRecords(repository)(
-      ImageOwner.instance,
-      'd1',
+      owner: ImageOwner.instance,
+      ownerId: 'd1',
     ).run();
     instanceImages.getOrElse((_) => []).map((i) => i.id).should.be(['d1a']);
   });
 
   test('deleting an image record removes it', () async {
-    await CreateImageRecord(repository)(record('img1')).run();
+    await CreateImageRecord(repository)(image: record('img1')).run();
 
     (await DeleteImageRecord(repository)(
-      'img1',
+      id: 'img1',
     ).run()).isRight().should.be(true);
     (await repository.fetchAll().run())
         .getOrElse((_) => [])
@@ -67,7 +69,7 @@ void main() {
   });
 
   test('deleting an image that is not there fails as a value', () async {
-    final result = await DeleteImageRecord(repository)('nope').run();
+    final result = await DeleteImageRecord(repository)(id: 'nope').run();
 
     result.isLeft().should.be(true);
     result

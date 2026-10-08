@@ -25,7 +25,7 @@ class MemoryManufacturerRepository
       TaskEither.of(_store.values.map(Manufacturer.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Manufacturer> fetchById(String id) {
+  TaskEither<DomainFailure, Manufacturer> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, Manufacturer>.left(
@@ -36,8 +36,8 @@ class MemoryManufacturerRepository
   }
 
   @override
-  TaskEither<DomainFailure, Manufacturer> create(
-    Manufacturer manufacturer, {
+  TaskEither<DomainFailure, Manufacturer> create({
+    required Manufacturer manufacturer,
     IUnitOfWork? uow,
   }) {
     _store[manufacturer.meta.id] = manufacturer.toJson();
@@ -45,8 +45,8 @@ class MemoryManufacturerRepository
   }
 
   @override
-  TaskEither<DomainFailure, Manufacturer> update(
-    Manufacturer manufacturer, {
+  TaskEither<DomainFailure, Manufacturer> update({
+    required Manufacturer manufacturer,
     IUnitOfWork? uow,
   }) {
     if (!_store.containsKey(manufacturer.meta.id)) {
@@ -59,7 +59,10 @@ class MemoryManufacturerRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Manufacturer "$id" not found'),

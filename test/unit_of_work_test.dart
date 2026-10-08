@@ -23,12 +23,12 @@ void main() {
     components = MemorySkuComponentRepository();
     instances = MemoryInstanceRepository();
     await CreateSku(skus)(
-      Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
+      sku: Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
     ).run();
     // An edge whose child SKU is deliberately absent from the SKU store, so the
     // SKU delete fails *after* the edge delete has already succeeded.
     await CreateSkuComponent(components)(
-      SkuComponent(
+      component: SkuComponent(
         meta: meta('edge'),
         parentSkuId: 'rack',
         childSkuId: 'card',
@@ -38,7 +38,7 @@ void main() {
   });
 
   Future<int> edgeCount() async => (await FetchComponentsBySku(components)(
-    'rack',
+    skuId: 'rack',
   ).run()).getOrElse((_) => []).length;
 
   test('a unit of work rolls a failed SKU delete back', () async {
@@ -47,7 +47,7 @@ void main() {
       instanceRepository: instances,
       skuComponentRepository: components,
       unitOfWork: MemoryUnitOfWork([skus, components]),
-    )('card').run();
+    )(id: 'card').run();
 
     result.isLeft().should.beTrue();
     (await edgeCount()).should.be(1);
@@ -58,7 +58,7 @@ void main() {
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
-    )('card').run();
+    )(id: 'card').run();
 
     result.isLeft().should.beTrue();
     // No transaction: the cascade committed before the failure. This is the
@@ -71,7 +71,7 @@ void main() {
     () async {
       final images = MemoryImageRepository();
       await CreateInstance(instances)(
-        Instance(
+        instance: Instance(
           meta: meta('d1'),
           skuId: 'rack',
           locateId: null,
@@ -79,7 +79,7 @@ void main() {
         ),
       ).run();
       await CreateImageRecord(images)(
-        ImageRecord(
+        image: ImageRecord(
           id: 'img1',
           owner: ImageOwner.instance,
           ownerId: 'd1',
@@ -93,7 +93,7 @@ void main() {
         instanceRepository: instances,
         imageRepository: images,
         unitOfWork: MemoryUnitOfWork([instances, images]),
-      )('d1').run();
+      )(id: 'd1').run();
 
       result.isRight().should.beTrue();
       (await instances.fetchAll().run()).getOrElse((_) => []).should.beEmpty();

@@ -10,19 +10,24 @@ abstract interface class ISkuComponentRepository {
   TaskEither<DomainFailure, List<SkuComponent>> fetchAll();
 
   /// Fetch components for a SKU.
-  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId);
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku({
+    required String skuId,
+  });
 
   /// Fetch a single component by id.
-  TaskEither<DomainFailure, SkuComponent> fetchById(String id);
+  TaskEither<DomainFailure, SkuComponent> fetchById({required String id});
 
   /// Create a new SKU component.
-  TaskEither<DomainFailure, SkuComponent> create(
-    SkuComponent component, {
+  TaskEither<DomainFailure, SkuComponent> create({
+    required SkuComponent component,
     IUnitOfWork? uow,
   });
 
   /// Delete a SKU component by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

@@ -10,27 +10,32 @@ abstract interface class ITraitAttributeDefinitionRepository {
   TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchAll();
 
   /// Fetch attribute definitions for given trait.
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait(
-    String traitId,
-  );
+  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait({
+    required String traitId,
+  });
 
   /// Fetch a single attribute definition by id.
-  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById(String id);
+  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById({
+    required String id,
+  });
 
   /// Create a new attribute definition.
-  TaskEither<DomainFailure, TraitAttributeDefinition> create(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> create({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   });
 
   /// Update an existing attribute definition.
-  TaskEither<DomainFailure, TraitAttributeDefinition> update(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> update({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   });
 
   /// Delete an attribute definition by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

@@ -10,7 +10,10 @@ abstract interface class IMetaRepository {
   TaskEither<DomainFailure, Meta> fetch();
 
   /// Update meta.
-  TaskEither<DomainFailure, Meta> update(Meta meta, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Meta> update({
+    required Meta meta,
+    IUnitOfWork? uow,
+  });
 
   /// Remove the current meta (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

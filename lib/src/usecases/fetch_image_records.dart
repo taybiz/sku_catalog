@@ -9,8 +9,8 @@ class FetchImageRecords {
   final IImageRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, List<ImageRecord>> call(
-    ImageOwner owner,
-    String ownerId,
-  ) => _repository.fetchByOwner(owner, ownerId);
+  TaskEither<DomainFailure, List<ImageRecord>> call({
+    required ImageOwner owner,
+    required String ownerId,
+  }) => _repository.fetchByOwner(owner: owner, ownerId: ownerId);
 }

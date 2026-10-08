@@ -24,9 +24,9 @@ class ResolveSchema {
   ///
   /// Definitions only: values are not resolved here. `ResolvedAttribute.source`
   /// is `'trait'` and `value` is null for every entry.
-  TaskEither<DomainFailure, List<ResolvedAttribute>> call(
-    List<String> traitIds,
-  ) {
+  TaskEither<DomainFailure, List<ResolvedAttribute>> call({
+    required List<String> traitIds,
+  }) {
     final chainResolver = ResolveTraitChain(_traitRepository);
     final indexByKey = <String, int>{};
     final result = <ResolvedAttribute>[];
@@ -38,7 +38,9 @@ class ResolveSchema {
     var collectChains = TaskEither<DomainFailure, List<Trait>>.of(const []);
     for (final traitId in traitIds) {
       collectChains = collectChains.flatMap(
-        (acc) => chainResolver(traitId).map((traits) => [...acc, ...traits]),
+        (acc) => chainResolver(
+          traitId: traitId,
+        ).map((traits) => [...acc, ...traits]),
       );
     }
 
@@ -46,7 +48,9 @@ class ResolveSchema {
       var resolveAttributes = TaskEither<DomainFailure, Unit>.of(unit);
       for (final trait in allTraits) {
         resolveAttributes = resolveAttributes.flatMap(
-          (_) => _attributeRepository.fetchByTrait(trait.meta.id).map((attrs) {
+          (_) => _attributeRepository.fetchByTrait(traitId: trait.meta.id).map((
+            attrs,
+          ) {
             for (final attr in attrs) {
               final resolved = ResolvedAttribute(
                 attributeId: attr.meta.id,

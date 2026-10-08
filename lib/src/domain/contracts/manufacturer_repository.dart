@@ -10,22 +10,25 @@ abstract interface class IManufacturerRepository {
   TaskEither<DomainFailure, List<Manufacturer>> fetchAll();
 
   /// Fetch a single manufacturer by id.
-  TaskEither<DomainFailure, Manufacturer> fetchById(String id);
+  TaskEither<DomainFailure, Manufacturer> fetchById({required String id});
 
   /// Create a new manufacturer.
-  TaskEither<DomainFailure, Manufacturer> create(
-    Manufacturer manufacturer, {
+  TaskEither<DomainFailure, Manufacturer> create({
+    required Manufacturer manufacturer,
     IUnitOfWork? uow,
   });
 
   /// Update an existing manufacturer.
-  TaskEither<DomainFailure, Manufacturer> update(
-    Manufacturer manufacturer, {
+  TaskEither<DomainFailure, Manufacturer> update({
+    required Manufacturer manufacturer,
     IUnitOfWork? uow,
   });
 
   /// Delete a manufacturer by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

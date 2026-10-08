@@ -27,7 +27,7 @@ class DeleteInstance {
   final IUnitOfWork _unitOfWork;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call(String id) =>
+  TaskEither<DomainFailure, void> call({required String id}) =>
       _imageRepository.fetchAll().flatMap((images) {
         final mine = images
             .where((i) => i.owner == ImageOwner.instance && i.ownerId == id)
@@ -35,8 +35,8 @@ class DeleteInstance {
         return TaskEither<DomainFailure, void>(
           () => _unitOfWork.runEither<DomainFailure, void>(
             body: () => sequenceTaskEither([
-              for (final img in mine) _imageRepository.delete(img.id),
-            ]).flatMap((_) => _instanceRepository.delete(id)).run(),
+              for (final img in mine) _imageRepository.delete(id: img.id),
+            ]).flatMap((_) => _instanceRepository.delete(id: id)).run(),
           ),
         );
       });

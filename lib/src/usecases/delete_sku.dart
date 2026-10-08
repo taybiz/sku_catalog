@@ -27,7 +27,7 @@ class DeleteSku {
   final IUnitOfWork _unitOfWork;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call(String id) =>
+  TaskEither<DomainFailure, void> call({required String id}) =>
       _instanceRepository.fetchAll().flatMap((instances) {
         if (instances.any((d) => d.skuId == id)) {
           return TaskEither.left(
@@ -45,8 +45,8 @@ class DeleteSku {
             () => _unitOfWork.runEither<DomainFailure, void>(
               body: () => sequenceTaskEither([
                 for (final c in touching)
-                  _skuComponentRepository.delete(c.meta.id),
-              ]).flatMap((_) => _skuRepository.delete(id)).run(),
+                  _skuComponentRepository.delete(id: c.meta.id),
+              ]).flatMap((_) => _skuRepository.delete(id: id)).run(),
             ),
           );
         });

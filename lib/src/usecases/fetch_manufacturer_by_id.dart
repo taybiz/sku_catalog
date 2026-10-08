@@ -9,6 +9,6 @@ class FetchManufacturerById {
   final IManufacturerRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Manufacturer> call(String id) =>
-      _repository.fetchById(id);
+  TaskEither<DomainFailure, Manufacturer> call({required String id}) =>
+      _repository.fetchById(id: id);
 }

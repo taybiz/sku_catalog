@@ -29,8 +29,8 @@ class AggregateBillOfMaterials {
   ///
   /// Fails with [NotFoundFailure] when the catalog has no such SKU, and with
   /// [InvalidInputFailure] when [units] is below one.
-  TaskEither<DomainFailure, BillOfMaterials> call(
-    String skuId, {
+  TaskEither<DomainFailure, BillOfMaterials> call({
+    required String skuId,
     int units = 1,
   }) {
     if (units < 1) {

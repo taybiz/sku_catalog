@@ -9,6 +9,6 @@ class FetchComponentsBySku {
   final ISkuComponentRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, List<SkuComponent>> call(String skuId) =>
-      _repository.fetchBySku(skuId);
+  TaskEither<DomainFailure, List<SkuComponent>> call({required String skuId}) =>
+      _repository.fetchBySku(skuId: skuId);
 }

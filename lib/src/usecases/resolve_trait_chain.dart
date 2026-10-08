@@ -9,7 +9,7 @@ class ResolveTraitChain {
   final ITraitRepository _traitRepository;
 
   /// Returns the trait chain from root ancestor to [traitId].
-  TaskEither<DomainFailure, List<Trait>> call(String traitId) =>
+  TaskEither<DomainFailure, List<Trait>> call({required String traitId}) =>
       _traitRepository.fetchAll().map((traits) {
         final traitMap = {for (final t in traits) t.meta.id: t};
         final chain = <Trait>[];

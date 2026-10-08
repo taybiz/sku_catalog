@@ -8,8 +8,8 @@ import 'instance_naming.dart';
 ///
 /// The per-locate unique name rule lives here so [UpdateInstance] and any
 /// caller's own creation use case share one implementation.
-TaskEither<DomainFailure, Unit> assertUniqueInstanceName(
-  IInstanceRepository repository, {
+TaskEither<DomainFailure, Unit> assertUniqueInstanceName({
+  required IInstanceRepository repository,
   required String name,
   required String? locateId,
   String? excludeId,

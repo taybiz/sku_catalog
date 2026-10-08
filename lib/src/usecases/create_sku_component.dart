@@ -9,6 +9,7 @@ class CreateSkuComponent {
   final ISkuComponentRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, SkuComponent> call(SkuComponent component) =>
-      _repository.create(component);
+  TaskEither<DomainFailure, SkuComponent> call({
+    required SkuComponent component,
+  }) => _repository.create(component: component);
 }

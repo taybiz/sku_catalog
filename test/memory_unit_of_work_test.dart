@@ -26,14 +26,20 @@ void main() {
   test('a Left body restores every registered store', () async {
     final skus = MemorySkuRepository();
     final locates = MemoryLocateRepository();
-    await skus.create(sku('a')).run();
+    await skus.create(sku: sku('a')).run();
     final uow = MemoryUnitOfWork([skus, locates]);
 
-    final result = await uow.runEither<DomainFailure, void>(body: () async {
-      await skus.create(sku('b')).run();
-      await locates.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
-      return const Left<DomainFailure, void>(InUseFailure('refused'));
-    });
+    final result = await uow.runEither<DomainFailure, void>(
+      body: () async {
+        await skus.create(sku: sku('b')).run();
+        await locates
+            .create(
+              locate: Locate(meta: meta('l1'), name: 'Rack 1'),
+            )
+            .run();
+        return const Left<DomainFailure, void>(InUseFailure('refused'));
+      },
+    );
 
     result.isLeft().should.beTrue();
     (await ids(skus)).should.be(['a']);
@@ -42,13 +48,15 @@ void main() {
 
   test('runEither rolls back on a Left and returns the failure', () async {
     final skus = MemorySkuRepository();
-    await skus.create(sku('a')).run();
+    await skus.create(sku: sku('a')).run();
     final uow = MemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(body: () async {
-      await skus.create(sku('b')).run();
-      return const Left<DomainFailure, void>(InUseFailure('refused'));
-    });
+    final result = await uow.runEither<DomainFailure, void>(
+      body: () async {
+        await skus.create(sku: sku('b')).run();
+        return const Left<DomainFailure, void>(InUseFailure('refused'));
+      },
+    );
 
     result.isLeft().should.beTrue();
     result
@@ -62,10 +70,12 @@ void main() {
     final skus = MemorySkuRepository();
     final uow = MemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(body: () async {
-      await skus.create(sku('a')).run();
-      return const Right<DomainFailure, void>(null);
-    });
+    final result = await uow.runEither<DomainFailure, void>(
+      body: () async {
+        await skus.create(sku: sku('a')).run();
+        return const Right<DomainFailure, void>(null);
+      },
+    );
 
     result.isRight().should.beTrue();
     (await ids(skus)).should.be(['a']);
@@ -76,10 +86,16 @@ void main() {
     final others = MemoryLocateRepository();
     final uow = MemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(body: () async {
-      await others.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
-      return const Left<DomainFailure, void>(InUseFailure('refused'));
-    });
+    final result = await uow.runEither<DomainFailure, void>(
+      body: () async {
+        await others
+            .create(
+              locate: Locate(meta: meta('l1'), name: 'Rack 1'),
+            )
+            .run();
+        return const Left<DomainFailure, void>(InUseFailure('refused'));
+      },
+    );
 
     result.isLeft().should.beTrue();
     // Not registered, so not rolled back — the documented boundary.

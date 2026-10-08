@@ -9,6 +9,6 @@ class FetchInstancesByLocate {
   final IInstanceRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, List<Instance>> call(String locateId) =>
-      _repository.fetchByLocate(locateId);
+  TaskEither<DomainFailure, List<Instance>> call({required String locateId}) =>
+      _repository.fetchByLocate(locateId: locateId);
 }

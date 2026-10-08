@@ -14,22 +14,25 @@ abstract interface class IImageRepository {
   TaskEither<DomainFailure, List<ImageRecord>> fetchAll();
 
   /// Fetch images for a single owner entity.
-  TaskEither<DomainFailure, List<ImageRecord>> fetchByOwner(
-    ImageOwner owner,
-    String ownerId,
-  );
+  TaskEither<DomainFailure, List<ImageRecord>> fetchByOwner({
+    required ImageOwner owner,
+    required String ownerId,
+  });
 
   /// Fetch a single image record by id.
-  TaskEither<DomainFailure, ImageRecord> fetchById(String id);
+  TaskEither<DomainFailure, ImageRecord> fetchById({required String id});
 
   /// Create a new image record.
-  TaskEither<DomainFailure, ImageRecord> create(
-    ImageRecord image, {
+  TaskEither<DomainFailure, ImageRecord> create({
+    required ImageRecord image,
     IUnitOfWork? uow,
   });
 
   /// Delete an image record by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

@@ -24,7 +24,7 @@ class MemorySkuRepository implements ISkuRepository, MemoryBacked {
       TaskEither.of(_store.values.map(Sku.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Sku> fetchById(String id) {
+  TaskEither<DomainFailure, Sku> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, Sku>.left(
@@ -35,13 +35,13 @@ class MemorySkuRepository implements ISkuRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow}) {
     _store[sku.meta.id] = sku.toJson();
     return TaskEither.of(sku);
   }
 
   @override
-  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow}) {
     if (!_store.containsKey(sku.meta.id)) {
       return TaskEither<DomainFailure, Sku>.left(
         NotFoundFailure('Sku "${sku.meta.id}" not found'),
@@ -52,7 +52,10 @@ class MemorySkuRepository implements ISkuRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Sku "$id" not found'),

@@ -9,5 +9,6 @@ class FetchSkuById {
   final ISkuRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Sku> call(String id) => _repository.fetchById(id);
+  TaskEither<DomainFailure, Sku> call({required String id}) =>
+      _repository.fetchById(id: id);
 }

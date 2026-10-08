@@ -9,8 +9,8 @@ class DescendantLocateIds {
   final ILocateRepository _locateRepository;
 
   /// Returns all descendant locate IDs, optionally including the root.
-  TaskEither<DomainFailure, List<String>> call(
-    String rootId, {
+  TaskEither<DomainFailure, List<String>> call({
+    required String rootId,
     bool includeSelf = false,
   }) => _locateRepository.fetchAll().map((allLocates) {
     final adj = <String, List<String>>{};

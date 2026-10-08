@@ -9,6 +9,7 @@ class UpdateManufacturer {
   final IManufacturerRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Manufacturer> call(Manufacturer manufacturer) =>
-      _repository.update(manufacturer);
+  TaskEither<DomainFailure, Manufacturer> call({
+    required Manufacturer manufacturer,
+  }) => _repository.update(manufacturer: manufacturer);
 }

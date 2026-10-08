@@ -26,7 +26,7 @@ class DeleteTrait {
   final ITraitAttributeDefinitionRepository _traitAttributeRepository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call(String id) =>
+  TaskEither<DomainFailure, void> call({required String id}) =>
       _traitRepository.fetchAll().flatMap((traits) {
         if (traits.any((t) => t.parentTraitId == id)) {
           return TaskEither.left(InUseFailure('This trait has child traits.'));
@@ -54,14 +54,14 @@ class DeleteTrait {
                 );
               }
               return _traitAttributeRepository
-                  .fetchByTrait(id)
+                  .fetchByTrait(traitId: id)
                   .flatMap(
                     (attrs) => sequenceTaskEither([
                       for (final a in attrs)
-                        _traitAttributeRepository.delete(a.meta.id),
+                        _traitAttributeRepository.delete(id: a.meta.id),
                     ]),
                   )
-                  .flatMap((_) => _traitRepository.delete(id));
+                  .flatMap((_) => _traitRepository.delete(id: id));
             });
           });
         });

@@ -17,7 +17,7 @@ void main() {
     final repo = MemorySkuRepository();
     await repo
         .create(
-          Sku(
+          sku: Sku(
             meta: meta('qo120'),
             manufacturerId: 'square-d',
             modelNumber: 'QO120',
@@ -29,7 +29,7 @@ void main() {
         .getOrElse((_) => fail('expected Right'))
         .should
         .haveCount(1);
-    (await repo.fetchById('qo120').run())
+    (await repo.fetchById(id: 'qo120').run())
         .getOrElse((_) => fail('expected Right'))
         .modelNumber
         .should
@@ -37,14 +37,14 @@ void main() {
 
     await repo
         .update(
-          Sku(
+          sku: Sku(
             meta: meta('qo120'),
             manufacturerId: 'square-d',
             modelNumber: 'QO120-2',
           ),
         )
         .run();
-    (await repo.fetchById('qo120').run())
+    (await repo.fetchById(id: 'qo120').run())
         .getOrElse((_) => fail('expected Right'))
         .modelNumber
         .should
@@ -53,7 +53,7 @@ void main() {
 
   test('a missing record fails as a value, not an exception', () async {
     final repo = MemorySkuRepository();
-    final result = await repo.fetchById('nope').run();
+    final result = await repo.fetchById(id: 'nope').run();
 
     result.isLeft().should.beTrue();
     result
@@ -64,16 +64,24 @@ void main() {
 
   test('delete removes, and delete of a missing record fails', () async {
     final repo = MemoryLocateRepository();
-    await repo.create(Locate(meta: meta('rack-1'), name: 'Rack 1')).run();
+    await repo
+        .create(
+          locate: Locate(meta: meta('rack-1'), name: 'Rack 1'),
+        )
+        .run();
 
-    (await repo.delete('rack-1').run()).isRight().should.beTrue();
+    (await repo.delete(id: 'rack-1').run()).isRight().should.beTrue();
     (await repo.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
-    (await repo.delete('rack-1').run()).isLeft().should.beTrue();
+    (await repo.delete(id: 'rack-1').run()).isLeft().should.beTrue();
   });
 
   test('clearAll empties the store', () async {
     final repo = MemoryTraitRepository();
-    await repo.create(Trait(meta: meta('t'), name: 'T')).run();
+    await repo
+        .create(
+          trait: Trait(meta: meta('t'), name: 'T'),
+        )
+        .run();
 
     (await repo.clearAll().run()).isRight().should.beTrue();
     (await repo.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
@@ -83,7 +91,7 @@ void main() {
     final repo = MemorySkuComponentRepository();
     await repo
         .create(
-          SkuComponent(
+          component: SkuComponent(
             meta: meta('e1'),
             parentSkuId: 'rack',
             childSkuId: 'card',
@@ -93,7 +101,7 @@ void main() {
         .run();
     await repo
         .create(
-          SkuComponent(
+          component: SkuComponent(
             meta: meta('e2'),
             parentSkuId: 'other',
             childSkuId: 'card',
@@ -102,7 +110,7 @@ void main() {
         )
         .run();
 
-    final rows = await repo.fetchBySku('rack').run();
+    final rows = await repo.fetchBySku(skuId: 'rack').run();
     rows.getOrElse((_) => fail('expected Right')).single.quantity.should.be(4);
   });
 }

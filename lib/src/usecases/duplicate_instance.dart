@@ -29,29 +29,35 @@ class DuplicateInstance {
   final Set<String> slotBoundTraitNames;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Instance> call(String id) => _instanceRepository
-      .fetchById(id)
-      .flatMap(
-        (current) => _traitRepository.fetchAll().flatMap(
-          (traits) => _skuRepository.fetchAll().flatMap((types) {
-            final bound =
-                slotBoundTraitNames.isNotEmpty &&
-                isSlotBound(current.skuId, types, traits, slotBoundTraitNames);
-            final copyLocate = bound ? null : current.locateId;
-            return _instanceRepository.fetchAll().flatMap((all) {
-              final copy = Instance(
-                meta: newMeta(current.meta.notes),
-                skuId: current.skuId,
-                locateId: copyLocate,
-                name: uniqueCopyName(current.name, copyLocate, all),
-                skuModelNumber: current.skuModelNumber,
-                traitIds: current.traitIds,
-                attributeValues: current.attributeValues,
-                icon: current.icon,
-              );
-              return _instanceRepository.create(copy);
-            });
-          }),
-        ),
-      );
+  TaskEither<DomainFailure, Instance> call({required String id}) =>
+      _instanceRepository
+          .fetchById(id: id)
+          .flatMap(
+            (current) => _traitRepository.fetchAll().flatMap(
+              (traits) => _skuRepository.fetchAll().flatMap((types) {
+                final bound =
+                    slotBoundTraitNames.isNotEmpty &&
+                    isSlotBound(
+                      current.skuId,
+                      types,
+                      traits,
+                      slotBoundTraitNames,
+                    );
+                final copyLocate = bound ? null : current.locateId;
+                return _instanceRepository.fetchAll().flatMap((all) {
+                  final copy = Instance(
+                    meta: newMeta(current.meta.notes),
+                    skuId: current.skuId,
+                    locateId: copyLocate,
+                    name: uniqueCopyName(current.name, copyLocate, all),
+                    skuModelNumber: current.skuModelNumber,
+                    traitIds: current.traitIds,
+                    attributeValues: current.attributeValues,
+                    icon: current.icon,
+                  );
+                  return _instanceRepository.create(instance: copy);
+                });
+              }),
+            ),
+          );
 }

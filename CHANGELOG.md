@@ -47,8 +47,17 @@
   `device_type_id` → `sku_id`. The model and its behaviour are unchanged; only the
   vocabulary. What the package called a device is now an `Instance` (a physical article of a
   `Sku`, at a `Locate`), so a book copy and a breaker instance read the same way. `Locate`
-  is untouched. No deprecation shims: adopters rename in one step. This release also marks
+  is untouched. No deprecation shims: adopters rename, in one step. This release also marks
   the vocabulary as final (1.0).
+- **Breaking (major):** every repository method and use-case `call()` now takes **named**
+  parameters (`fetchById({required String id})`, `create({required Sku sku})`,
+  `FetchInstancesByLocate(repo)(locateId: …)`), per bible §2.5. Positional call sites must
+  be updated. `IUnitOfWork` is reshaped with them: `runEither({required … body})` returns
+  `Future<Either<F, T>>` and the adapter rolls back on a `Left` — rollback is a **value**,
+  not a thrown error, so no `throw`/`try`/`catch` remains anywhere in `lib/` (§4.8).
+- `DomainFailure` is now a **sealed** hierarchy (§4.2), so a `switch` over it is exhaustive;
+  the analyzer runs the **strict** flags (`strict-casts` / `strict-inference` /
+  `strict-raw-types`, §9.7).
 
 ## 0.2.0
 

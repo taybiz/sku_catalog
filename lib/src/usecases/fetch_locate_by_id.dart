@@ -9,6 +9,6 @@ class FetchLocateById {
   final ILocateRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Locate> call(String id) =>
-      _repository.fetchById(id);
+  TaskEither<DomainFailure, Locate> call({required String id}) =>
+      _repository.fetchById(id: id);
 }

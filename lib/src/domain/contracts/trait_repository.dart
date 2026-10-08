@@ -10,16 +10,25 @@ abstract interface class ITraitRepository {
   TaskEither<DomainFailure, List<Trait>> fetchAll();
 
   /// Fetch a single trait by id.
-  TaskEither<DomainFailure, Trait> fetchById(String id);
+  TaskEither<DomainFailure, Trait> fetchById({required String id});
 
   /// Create a new trait.
-  TaskEither<DomainFailure, Trait> create(Trait trait, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Trait> create({
+    required Trait trait,
+    IUnitOfWork? uow,
+  });
 
   /// Update an existing trait.
-  TaskEither<DomainFailure, Trait> update(Trait trait, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Trait> update({
+    required Trait trait,
+    IUnitOfWork? uow,
+  });
 
   /// Delete a trait by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

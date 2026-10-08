@@ -9,7 +9,7 @@ class FetchAttributesByTrait {
   final ITraitAttributeDefinitionRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> call(
-    String traitId,
-  ) => _repository.fetchByTrait(traitId);
+  TaskEither<DomainFailure, List<TraitAttributeDefinition>> call({
+    required String traitId,
+  }) => _repository.fetchByTrait(traitId: traitId);
 }

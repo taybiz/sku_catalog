@@ -27,7 +27,7 @@ void main() {
     instances = MemoryInstanceRepository();
     addEdge = AddSkuComponent(repository: components, skuRepository: skus);
     for (final id in ['base', 'card', 'rack']) {
-      await CreateSku(skus)(sku(id)).run();
+      await CreateSku(skus)(sku: sku(id)).run();
     }
   });
 
@@ -40,7 +40,7 @@ void main() {
 
     result.isRight().should.beTrue();
 
-    final edges = await FetchComponentsBySku(components)('rack').run();
+    final edges = await FetchComponentsBySku(components)(skuId: 'rack').run();
     final rows = edges.getOrElse((_) => fail('expected Right'));
     rows.should.haveCount(1);
     rows.single.quantity.should.be(8);
@@ -101,27 +101,32 @@ void main() {
   test('an assembly edge can be removed', () async {
     await addEdge(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
     final rows = (await FetchComponentsBySku(components)(
-      'rack',
+      skuId: 'rack',
     ).run()).getOrElse((_) => fail('expected Right'));
 
     (await DeleteSkuComponent(components)(
-      rows.single.meta.id,
+      id: rows.single.meta.id,
     ).run()).isRight().should.beTrue();
     (await FetchComponentsBySku(components)(
-      'rack',
+      skuId: 'rack',
     ).run()).getOrElse((_) => []).should.beEmpty();
   });
 
   test('deleting a SKU that an instance instantiates is refused', () async {
     await CreateInstance(instances)(
-      Instance(meta: meta('d1'), skuId: 'base', locateId: null, name: 'Base 1'),
+      instance: Instance(
+        meta: meta('d1'),
+        skuId: 'base',
+        locateId: null,
+        name: 'Base 1',
+      ),
     ).run();
 
     final result = await DeleteSku(
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
-    )('base').run();
+    )(id: 'base').run();
 
     result.isLeft().should.beTrue();
     result
@@ -139,11 +144,11 @@ void main() {
         skuRepository: skus,
         instanceRepository: instances,
         skuComponentRepository: components,
-      )('card').run();
+      )(id: 'card').run();
       deleted.isRight().should.beTrue();
 
       (await FetchComponentsBySku(components)(
-        'rack',
+        skuId: 'rack',
       ).run()).getOrElse((_) => []).should.beEmpty();
       (await FetchAllSkus(skus)().run())
           .getOrElse((_) => [])

@@ -14,16 +14,18 @@ class UpdateSkuComponent {
   final ISkuComponentRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, SkuComponent> call(String skuId, int quantity) =>
-      _repository.fetchById(skuId).flatMap((current) {
-        final replacement = SkuComponent(
-          meta: newMeta(),
-          parentSkuId: current.parentSkuId,
-          childSkuId: current.childSkuId,
-          quantity: quantity,
-        );
-        return _repository.delete(skuId).flatMap((_) {
-          return _repository.create(replacement);
-        });
-      });
+  TaskEither<DomainFailure, SkuComponent> call({
+    required String skuId,
+    required int quantity,
+  }) => _repository.fetchById(id: skuId).flatMap((current) {
+    final replacement = SkuComponent(
+      meta: newMeta(),
+      parentSkuId: current.parentSkuId,
+      childSkuId: current.childSkuId,
+      quantity: quantity,
+    );
+    return _repository.delete(id: skuId).flatMap((_) {
+      return _repository.create(component: replacement);
+    });
+  });
 }

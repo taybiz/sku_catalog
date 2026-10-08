@@ -56,12 +56,12 @@ Future<void> main() async {
     parentTraitId: switchTrait.meta.id,
     scope: const [TraitScope.sku],
   );
-  await CreateTrait(traitRepository)(switchTrait).run();
-  await CreateTrait(traitRepository)(breakerTrait).run();
+  await CreateTrait(traitRepository)(trait: switchTrait).run();
+  await CreateTrait(traitRepository)(trait: breakerTrait).run();
 
   // 2. Value: each trait contributes typed fields, and a child overrides them.
   await CreateTraitAttributeDefinition(attributeRepository)(
-    TraitAttributeDefinition(
+    attribute: TraitAttributeDefinition(
       meta: _meta('switch-rated_amps'),
       traitId: switchTrait.meta.id,
       key: 'rated_amps',
@@ -72,7 +72,7 @@ Future<void> main() async {
     ),
   ).run();
   await CreateTraitAttributeDefinition(attributeRepository)(
-    TraitAttributeDefinition(
+    attribute: TraitAttributeDefinition(
       meta: _meta('breaker-trip_amperage'),
       traitId: breakerTrait.meta.id,
       key: 'trip_amperage',
@@ -95,14 +95,14 @@ Future<void> main() async {
     manufacturerId: 'square-d',
     modelNumber: 'QO-16',
   );
-  await CreateSku(skuRepository)(breakerModel).run();
-  await CreateSku(skuRepository)(panelModel).run();
+  await CreateSku(skuRepository)(sku: breakerModel).run();
+  await CreateSku(skuRepository)(sku: panelModel).run();
   final subPanelModel = Sku(
     meta: _meta('qo-4'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-4',
   );
-  await CreateSku(skuRepository)(subPanelModel).run();
+  await CreateSku(skuRepository)(sku: subPanelModel).run();
 
   // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
   //    sub-panel holds four breakers — so a build consumes the breaker two
@@ -140,8 +140,8 @@ Future<void> main() async {
     name: 'Panel Position',
     parentLocateId: garage.meta.id,
   );
-  await CreateLocate(locateRepository)(garage).run();
-  await CreateLocate(locateRepository)(panelPlace).run();
+  await CreateLocate(locateRepository)(locate: garage).run();
+  await CreateLocate(locateRepository)(locate: panelPlace).run();
 
   // 6. Instantiate: an instance is one article of a SKU, at one place.
   final panelInstance = Instance(
@@ -150,14 +150,14 @@ Future<void> main() async {
     locateId: panelPlace.meta.id,
     name: 'Garage Panel 1',
   );
-  await CreateInstance(instanceRepository)(panelInstance).run();
+  await CreateInstance(instanceRepository)(instance: panelInstance).run();
 
   // 7. Ask the model what it knows. Traits inherit, so the breaker's schema
   //    carries Switch's attributes too.
   final schema = await ResolveSchema(
     traitRepository: traitRepository,
     attributeRepository: attributeRepository,
-  )(breakerModel.traitIds).run();
+  )(traitIds: breakerModel.traitIds).run();
 
   final schemaLine = schema.fold(
     (failure) => 'failed: ${failure.message}',
@@ -166,7 +166,7 @@ Future<void> main() async {
         .join(', '),
   );
   final partsCount = await FetchComponentsBySku(assemblyRepository)(
-    panelModel.meta.id,
+    skuId: panelModel.meta.id,
   ).run();
   final breakersDirect = partsCount.fold(
     (failure) => '?',
@@ -179,7 +179,7 @@ Future<void> main() async {
         '${rows.firstWhere((c) => c.childSkuId == subPanelModel.meta.id).quantity}',
   );
   final instancesAtPlace = await FetchInstancesByLocate(instanceRepository)(
-    panelPlace.meta.id,
+    locateId: panelPlace.meta.id,
   ).run();
 
   print(
@@ -204,7 +204,7 @@ Future<void> main() async {
   final bom = await AggregateBillOfMaterials(
     skuRepository: skuRepository,
     skuComponentRepository: assemblyRepository,
-  )(panelModel.meta.id, units: 2).run();
+  )(skuId: panelModel.meta.id, units: 2).run();
 
   final bomLine = bom.fold(
     (failure) => 'failed: ${failure.message}',
@@ -261,22 +261,31 @@ class _Traits implements ITraitRepository {
       TaskEither.of(table.all().map(Trait.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Trait> fetchById(String id) => table.has(id)
+  TaskEither<DomainFailure, Trait> fetchById({required String id}) =>
+      table.has(id)
       ? TaskEither.of(table.get(id))
       : _missing<Trait>('Trait', id);
 
   @override
-  TaskEither<DomainFailure, Trait> create(Trait trait, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Trait> create({
+    required Trait trait,
+    IUnitOfWork? uow,
+  }) {
     table.put(trait);
     return TaskEither.of(trait);
   }
 
   @override
-  TaskEither<DomainFailure, Trait> update(Trait trait, {IUnitOfWork? uow}) =>
-      create(trait);
+  TaskEither<DomainFailure, Trait> update({
+    required Trait trait,
+    IUnitOfWork? uow,
+  }) => create(trait: trait);
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }
@@ -299,9 +308,9 @@ class _Attributes implements ITraitAttributeDefinitionRepository {
       );
 
   @override
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait(
-    String traitId,
-  ) => TaskEither.of(
+  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait({
+    required String traitId,
+  }) => TaskEither.of(
     table
         .all()
         .map(TraitAttributeDefinition.fromJson)
@@ -310,14 +319,15 @@ class _Attributes implements ITraitAttributeDefinitionRepository {
   );
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById(String id) =>
-      table.has(id)
+  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById({
+    required String id,
+  }) => table.has(id)
       ? TaskEither.of(table.get(id))
       : _missing<TraitAttributeDefinition>('Attribute', id);
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> create(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> create({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   }) {
     table.put(attribute);
@@ -325,13 +335,16 @@ class _Attributes implements ITraitAttributeDefinitionRepository {
   }
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> update(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> update({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
-  }) => create(attribute);
+  }) => create(attribute: attribute);
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }
@@ -352,21 +365,24 @@ class _Skus implements ISkuRepository {
       TaskEither.of(table.all().map(Sku.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Sku> fetchById(String id) =>
+  TaskEither<DomainFailure, Sku> fetchById({required String id}) =>
       table.has(id) ? TaskEither.of(table.get(id)) : _missing<Sku>('SKU', id);
 
   @override
-  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow}) {
     table.put(sku);
     return TaskEither.of(sku);
   }
 
   @override
-  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow}) =>
-      create(sku);
+  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow}) =>
+      create(sku: sku);
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }
@@ -387,23 +403,25 @@ class _Components implements ISkuComponentRepository {
       TaskEither.of(table.all().map(SkuComponent.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId) =>
-      TaskEither.of(
-        table
-            .all()
-            .map(SkuComponent.fromJson)
-            .where((c) => c.parentSkuId == skuId)
-            .toList(),
-      );
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku({
+    required String skuId,
+  }) => TaskEither.of(
+    table
+        .all()
+        .map(SkuComponent.fromJson)
+        .where((c) => c.parentSkuId == skuId)
+        .toList(),
+  );
 
   @override
-  TaskEither<DomainFailure, SkuComponent> fetchById(String id) => table.has(id)
+  TaskEither<DomainFailure, SkuComponent> fetchById({required String id}) =>
+      table.has(id)
       ? TaskEither.of(table.get(id))
       : _missing<SkuComponent>('Assembly edge', id);
 
   @override
-  TaskEither<DomainFailure, SkuComponent> create(
-    SkuComponent component, {
+  TaskEither<DomainFailure, SkuComponent> create({
+    required SkuComponent component,
     IUnitOfWork? uow,
   }) {
     table.put(component);
@@ -411,7 +429,10 @@ class _Components implements ISkuComponentRepository {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }
@@ -432,22 +453,31 @@ class _Locates implements ILocateRepository {
       TaskEither.of(table.all().map(Locate.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Locate> fetchById(String id) => table.has(id)
+  TaskEither<DomainFailure, Locate> fetchById({required String id}) =>
+      table.has(id)
       ? TaskEither.of(table.get(id))
       : _missing<Locate>('Locate', id);
 
   @override
-  TaskEither<DomainFailure, Locate> create(Locate locate, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Locate> create({
+    required Locate locate,
+    IUnitOfWork? uow,
+  }) {
     table.put(locate);
     return TaskEither.of(locate);
   }
 
   @override
-  TaskEither<DomainFailure, Locate> update(Locate locate, {IUnitOfWork? uow}) =>
-      create(locate);
+  TaskEither<DomainFailure, Locate> update({
+    required Locate locate,
+    IUnitOfWork? uow,
+  }) => create(locate: locate);
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }
@@ -468,23 +498,25 @@ class _Instances implements IInstanceRepository {
       TaskEither.of(table.all().map(Instance.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<Instance>> fetchByLocate(String locateId) =>
-      TaskEither.of(
-        table
-            .all()
-            .map(Instance.fromJson)
-            .where((d) => d.locateId == locateId)
-            .toList(),
-      );
+  TaskEither<DomainFailure, List<Instance>> fetchByLocate({
+    required String locateId,
+  }) => TaskEither.of(
+    table
+        .all()
+        .map(Instance.fromJson)
+        .where((d) => d.locateId == locateId)
+        .toList(),
+  );
 
   @override
-  TaskEither<DomainFailure, Instance> fetchById(String id) => table.has(id)
+  TaskEither<DomainFailure, Instance> fetchById({required String id}) =>
+      table.has(id)
       ? TaskEither.of(table.get(id))
       : _missing<Instance>('Instance', id);
 
   @override
-  TaskEither<DomainFailure, Instance> create(
-    Instance instance, {
+  TaskEither<DomainFailure, Instance> create({
+    required Instance instance,
     IUnitOfWork? uow,
   }) {
     table.put(instance);
@@ -492,13 +524,16 @@ class _Instances implements IInstanceRepository {
   }
 
   @override
-  TaskEither<DomainFailure, Instance> update(
-    Instance instance, {
+  TaskEither<DomainFailure, Instance> update({
+    required Instance instance,
     IUnitOfWork? uow,
-  }) => create(instance);
+  }) => create(instance: instance);
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     table.remove(id);
     return TaskEither.of(null);
   }

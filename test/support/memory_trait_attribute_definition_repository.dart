@@ -29,9 +29,9 @@ class MemoryTraitAttributeDefinitionRepository
       );
 
   @override
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait(
-    String traitId,
-  ) => TaskEither.of(
+  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait({
+    required String traitId,
+  }) => TaskEither.of(
     _store.values
         .map(TraitAttributeDefinition.fromJson)
         .where((a) => a.traitId == traitId)
@@ -39,7 +39,9 @@ class MemoryTraitAttributeDefinitionRepository
   );
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById(String id) {
+  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById({
+    required String id,
+  }) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, TraitAttributeDefinition>.left(
@@ -50,8 +52,8 @@ class MemoryTraitAttributeDefinitionRepository
   }
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> create(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> create({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   }) {
     _store[attribute.meta.id] = attribute.toJson();
@@ -59,8 +61,8 @@ class MemoryTraitAttributeDefinitionRepository
   }
 
   @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> update(
-    TraitAttributeDefinition attribute, {
+  TaskEither<DomainFailure, TraitAttributeDefinition> update({
+    required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   }) {
     if (!_store.containsKey(attribute.meta.id)) {
@@ -75,7 +77,10 @@ class MemoryTraitAttributeDefinitionRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('TraitAttributeDefinition "$id" not found'),

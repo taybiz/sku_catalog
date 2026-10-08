@@ -24,16 +24,17 @@ class MemoryInstanceRepository implements IInstanceRepository, MemoryBacked {
       TaskEither.of(_store.values.map(Instance.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<Instance>> fetchByLocate(String locateId) =>
-      TaskEither.of(
-        _store.values
-            .map(Instance.fromJson)
-            .where((d) => d.locateId == locateId)
-            .toList(),
-      );
+  TaskEither<DomainFailure, List<Instance>> fetchByLocate({
+    required String locateId,
+  }) => TaskEither.of(
+    _store.values
+        .map(Instance.fromJson)
+        .where((d) => d.locateId == locateId)
+        .toList(),
+  );
 
   @override
-  TaskEither<DomainFailure, Instance> fetchById(String id) {
+  TaskEither<DomainFailure, Instance> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, Instance>.left(
@@ -44,8 +45,8 @@ class MemoryInstanceRepository implements IInstanceRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, Instance> create(
-    Instance instance, {
+  TaskEither<DomainFailure, Instance> create({
+    required Instance instance,
     IUnitOfWork? uow,
   }) {
     _store[instance.meta.id] = instance.toJson();
@@ -53,8 +54,8 @@ class MemoryInstanceRepository implements IInstanceRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, Instance> update(
-    Instance instance, {
+  TaskEither<DomainFailure, Instance> update({
+    required Instance instance,
     IUnitOfWork? uow,
   }) {
     if (!_store.containsKey(instance.meta.id)) {
@@ -67,7 +68,10 @@ class MemoryInstanceRepository implements IInstanceRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Instance "$id" not found'),

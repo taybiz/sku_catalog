@@ -42,18 +42,20 @@ class ResolveEffectiveAttributes {
   final ResolveSchema _resolveSchema;
 
   /// Effective attributes for the instance [instanceId], instance layer included.
-  TaskEither<DomainFailure, List<ResolvedAttribute>> call(String instanceId) =>
-      _instanceRepository
-          .fetchById(instanceId)
-          .flatMap((instance) => _resolve(instance.skuId, instance: instance));
+  TaskEither<DomainFailure, List<ResolvedAttribute>> call({
+    required String instanceId,
+  }) => _instanceRepository
+      .fetchById(id: instanceId)
+      .flatMap((instance) => _resolve(instance.skuId, instance: instance));
 
   /// Effective attributes for a SKU with no instance layer.
   ///
   /// This is the "what does this part owe its assembly" question: a SKU used as
   /// a component resolves within the assemblies it belongs to, so it reports the
   /// values it would have in place.
-  TaskEither<DomainFailure, List<ResolvedAttribute>> forSku(String skuId) =>
-      _resolve(skuId);
+  TaskEither<DomainFailure, List<ResolvedAttribute>> forSku({
+    required String skuId,
+  }) => _resolve(skuId);
 
   TaskEither<DomainFailure, List<ResolvedAttribute>> _resolve(
     String skuId, {
@@ -63,7 +65,7 @@ class ResolveEffectiveAttributes {
       ...?instance?.traitIds,
       for (final sku in chain) ...sku.traitIds,
     ];
-    return _resolveSchema(traitIds).map((schema) {
+    return _resolveSchema(traitIds: traitIds).map((schema) {
       final winners = _winners(instance, chain);
       return [
         for (final entry in schema)

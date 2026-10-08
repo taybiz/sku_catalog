@@ -24,7 +24,7 @@ class MemoryTraitRepository implements ITraitRepository, MemoryBacked {
       TaskEither.of(_store.values.map(Trait.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, Trait> fetchById(String id) {
+  TaskEither<DomainFailure, Trait> fetchById({required String id}) {
     final record = _store[id];
     if (record == null) {
       return TaskEither<DomainFailure, Trait>.left(
@@ -35,13 +35,19 @@ class MemoryTraitRepository implements ITraitRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, Trait> create(Trait trait, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Trait> create({
+    required Trait trait,
+    IUnitOfWork? uow,
+  }) {
     _store[trait.meta.id] = trait.toJson();
     return TaskEither.of(trait);
   }
 
   @override
-  TaskEither<DomainFailure, Trait> update(Trait trait, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Trait> update({
+    required Trait trait,
+    IUnitOfWork? uow,
+  }) {
     if (!_store.containsKey(trait.meta.id)) {
       return TaskEither<DomainFailure, Trait>.left(
         NotFoundFailure('Trait "${trait.meta.id}" not found'),
@@ -52,7 +58,10 @@ class MemoryTraitRepository implements ITraitRepository, MemoryBacked {
   }
 
   @override
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  }) {
     if (_store.remove(id) == null) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Trait "$id" not found'),

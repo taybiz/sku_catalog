@@ -23,10 +23,13 @@ class AddSkuComponent {
     required String childSkuId,
     required int quantity,
   }) => _skuRepository
-      .fetchById(parentSkuId)
-      .andThen(() => _skuRepository.fetchById(childSkuId))
+      .fetchById(id: parentSkuId)
+      .andThen(() => _skuRepository.fetchById(id: childSkuId))
       .flatMap(
-        (_) => WouldCreateAssemblyCycle(_repository)(parentSkuId, childSkuId),
+        (_) => WouldCreateAssemblyCycle(_repository)(
+          parentSkuId: parentSkuId,
+          childSkuId: childSkuId,
+        ),
       )
       .flatMap((wouldCycle) {
         if (wouldCycle) {
@@ -46,6 +49,6 @@ class AddSkuComponent {
           quantity: quantity,
         );
 
-        return _repository.create(component);
+        return _repository.create(component: component);
       });
 }

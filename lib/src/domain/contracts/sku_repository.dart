@@ -10,16 +10,19 @@ abstract interface class ISkuRepository {
   TaskEither<DomainFailure, List<Sku>> fetchAll();
 
   /// Fetch a single SKU by id.
-  TaskEither<DomainFailure, Sku> fetchById(String id);
+  TaskEither<DomainFailure, Sku> fetchById({required String id});
 
   /// Create a new SKU.
-  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow});
 
   /// Update an existing SKU.
-  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow});
 
   /// Delete a SKU by id.
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({
+    required String id,
+    IUnitOfWork? uow,
+  });
 
   /// Remove every record (factory reset support).
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});

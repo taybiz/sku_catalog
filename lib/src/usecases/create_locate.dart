@@ -9,6 +9,6 @@ class CreateLocate {
   final ILocateRepository _repository;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Locate> call(Locate locate) =>
-      _repository.create(locate);
+  TaskEither<DomainFailure, Locate> call({required Locate locate}) =>
+      _repository.create(locate: locate);
 }

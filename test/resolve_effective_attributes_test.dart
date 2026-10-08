@@ -78,13 +78,13 @@ void main() {
       );
 
   Future<List<ResolvedAttribute>> effective(String instanceId) async {
-    final result = await resolve(instanceId).run();
+    final result = await resolve(instanceId: instanceId).run();
     result.isRight().should.be(true);
     return result.getOrElse((_) => []);
   }
 
   Future<List<ResolvedAttribute>> effectiveForSku(String skuId) async {
-    final result = await resolve.forSku(skuId).run();
+    final result = await resolve.forSku(skuId: skuId).run();
     result.isRight().should.be(true);
     return result.getOrElse((_) => []);
   }
@@ -106,20 +106,28 @@ void main() {
       ),
     );
 
-    await create(traits.create(Trait(meta: meta('mech'), name: 'Mech')));
     await create(
       traits.create(
-        Trait(meta: meta('flipper'), name: 'Flipper', parentTraitId: 'mech'),
+        trait: Trait(meta: meta('mech'), name: 'Mech'),
+      ),
+    );
+    await create(
+      traits.create(
+        trait: Trait(
+          meta: meta('flipper'),
+          name: 'Flipper',
+          parentTraitId: 'mech',
+        ),
       ),
     );
     await create(
       attributes.create(
-        definition('mech', 'travel', unit: 'mm', defaultValue: 10),
+        attribute: definition('mech', 'travel', unit: 'mm', defaultValue: 10),
       ),
     );
     await create(
       attributes.create(
-        definition(
+        attribute: definition(
           'mech',
           'label',
           type: DataType.string,
@@ -128,19 +136,25 @@ void main() {
       ),
     );
     await create(
-      attributes.create(definition('flipper', 'coil_ohms', unit: 'ohm')),
+      attributes.create(
+        attribute: definition('flipper', 'coil_ohms', unit: 'ohm'),
+      ),
     );
 
     // `flipper-set` claims travel; `flipper-plain` claims nothing. Both are
     // components of `assembly`, which is itself a component of `top-assembly`.
-    await create(skus.create(sku('flipper-set', ['flipper'], {'travel': 40})));
-    await create(skus.create(sku('flipper-plain', ['flipper'])));
-    await create(skus.create(sku('assembly', ['mech'], {'travel': 55})));
-    await create(skus.create(sku('top-assembly', ['mech'], {'travel': 99})));
+    await create(
+      skus.create(sku: sku('flipper-set', ['flipper'], {'travel': 40})),
+    );
+    await create(skus.create(sku: sku('flipper-plain', ['flipper'])));
+    await create(skus.create(sku: sku('assembly', ['mech'], {'travel': 55})));
+    await create(
+      skus.create(sku: sku('top-assembly', ['mech'], {'travel': 99})),
+    );
 
     await create(
       components.create(
-        SkuComponent(
+        component: SkuComponent(
           meta: meta('edge-assembly-flipper-set'),
           parentSkuId: 'assembly',
           childSkuId: 'flipper-set',
@@ -150,7 +164,7 @@ void main() {
     );
     await create(
       components.create(
-        SkuComponent(
+        component: SkuComponent(
           meta: meta('edge-assembly-flipper-plain'),
           parentSkuId: 'assembly',
           childSkuId: 'flipper-plain',
@@ -160,7 +174,7 @@ void main() {
     );
     await create(
       components.create(
-        SkuComponent(
+        component: SkuComponent(
           meta: meta('edge-top-assembly'),
           parentSkuId: 'top-assembly',
           childSkuId: 'assembly',
@@ -170,9 +184,13 @@ void main() {
     );
 
     await create(
-      instances.create(instance('d-instance', 'flipper-set', {'travel': 42})),
+      instances.create(
+        instance: instance('d-instance', 'flipper-set', {'travel': 42}),
+      ),
     );
-    await create(instances.create(instance('d-plain', 'flipper-set')));
+    await create(
+      instances.create(instance: instance('d-plain', 'flipper-set')),
+    );
   });
 
   group('Given ResolveEffectiveAttributes', () {
@@ -235,7 +253,9 @@ void main() {
       test('Then it is not returned as an attribute', () async {
         await create(
           instances.create(
-            instance('d-stray', 'flipper-set', {'no_trait_defines_this': 7}),
+            instance: instance('d-stray', 'flipper-set', {
+              'no_trait_defines_this': 7,
+            }),
           ),
         );
 
@@ -251,7 +271,7 @@ void main() {
       test('Then that trait attributes join the resolved set', () async {
         await create(
           instances.create(
-            Instance(
+            instance: Instance(
               meta: meta('d-classified'),
               skuId: 'flipper-plain',
               locateId: null,
@@ -272,7 +292,7 @@ void main() {
       test('Then resolution terminates instead of hanging', () async {
         await create(
           components.create(
-            SkuComponent(
+            component: SkuComponent(
               meta: meta('edge-back'),
               parentSkuId: 'flipper-set',
               childSkuId: 'assembly',
@@ -291,7 +311,7 @@ void main() {
 
     group('When the instance does not exist', () {
       test('Then the failure comes back on the Left', () async {
-        final result = await resolve('nope').run();
+        final result = await resolve(instanceId: 'nope').run();
 
         result.isLeft().should.be(true);
         final failure = result.fold((f) => f, (_) => fail('expected Left'));
@@ -301,7 +321,7 @@ void main() {
 
     group('When a SKU does not exist', () {
       test('Then the definition set is empty rather than an error', () async {
-        final resolved = await resolve.forSku('nope').run();
+        final resolved = await resolve.forSku(skuId: 'nope').run();
 
         resolved.isRight().should.be(true);
         resolved.getOrElse((_) => []).should.beEmpty();

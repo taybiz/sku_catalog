@@ -114,7 +114,7 @@ merge the attribute definitions.
 final attributes = await ResolveSchema(
   traitRepository: myTraitRepository,
   attributeRepository: myAttributeRepository,
-)(breaker.traitIds).run();
+)(traitIds: breaker.traitIds).run();
 // attributes: [Rated Amperage (number, A, required)]
 ```
 
@@ -140,7 +140,7 @@ this *folds* the tree that builds one thing.
 final bom = await AggregateBillOfMaterials(
   skuRepository: mySkuRepository,
   skuComponentRepository: mySkuComponentRepository,
-)(panel.meta.id, units: 12).run();
+)(skuId: panel.meta.id, units: 12).run();
 // → one line per distinct part: quantity, level, and whether it is itself
 //   an assembly. A part reached by two paths is one line whose quantity is the
 //   sum of both; a loop is a failure, not a number.
@@ -160,10 +160,10 @@ and pass them in.
 ```dart
 abstract interface class ISkuRepository {
   TaskEither<DomainFailure, List<Sku>> fetchAll();
-  TaskEither<DomainFailure, Sku> fetchById(String id);
-  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow});
-  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow});
-  TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> fetchById({required String id});
+  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id, IUnitOfWork? uow});
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
 }
 ```
@@ -179,10 +179,11 @@ their own backend against these contracts.
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
 it to the use cases that write more than once (`DeleteSku`,
-`DeleteInstance`) and a failure half-way through rolls back. `runEither` bridges
-the two conventions: a returned `Left` becomes the throw that triggers rollback,
-and is handed back as a `Left` afterwards. `NoOpUnitOfWork` is the honest
-implementation for a store that cannot roll back.
+`DeleteInstance`) and a failure half-way through rolls back. `runEither` takes a
+body that returns `Either`; a `Left` is the rollback signal and is handed back
+unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
+writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
+for a store that cannot roll back.
 
 Two deliberate consequences worth knowing:
 
