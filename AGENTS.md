@@ -16,16 +16,15 @@ Bible"; one line each here. Re-checked 2026-10-08 against the bible at
 | # | Bible says | Here |
 |---|---|---|
 | 1 | §4.6 the default seam is `Future<Either<...>>` and consumers never build or run a chain. | The seam **is** the unrun `TaskEither`; the consumer runs it. **Sanctioned** by §4 ("declare the error style, loudly") — declared in the barrel doc comment, the README and here. |
-| 2 | §3.3 / §9 a single-package repo is still a melos workspace: `melos: useRootAsPackage: true`, scripts in its own pubspec, CI runs `melos run`. | No melos at all — CI runs the raw `dart` commands. |
-| 3 | §2.5 named parameters always; §4.4 `call()` takes discrete business params, never cargo objects. | Contracts and `call()` are positional and pass whole entities (`create(DeviceType …)`). |
-| 4 | §2.2 never disable a rule in `analysis_options.yaml` — per-line `// ignore:` or change the code. | `prefer_initializing_formals: false` is set in the config. |
-| 5 | §9.7 the root `analysis_options.yaml` wires lints, **strict**, `public_member_api_docs`, `todo: error`. | `lints` + `public_member_api_docs` + `todo: error` are on; no `strict-casts` / `strict-raw-types`. |
-| 6 | §4.2 failure hierarchies are closed (`sealed` where the language allows) so a `switch` over them is exhaustive. | `DomainFailure` is `abstract base` — the shared root every product's failure family extends, which a `sealed` root cannot be. |
-| 7 | §4.8 / §10.2 no `throw` / `try` / `catch` anywhere inside the domain. | `contracts/unit_of_work.dart` bridges a transactional store's rollback with a hand-rolled `throw` / `on … catch`. |
-| 8 | §6.2 use-case tests mock the repository seam with `mocktail`. | All twelve test files run the use cases against the real in-memory doubles (§6.3 also says to prefer a real double where one exists). |
-| 9 | Stack table pins `equatable ^2.x`. | `equatable ^3.0.0` — the pin looks stale; 3.x is current and `dart pub outdated` is clean. |
-| 10 | §2.7 / §3 a published package's example directory is `examples/`. | `example/` (singular) — the name only. |
-| 11 | §10.4 every repository contract has ≥2 adapters and a shared contract suite run against all of them. | One (test-only, in-memory) adapter and no contract suite. Open item in `BACKLOG.md`. |
+| 2 | §2.5 named parameters always; §4.4 `call()` takes discrete business params, never cargo objects. | Contracts and `call()` are positional and pass whole entities (`create(DeviceType …)`). |
+| 3 | §2.2 never disable a rule in `analysis_options.yaml` — per-line `// ignore:` or change the code. | `prefer_initializing_formals: false` is set in the config. |
+| 4 | §9.7 the root `analysis_options.yaml` wires lints, **strict**, `public_member_api_docs`, `todo: error`. | `lints` + `public_member_api_docs` + `todo: error` are on; no `strict-casts` / `strict-raw-types`. |
+| 5 | §4.2 failure hierarchies are closed (`sealed` where the language allows) so a `switch` over them is exhaustive. | `DomainFailure` is `abstract base` — the shared root every product's failure family extends, which a `sealed` root cannot be. |
+| 6 | §4.8 / §10.2 no `throw` / `try` / `catch` anywhere inside the domain. | `contracts/unit_of_work.dart` bridges a transactional store's rollback with a hand-rolled `throw` / `on … catch`. |
+| 7 | §6.2 use-case tests mock the repository seam with `mocktail`. | All twelve test files run the use cases against the real in-memory doubles (§6.3 also says to prefer a real double where one exists). |
+| 8 | Stack table pins `equatable ^2.x`. | `equatable ^3.0.0` — the pin looks stale; 3.x is current and `dart pub outdated` is clean. |
+| 9 | §2.7 / §3 a published package's example directory is `examples/`. | `example/` (singular) — the name only. |
+| 10 | §10.4 every repository contract has ≥2 adapters and a shared contract suite run against all of them. | One (test-only, in-memory) adapter and no contract suite. Open item in `BACKLOG.md`. |
 
 There is no deviation for the layer graph: the current bible (§2.8) enforces
 boundaries by **lint and review only** and names no architecture test, so the
@@ -54,11 +53,13 @@ library can never start depending on them.
 
 ## Local wiring
 
-- One package, plain Dart commands, no task runner: no melos and no pub
-  workspace (see deviation 2). CI runs the commands directly.
-- `dart pub get` · `dart format --output=none --set-exit-if-changed .` ·
-  `dart analyze --fatal-infos --fatal-warnings` · `dart test` ·
-  `dart pub publish --dry-run`. CI runs exactly those, in that order.
+- Melos workspace of one (bible §3.3 "Topology C"): the package *is* the
+  workspace root — `melos: useRootAsPackage: true` in `pubspec.yaml`, no
+  `melos.yaml`, no pub `workspace:`. The gate is four scripts, and CI calls them
+  by name so a script that rots fails the build: `dart run melos run format`,
+  `analyze`, `test`, `publish-dry` (after `dart pub get`; `dart run melos
+  bootstrap` once per clone, which writes `melos_<pkg>.iml` — kept out of git and
+  the archive by `*.iml` in `.gitignore` and `.pubignore`).
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is enforced twice, deliberately. `import_rules.yaml`
@@ -77,5 +78,5 @@ library can never start depending on them.
   file list before trusting it — an over-eager rule once hid a member's pubspec
   and emptied its archive, and stale untracked directories in a working clone get
   published too.
-- Open items live in `BACKLOG.md`, including the outstanding doctrine deltas
-  (a second repository adapter plus a shared contract suite; the melos question).
+- Open items live in `BACKLOG.md`, including the outstanding doctrine delta
+  (a second repository adapter plus a shared contract suite).

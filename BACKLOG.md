@@ -108,8 +108,9 @@ code's favour, rewrites one, and adds one**: the `dart_arch_test` boundary rule
 and the pub-workspace mandate are gone (§2.8 now enforces boundaries by lint +
 review only; §3.3 "Topology C" sanctions a single-package repo), which clears the
 two boundary/cycle items and half the workspace item; and the same revision makes
-melos mandatory for a single-package repo, which is a **new** gap the repo does
-not yet meet. The stricken items are kept below with the reason, per house style.
+melos mandatory for a single-package repo — a new gap, **met the same day** (the
+`melos:` block in `pubspec.yaml`). The stricken items are kept below with the
+reason, per house style.
 
 - **Deviation: `lib/src/domain/contracts/` (all nine repository contracts)** —
   methods take **positional** parameters (`fetchById(String id)`,
@@ -166,20 +167,22 @@ not yet meet. The stricken items are kept below with the reason, per house style
   the old `docs/03`/`docs/09` mandate for a `*_domain` + `*_usecases` + ≥2
   `*_datasource_*` + app workspace is gone: §3.3 "Topology C" now sanctions a
   single-package repo, and this repo's one-published-package shape (argued in
-  `AGENTS.md`, "One package, on purpose") fits it exactly. What survives is the
-  melos half, next.
+  `AGENTS.md`, "One package, on purpose") fits it exactly. The melos half was
+  resolved the same day — item next.
 
-- **Deviation (new 2026-10-08): no melos** — §3.3 "Topology C" says a
-  single-package repo is **still a melos workspace**: the package *is* the
-  workspace root (`melos: useRootAsPackage: true`, melos as a dev dependency,
-  scripts in its own pubspec), CI calls `dart run melos run analyze` / `test`,
-  and the release flow is `melos version` / `melos publish`. This repo runs plain
-  `dart` commands with no task runner. The reason for dropping melos that was
+- **[resolved 2026-10-08] no melos** — §3.3 "Topology C" says a single-package
+  repo is **still a melos workspace**: the package *is* the workspace root
+  (`melos: useRootAsPackage: true`, melos as a dev dependency, scripts in its own
+  pubspec), CI calls `dart run melos run analyze` / `test`, and the release flow
+  is `melos version` / `melos publish`. The reason for dropping melos that was
   previously recorded here ("melos never saw the workspace root as a package, so
   the scripts had to name it explicitly") is exactly what `useRootAsPackage: true`
-  addresses, so it no longer holds. Note `melos bootstrap` writes
-  `melos_<pkg>.iml` into the root — `*.iml` has to be gitignored or it rides into
-  the published archive.
+  addresses, so it no longer held. **Adopted the same day:** `melos: ^8.8.0` and a
+  `melos:` block (`format` / `analyze` / `test` / `publish-dry`) are in
+  `pubspec.yaml`, CI calls the four scripts by name, and `*.iml` (written by
+  `melos bootstrap`) is ignored in `.gitignore` and `.pubignore`. Verified:
+  `melos bootstrap` links one package and writes the `.iml`, and
+  `dart run melos run analyze` / `test` / `publish-dry` all pass.
 
 - **Deviation: `import_rules.yaml` + `test/boundary_test.dart`** — the layer
   graph is enforced by the `import_rules` analyzer plugin (wired in

@@ -27,6 +27,18 @@
   CI change, and the gate stays green (`dart analyze --fatal-infos
   --fatal-warnings` clean, `dart test` 86 passing, `dart pub publish --dry-run`
   0 warnings).
+- Adopted the bible's §3.3 "Topology C" for this single-package repo: it is now a
+  **melos workspace of one**. `melos: ^8.8.0` is a dev dependency and the gate
+  lives in a `melos:` block in `pubspec.yaml` (`useRootAsPackage: true`; scripts
+  `format`, `analyze`, `test`, `publish-dry`) — no `melos.yaml`. CI now calls
+  `dart run melos run <script>` instead of the raw commands, so a script that rots
+  fails the build. `*.iml` (written by `melos bootstrap`) is ignored in both
+  `.gitignore` and `.pubignore` so it cannot ride into the archive. This closes
+  the melos deviation the same-day re-check added; `AGENTS.md`, `README.md` and
+  `BACKLOG.md` updated to match. Gate green after the change: `dart run melos run
+  analyze` clean, `dart run melos run test` 86 passing, `dart run melos run
+  publish-dry` 0 warnings on a committed tree, `dart run melos bootstrap` links
+  one package.
 
 ## 0.2.0
 

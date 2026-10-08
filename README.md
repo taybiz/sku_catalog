@@ -220,18 +220,20 @@ so there is no question of which half to depend on.
 
 ## Working on it
 
-Plain Dart commands, no task runner:
+This package is a **melos workspace of one**: the package *is* the workspace root,
+so the scripts live in `pubspec.yaml` under `melos:`. There is no `melos.yaml`.
 
 ```bash
 dart pub get
-dart format --output=none --set-exit-if-changed .
-dart analyze --fatal-infos --fatal-warnings
-dart test
-dart pub publish --dry-run     # what pub.dev would see
+dart run melos bootstrap       # once per clone; also writes melos_<pkg>.iml
+dart run melos run format      # dart format --output=none --set-exit-if-changed .
+dart run melos run analyze     # dart analyze --fatal-infos --fatal-warnings
+dart run melos run test        # dart test
+dart run melos run publish-dry # dart pub publish --dry-run
 ```
 
-CI runs exactly those, in that order, so a broken step fails the build rather
-than rotting.
+CI runs exactly those scripts, in that order, so a broken step fails the build
+rather than rotting.
 
 ### Publishing
 

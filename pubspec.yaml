@@ -21,5 +21,17 @@ dependencies:
 
 dev_dependencies:
   lints: ^6.1.0
+  melos: ^8.8.0
   shouldly: ^0.5.0+1
   test: ^1.25.0
+
+# Topology C: this single-package repo IS the melos workspace root, so the
+# scripts CI calls live here instead of in a melos.yaml (a bad smell since melos
+# 7 — see the bible, §2 and §3.3). Run them with `dart run melos run <script>`.
+melos:
+  useRootAsPackage: true
+  scripts:
+    format: dart format --output=none --set-exit-if-changed .
+    analyze: dart analyze --fatal-infos --fatal-warnings
+    test: dart test
+    publish-dry: dart pub publish --dry-run

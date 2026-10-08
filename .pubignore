@@ -36,3 +36,9 @@ doc/api/
 *.js.map
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Written by `melos bootstrap`; pub reads THIS file, not .gitignore, so the
+# exclusion has to be restated here for it to leave the published archive.
+# (pub already drops dot-directories, but say it outright.)
+*.iml
+.idea/

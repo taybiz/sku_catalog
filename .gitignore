@@ -27,3 +27,8 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Written into the root by `melos bootstrap` (Topology C). Keep it out of the
+# archive so it never ships with the package.
+*.iml
+.idea/
