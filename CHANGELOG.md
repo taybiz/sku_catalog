@@ -15,6 +15,18 @@
   `import_rules` as the boundary gate, one package instead of a workspace, no
   `mocktail`). They live in `BACKLOG.md` under "Deviations from the Bible
   (flagged for review)" for a human call.
+- Re-checked that deviation list on 2026-10-08 against the bible at
+  `taybiz/dart-flutter-bible` `main` (`5680607`). Doctrine had moved: the
+  `dart_arch_test` boundary rule and the pub-workspace mandate are gone (§2.8 now
+  enforces boundaries by lint + review only; §3.3 "Topology C" sanctions a
+  single-package repo), which resolves the two boundary/cycle items and half the
+  workspace item, while the same revision makes melos mandatory for a
+  single-package repo — a gap this repo does not yet meet. `AGENTS.md` now carries
+  the full deviation table (one line each, against the current rule codes) and
+  `BACKLOG.md` records the resolutions. Documentation only: no code, dependency or
+  CI change, and the gate stays green (`dart analyze --fatal-infos
+  --fatal-warnings` clean, `dart test` 86 passing, `dart pub publish --dry-run`
+  0 warnings).
 
 ## 0.2.0
 

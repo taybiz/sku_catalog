@@ -101,6 +101,16 @@ bible disagree. A deviation is **not** automatically a bug in the code: the
 bible may itself be wrong, so each one is recorded for a human decision rather
 than fixed by the auditor. Nothing here blocks a publish.
 
+**Re-checked 2026-10-08** against the bible at `taybiz/dart-flutter-bible`
+`main` (`5680607`, the first revision with the `S.N.N` rule codes). Doctrine has
+moved since this list was written, and the move **resolves three items in the
+code's favour, rewrites one, and adds one**: the `dart_arch_test` boundary rule
+and the pub-workspace mandate are gone (§2.8 now enforces boundaries by lint +
+review only; §3.3 "Topology C" sanctions a single-package repo), which clears the
+two boundary/cycle items and half the workspace item; and the same revision makes
+melos mandatory for a single-package repo, which is a **new** gap the repo does
+not yet meet. The stricken items are kept below with the reason, per house style.
+
 - **Deviation: `lib/src/domain/contracts/` (all nine repository contracts)** —
   methods take **positional** parameters (`fetchById(String id)`,
   `create(DeviceType deviceType, …)`, `delete(String id, …)`) and pass a whole
@@ -148,17 +158,28 @@ than fixed by the auditor. Nothing here blocks a publish.
   `todo: error`" at the root; `lints: recommended` is on and `todo: error` is
   set, but no `strict-casts` / `strict-inference` / `strict-raw-types` is.
   `docs/02` never names which strict flags it means, so the requirement is
-  underspecified — flagging it rather than guessing a setting.
+  underspecified — flagging it rather than guessing a setting. **Still stands at
+  2026-10-08:** §9.7 (rule-coded now) names `strict` explicitly but still not
+  which flags, and the repo sets none.
 
-- **Deviation: repo root / `pubspec.yaml` (single package, no `workspace:`)** —
-  `docs/03` and the `docs/09` bootstrap checklist mandate a pub workspace of
-  `*_domain` + `*_usecases` + ≥2 `*_datasource_*` + the app. Here there is one
-  published package on purpose, argued in `AGENTS.md` ("One package, on
-  purpose"): a published package may not carry a `path:` dependency, so any
-  split means publishing siblings in dependency order with version lockstep and
-  no client-side check that catches a miss. The bible's checklist assumes
-  unbounded publication; for a package whose consumers implement their own
-  backend, the bible may be wrong.
+- **[halved 2026-10-08] `pubspec.yaml` — single package, no pub workspace** —
+  the old `docs/03`/`docs/09` mandate for a `*_domain` + `*_usecases` + ≥2
+  `*_datasource_*` + app workspace is gone: §3.3 "Topology C" now sanctions a
+  single-package repo, and this repo's one-published-package shape (argued in
+  `AGENTS.md`, "One package, on purpose") fits it exactly. What survives is the
+  melos half, next.
+
+- **Deviation (new 2026-10-08): no melos** — §3.3 "Topology C" says a
+  single-package repo is **still a melos workspace**: the package *is* the
+  workspace root (`melos: useRootAsPackage: true`, melos as a dev dependency,
+  scripts in its own pubspec), CI calls `dart run melos run analyze` / `test`,
+  and the release flow is `melos version` / `melos publish`. This repo runs plain
+  `dart` commands with no task runner. The reason for dropping melos that was
+  previously recorded here ("melos never saw the workspace root as a package, so
+  the scripts had to name it explicitly") is exactly what `useRootAsPackage: true`
+  addresses, so it no longer holds. Note `melos bootstrap` writes
+  `melos_<pkg>.iml` into the root — `*.iml` has to be gitignored or it rides into
+  the published archive.
 
 - **Deviation: `import_rules.yaml` + `test/boundary_test.dart`** — the layer
   graph is enforced by the `import_rules` analyzer plugin (wired in
@@ -173,11 +194,17 @@ than fixed by the auditor. Nothing here blocks a publish.
   part `docs/02` distrusts about it. With one package there are no cross-package
   `package:` URIs for `dart_arch_test`'s boundary assertions to key on, so the
   bible's rule may not fit a single-package repo at all.
+  **Resolved 2026-10-08:** the current §2.8 enforces boundaries by lint + review
+  only, prescribes no architecture test, and says nothing about `import_rules`
+  either way — doctrine moved to the code, so this is no longer a deviation. The
+  plugin plus `boundary_test.dart` stay as extra hygiene.
 
 - **Deviation: `test/boundary_test.dart` (cycle-freedom)** — cycle-freedom is
   asserted by area-level import-direction scanning and the plugin's rules, not
   by `shouldBeFreeOfCycles(allFiles(), graph)` over the resolved graph as
-  `docs/02` prescribes. Same root cause as the item above.
+  `docs/02` prescribes. Same root cause as the item above — **and resolved with
+  it (2026-10-08):** with no `dart_arch_test` rule in the current §2.8, the
+  area-level scan is not competing with a prescribed cycle gate.
 
 - **Deviation: `test/` (all twelve test files) — no `mocktail`** — the
   application-layer tests run against the real in-memory doubles instead of
