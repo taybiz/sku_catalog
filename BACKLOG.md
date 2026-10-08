@@ -109,29 +109,7 @@ and the pub-workspace mandate are gone (§2.8 now enforces boundaries by lint +
 review only; §3.3 "Topology C" sanctions a single-package repo), which clears the
 two boundary/cycle items and half the workspace item; and the same revision makes
 melos mandatory for a single-package repo — a new gap, **met the same day** (the
-`melos:` block in `pubspec.yaml`). The stricken items are kept below with the
-reason, per house style.
-
-- **[halved 2026-10-08] `pubspec.yaml` — single package, no pub workspace** —
-  the old `docs/03`/`docs/09` mandate for a `*_domain` + `*_usecases` + ≥2
-  `*_datasource_*` + app workspace is gone: §3.3 "Topology C" now sanctions a
-  single-package repo, and this repo's one-published-package shape (argued in
-  `AGENTS.md`, "One package, on purpose") fits it exactly. The melos half was
-  resolved the same day — item next.
-
-- **[resolved 2026-10-08] no melos** — §3.3 "Topology C" says a single-package
-  repo is **still a melos workspace**: the package *is* the workspace root
-  (`melos: useRootAsPackage: true`, melos as a dev dependency, scripts in its own
-  pubspec), CI calls `dart run melos run analyze` / `test`, and the release flow
-  is `melos version` / `melos publish`. The reason for dropping melos that was
-  previously recorded here ("melos never saw the workspace root as a package, so
-  the scripts had to name it explicitly") is exactly what `useRootAsPackage: true`
-  addresses, so it no longer held. **Adopted the same day:** `melos: ^8.8.0` and a
-  `melos:` block (`format` / `analyze` / `test` / `publish-dry`) are in
-  `pubspec.yaml`, CI calls the four scripts by name, and `*.iml` (written by
-  `melos bootstrap`) is ignored in `.gitignore` and `.pubignore`. Verified:
-  `melos bootstrap` links one package and writes the `.iml`, and
-  `dart run melos run analyze` / `test` / `publish-dry` all pass.
+`melos:` block in `pubspec.yaml`).
 
 - **Deviation: `import_rules.yaml` + `test/boundary_test.dart`** — the layer
   graph is enforced by the `import_rules` analyzer plugin (wired in
@@ -158,13 +136,6 @@ reason, per house style.
   it (2026-10-08):** with no `dart_arch_test` rule in the current §2.8, the
   area-level scan is not competing with a prescribed cycle gate.
 
-- **Deviation: `test/` (all twelve test files) — no `mocktail`** — the
-  application-layer tests run against the real in-memory doubles instead of
-  mocking the repository interfaces. `docs/06` ("Where tests live" layer matrix)
-  prescribes `mocktail` at the use-case seam, while the same section's mocktail
-  rules say to *prefer* real in-memory doubles where one exists. The bible
-  contradicts itself here; the repo took the second half.
-
 - **Deviation: `test/support/` — one repository adapter, no shared contract
   suite** — `docs/01` calls the at-least-two-adapter rule "the one we never
   skip" and `docs/05` requires a shared contract suite run against every
@@ -172,12 +143,3 @@ reason, per house style.
   no contract suite. Already an Open item above for the adapter count; listed
   here because `docs/10`'s review checklist asks for it explicitly.
 
-- **Deviation: `pubspec.yaml` (`equatable: ^3.0.0`)** — the stack table in
-  `docs/00-compact`/`docs/04` pins `equatable ^2.x`. The bible pin looks stale
-  rather than the dependency wrong: 3.x is current, `dart pub outdated` reports
-  nothing outdated, and the entities compile and test clean on it.
-
-- **Deviation: `example/` (singular)** — `docs/02` ("Code placement") and
-  `docs/03` call a published package's example directory `examples/`. Only the
-  name diverges; the directory exists, is analyzer- and format-covered, and is
-  shipped in the archive.
