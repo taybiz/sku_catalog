@@ -31,7 +31,7 @@ class DescendantLocateIds {
       if (includeSelf || current != rootId) {
         result.add(current);
       }
-      for (final child in (adj[current] ?? [])) {
+      for (final child in (adj[current] ?? const <String>[])) {
         queue.add(child);
       }
     }

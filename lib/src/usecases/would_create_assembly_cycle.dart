@@ -25,7 +25,7 @@ class WouldCreateAssemblyCycle {
         final current = queue.removeLast();
         if (current == parentSkuId) return true;
         if (!visited.add(current)) continue;
-        for (final neighbor in (adj[current] ?? [])) {
+        for (final neighbor in (adj[current] ?? const <String>[])) {
           queue.add(neighbor);
         }
       }
