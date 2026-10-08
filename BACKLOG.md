@@ -39,20 +39,10 @@ Nothing here blocks a publish.
 ## Deviations from the Bible (flagged for review — do NOT auto-fix)
 
 `dart-flutter-bible` (`taybiz/dart-flutter-bible`, `docs/01`–`docs/12`) is the
-standard this repo is built to. Everything below is a place the code and the
-bible disagree. A deviation is **not** automatically a bug in the code: the
-bible may itself be wrong, so each one is recorded for a human decision rather
-than fixed by the auditor. Nothing here blocks a publish.
-
-**Re-checked 2026-10-08** against the bible at `taybiz/dart-flutter-bible`
-`main` (`5680607`, the first revision with the `S.N.N` rule codes). Doctrine has
-moved since this list was written, and the move **resolves three items in the
-code's favour, rewrites one, and adds one**: the `dart_arch_test` boundary rule
-and the pub-workspace mandate are gone (§2.8 now enforces boundaries by lint +
-review only; §3.3 "Topology C" sanctions a single-package repo), which clears the
-two boundary/cycle items and half the workspace item; and the same revision makes
-melos mandatory for a single-package repo — a new gap, **met the same day** (the
-`melos:` block in `pubspec.yaml`).
+standard this repo is built to. Each entry below is a place the code and the bible
+disagree. A deviation is **not** automatically a bug in the code: the bible may
+itself be wrong, so each one is recorded for a human decision rather than fixed by
+the auditor. None blocks a publish.
 
 - **Deviation: `import_rules.yaml` + `test/boundary_test.dart`** — the layer
   graph is enforced by the `import_rules` analyzer plugin (wired in
@@ -67,17 +57,11 @@ melos mandatory for a single-package repo — a new gap, **met the same day** (t
   part `docs/02` distrusts about it. With one package there are no cross-package
   `package:` URIs for `dart_arch_test`'s boundary assertions to key on, so the
   bible's rule may not fit a single-package repo at all.
-  **Resolved 2026-10-08:** the current §2.8 enforces boundaries by lint + review
-  only, prescribes no architecture test, and says nothing about `import_rules`
-  either way — doctrine moved to the code, so this is no longer a deviation. The
-  plugin plus `boundary_test.dart` stay as extra hygiene.
 
 - **Deviation: `test/boundary_test.dart` (cycle-freedom)** — cycle-freedom is
   asserted by area-level import-direction scanning and the plugin's rules, not
   by `shouldBeFreeOfCycles(allFiles(), graph)` over the resolved graph as
-  `docs/02` prescribes. Same root cause as the item above — **and resolved with
-  it (2026-10-08):** with no `dart_arch_test` rule in the current §2.8, the
-  area-level scan is not competing with a prescribed cycle gate.
+  `docs/02` prescribes. Same root cause as the item above.
 
 - **Deviation: `test/support/` — one repository adapter, no shared contract
   suite** — `docs/01` calls the at-least-two-adapter rule "the one we never
