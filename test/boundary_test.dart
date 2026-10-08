@@ -120,6 +120,17 @@ void main() {
 
         offenders.should.beEmpty();
       });
+
+      test('Then none of them still calls anything a device', () {
+        final offenders = <String>[];
+        for (final entity in Directory('lib').listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
+          final text = entity.readAsStringSync().toLowerCase();
+          if (text.contains('device')) offenders.add(entity.path);
+        }
+
+        offenders.should.beEmpty();
+      });
     });
   });
 }
