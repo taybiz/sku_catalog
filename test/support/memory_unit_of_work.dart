@@ -1,3 +1,4 @@
+import 'package:fpdart/fpdart.dart';
 import 'package:sku_catalog/sku_catalog.dart';
 
 /// A memory-backed store whose rows a [MemoryUnitOfWork] can snapshot and put
@@ -11,14 +12,15 @@ abstract interface class MemoryBacked {
 }
 
 /// A real unit of work over this package's stores: the rows of every registered
-/// store are snapshotted before [run], and put back if the body throws.
+/// store are snapshotted before the body runs, and put back when the body
+/// returns a `Left`.
 ///
 /// This is what makes an atomic multi-write operation testable without a
 /// database — pair it with the use cases that accept one:
 ///
 /// ```dart
 /// final uow = MemoryUnitOfWork([skus, edges]);
-/// final result = await uow.runEither(() async {
+/// final result = await uow.runEither(body: () async {
 ///   await deleteAnEdge().run();     // if this returns Left ...
 ///   return deleteTheSku().run();    // ... this never happens, and the edge is back
 /// });
@@ -34,7 +36,9 @@ class MemoryUnitOfWork implements IUnitOfWork {
   final List<MemoryBacked> _stores;
 
   @override
-  Future<T> run<T>(Future<T> Function() work) async {
+  Future<Either<F, T>> runEither<F, T>({
+    required Future<Either<F, T>> Function() body,
+  }) async {
     final snapshots = <MemoryBacked, Map<String, Map<String, dynamic>>>{
       for (final store in _stores)
         store: {
@@ -42,13 +46,12 @@ class MemoryUnitOfWork implements IUnitOfWork {
             entry.key: Map<String, dynamic>.from(entry.value),
         },
     };
-    try {
-      return await work();
-    } catch (_) {
+    final result = await body();
+    if (result.isLeft()) {
       for (final entry in snapshots.entries) {
         entry.key.replaceAll(entry.value);
       }
-      rethrow;
     }
+    return result;
   }
 }

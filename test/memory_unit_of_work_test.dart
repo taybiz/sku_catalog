@@ -23,21 +23,19 @@ void main() {
           .map((s) => s.meta.id)
           .toList();
 
-  test('a thrown body restores every registered store', () async {
+  test('a Left body restores every registered store', () async {
     final skus = MemorySkuRepository();
     final locates = MemoryLocateRepository();
     await skus.create(sku('a')).run();
     final uow = MemoryUnitOfWork([skus, locates]);
 
-    await expectLater(
-      () => uow.run(() async {
-        await skus.create(sku('b')).run();
-        await locates.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
-        throw StateError('boom');
-      }),
-      throwsA(isA<StateError>()),
-    );
+    final result = await uow.runEither<DomainFailure, void>(body: () async {
+      await skus.create(sku('b')).run();
+      await locates.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
+      return const Left<DomainFailure, void>(InUseFailure('refused'));
+    });
 
+    result.isLeft().should.beTrue();
     (await ids(skus)).should.be(['a']);
     (await locates.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
   });
@@ -47,7 +45,7 @@ void main() {
     await skus.create(sku('a')).run();
     final uow = MemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(() async {
+    final result = await uow.runEither<DomainFailure, void>(body: () async {
       await skus.create(sku('b')).run();
       return const Left<DomainFailure, void>(InUseFailure('refused'));
     });
@@ -64,7 +62,7 @@ void main() {
     final skus = MemorySkuRepository();
     final uow = MemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(() async {
+    final result = await uow.runEither<DomainFailure, void>(body: () async {
       await skus.create(sku('a')).run();
       return const Right<DomainFailure, void>(null);
     });
@@ -78,14 +76,12 @@ void main() {
     final others = MemoryLocateRepository();
     final uow = MemoryUnitOfWork([skus]);
 
-    await expectLater(
-      () => uow.run(() async {
-        await others.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
-        throw StateError('boom');
-      }),
-      throwsA(isA<StateError>()),
-    );
+    final result = await uow.runEither<DomainFailure, void>(body: () async {
+      await others.create(Locate(meta: meta('l1'), name: 'Rack 1')).run();
+      return const Left<DomainFailure, void>(InUseFailure('refused'));
+    });
 
+    result.isLeft().should.beTrue();
     // Not registered, so not rolled back — the documented boundary.
     (await others.fetchAll().run()).getOrElse((_) => []).should.haveCount(1);
   });

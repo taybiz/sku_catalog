@@ -34,7 +34,7 @@ class DeleteInstance {
             .toList();
         return TaskEither<DomainFailure, void>(
           () => _unitOfWork.runEither<DomainFailure, void>(
-            () => sequenceTaskEither([
+            body: () => sequenceTaskEither([
               for (final img in mine) _imageRepository.delete(img.id),
             ]).flatMap((_) => _instanceRepository.delete(id)).run(),
           ),
