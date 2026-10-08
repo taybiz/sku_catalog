@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.0
 
 - Additive: an **injectable id seam**. `newMeta` takes an optional
   `IdGenerator` (`String Function()`, `lib/src/usecases/id_generator.dart`), and
