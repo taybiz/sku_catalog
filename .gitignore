@@ -32,3 +32,7 @@ doc/api/
 # archive so it never ships with the package.
 *.iml
 .idea/
+
+# Hermes agent artifacts (plan mode writes .hermes/plans/). Repo-only scratch —
+# never tracked, never published.
+.hermes/
