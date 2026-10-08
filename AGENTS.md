@@ -47,15 +47,19 @@ library can never start depending on them.
   out of git and the archive by `*.iml` / `.idea/` in `.gitignore` and `.pubignore`).
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
-- The import graph of `lib/` is enforced twice, deliberately. `import_rules.yaml`
-  (wired via `plugins:` in `analysis_options.yaml`, no pubspec dependency) fails
-  the analyzer — in the IDE as you type and in CI, because Analyze runs
+- The import graph of `lib/` is gated three ways, deliberately. The **gate** is
+  `test/architecture_test.dart`: a `dart_arch_test` test over the *resolved*
+  import graph (bible §2.9) for area direction, front-door cycles, `lib/src/`
+  privacy, `file:`/product-dependency leakage, and workspace-wide cycle-freedom —
+  a plain `dart test`, so CI already runs it. `import_rules.yaml` (wired via
+  `plugins:` in `analysis_options.yaml`, no pubspec dependency) is the as-you-type
+  nicety: it fails the analyzer — in the IDE and in CI, because Analyze runs
   `--fatal-infos` — on any wrong-way edge (`usecases -> domain`, never the reverse)
-  or on an internal file importing the public entry point. `test/boundary_test.dart`
-  is the tripwire that cannot fail silently if the plugin ever stops resolving, and
-  it carries the rules the plugin cannot express (a product name in text, `lib/`
-  reaching for the doubles). Prove a rule fires — plant the import, run
-  `dart analyze`, read the reason, revert — instead of assuming it does.
+  or an internal file importing the public entry point. `test/boundary_test.dart`
+  is the text tripwire that cannot fail silently if a tool stops resolving, and it
+  carries the rules no import graph can express (a product name in a comment or
+  string). Prove a rule fires — plant the import, run the test, read the failure,
+  revert — instead of assuming it does.
 - `.pubignore` replaces this directory's `.gitignore` for pub, **applies to
   subdirectories**, and anchors any pattern containing a slash to this directory
   (`doc/api/` does not reach `sub/doc/api/`). It keeps out `AGENTS.md`,
