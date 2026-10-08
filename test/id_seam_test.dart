@@ -45,10 +45,9 @@ void main() {
           ),
         ).run();
 
-        final copy = await DuplicateSku(
-          skus,
-          idGenerator: () => 'DEV-0007',
-        )(id: 'qo120').run();
+        final copy = await DuplicateSku(skus, idGenerator: () => 'DEV-0007')(
+          id: 'qo120',
+        ).run();
 
         copy
             .getOrElse((_) => fail('expected Right'))
@@ -111,32 +110,35 @@ void main() {
             .be('DEV-0008');
       });
 
-      test('Then AddSkuComponent stamps the edge with the injected id', () async {
-        final skus = MemorySkuRepository();
-        final components = MemorySkuComponentRepository();
-        for (final id in ['rack', 'card']) {
-          await CreateSku(skus)(
-            sku: Sku(
-              meta: meta(id),
-              manufacturerId: 'm',
-              modelNumber: id.toUpperCase(),
-            ),
-          ).run();
-        }
+      test(
+        'Then AddSkuComponent stamps the edge with the injected id',
+        () async {
+          final skus = MemorySkuRepository();
+          final components = MemorySkuComponentRepository();
+          for (final id in ['rack', 'card']) {
+            await CreateSku(skus)(
+              sku: Sku(
+                meta: meta(id),
+                manufacturerId: 'm',
+                modelNumber: id.toUpperCase(),
+              ),
+            ).run();
+          }
 
-        final edge = await AddSkuComponent(
-          repository: components,
-          skuRepository: skus,
-          idGenerator: () => 'EDGE-1',
-        )(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
+          final edge = await AddSkuComponent(
+            repository: components,
+            skuRepository: skus,
+            idGenerator: () => 'EDGE-1',
+          )(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
 
-        edge
-            .getOrElse((_) => fail('expected Right'))
-            .meta
-            .id
-            .should
-            .be('EDGE-1');
-      });
+          edge
+              .getOrElse((_) => fail('expected Right'))
+              .meta
+              .id
+              .should
+              .be('EDGE-1');
+        },
+      );
 
       test(
         'Then UpdateSkuComponent stamps the replacement with the injected id',
