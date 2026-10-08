@@ -54,7 +54,7 @@ When complete, mark each off and include a sentence as to disposition.
   answers with a finite quantity that is silently wrong — for a purchase order
   that is worse than a failure; and an edge pointing at a SKU the catalog does
   not have is reported with a null model number rather than dropped from the
-  build. Device composition stays out of scope: the ask was SKU assemblies,
+  build. Instance composition stays out of scope: the ask was SKU assemblies,
   which `SkuComponent` already covers.
 
 ## Open
@@ -69,7 +69,7 @@ Nothing here blocks a publish.
 
 - [ ] **An injectable id seam**, and a stated rule that ids are opaque. Today
   `newMeta()` hardcodes UUID v4 and is called from five internal write paths
-  (duplicate device, duplicate SKU, add/update assembly edge); every *create*
+  (duplicate instance, duplicate SKU, add/update assembly edge); every *create*
   use case takes a fully formed entity, so a consumer already chooses the id
   shape there. A `String Function()` typedef passed like `IUnitOfWork`
   (optional, UUID default) covers those five, so a consumer can mint ids their
@@ -88,8 +88,8 @@ Nothing here blocks a publish.
   costs: a path dependency cannot be published, so siblings mean publishing in
   order with version lockstep (see `AGENTS.md`).
 
-- [ ] Device composition: a `parentId` on `Device` so a device can be an
-  assembly of devices (a trough is a coil plus switches; a flipper is a
+- [ ] Instance composition: a `parentId` on `Instance` so an instance can be an
+  assembly of instances (a trough is a coil plus switches; a flipper is a
   mechanism plus a button). Deliberately left out of 0.1.0 — the ask was SKU
   assemblies, which `SkuComponent` already covers.
 
@@ -114,7 +114,7 @@ reason, per house style.
 
 - **Deviation: `lib/src/domain/contracts/` (all nine repository contracts)** —
   methods take **positional** parameters (`fetchById(String id)`,
-  `create(DeviceType deviceType, …)`, `delete(String id, …)`) and pass a whole
+  `create(Sku sku, …)`, `delete(String id, …)`) and pass a whole
   entity into `create`/`update`. `docs/02` ("Dart parameter style") says named
   parameters always, "sole exceptions: a single positional `ref` or `message`",
   and `docs/04` ("business params, not cargo") bans cargo objects. The bible's
@@ -122,9 +122,9 @@ reason, per house style.
   directions at once — positional *and* entity-shaped.
 
 - **Deviation: `lib/src/usecases/*.dart` (every use case)** — `call()` is
-  positional: `call(String id)`, `call(DeviceType deviceType)`,
-  `forSku(String deviceTypeId)`. Same `docs/02`/`docs/04` rules as above. The
-  entity-shaped ones (`CreateDeviceType(DeviceType deviceType)`) are the cargo
+  positional: `call(String id)`, `call(Sku sku)`,
+  `forSku(String skuId)`. Same `docs/02`/`docs/04` rules as above. The
+  entity-shaped ones (`CreateSku(Sku sku)`) are the cargo
   pattern `docs/04` names and bans by example.
 
 - **Deviation: `lib/src/domain/contracts/unit_of_work.dart`** —

@@ -40,6 +40,16 @@
   publish-dry` 0 warnings on a committed tree, `dart run melos bootstrap` links
   one package.
 
+## 1.0.0
+
+- **Breaking (major):** the SKU entity is renamed `DeviceType` → `Sku` and the instance
+  entity `Device` → `Instance` — the files, classes, contracts, use cases, and the JSON key
+  `device_type_id` → `sku_id`. The model and its behaviour are unchanged; only the
+  vocabulary. What the package called a device is now an `Instance` (a physical article of a
+  `Sku`, at a `Locate`), so a book copy and a breaker instance read the same way. `Locate`
+  is untouched. No deprecation shims: adopters rename in one step. This release also marks
+  the vocabulary as final (1.0).
+
 ## 0.2.0
 
 - `AggregateBillOfMaterials`: folds a SKU's assembly tree into a

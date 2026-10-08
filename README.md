@@ -2,7 +2,7 @@
 
 A catalog model for physical parts: **SKUs with traits and typed attributes,
 assemblies of SKUs, the manufacturers behind them, the places they go, and the
-devices that instantiate them.**
+instances that instantiate them.**
 
 Published from `taybiz/sku_catalog`. Built for the case where the things you are cataloguing are real, varied, and
 described by different people in different words — electrical gear, pinball
@@ -23,14 +23,14 @@ Why this seam is a tuple rather than a `Future` is recorded in
 
 | Concept | What it is |
 |---|---|
-| `DeviceType` | A **SKU** — a product model made by a manufacturer (`QO120`, `ESP32-S3 IO node rev B`). |
-| `Trait` | A **classification attached to a SKU, a device, a place or a manufacturer**. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
+| `Sku` | A **SKU** (product model) made by a manufacturer (`QO120`, `ESP32-S3 IO node rev B`). |
+| `Trait` | A **classification attached to a SKU, an instance, a place or a manufacturer**. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
 | `TraitAttributeDefinition` | A **typed field** a trait contributes: `rated_amps` (number, `A`, required), `gfci` (boolean), `load_type` (enum). |
 | `SkuComponent` | An **assembly edge**: this SKU contains *n* of that SKU. |
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
-| `Device` | An **instance of a SKU**, sitting at exactly one `Locate`, with its own traits and attribute values. |
-| `ImageRecord` | A photo attached to a SKU, a device or a place. |
+| `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, with its own traits and attribute values. |
+| `ImageRecord` | A photo attached to a SKU, an instance or a place. |
 
 Two ideas do most of the work:
 
@@ -48,7 +48,7 @@ Two ideas do most of the work:
 
 ```yaml
 dependencies:
-  sku_catalog: ^0.2.0
+  sku_catalog: ^1.0.0
 ```
 
 ```dart
@@ -83,7 +83,7 @@ final ratedAmps = TraitAttributeDefinition(
 );
 
 // A SKU carrying that trait, and the value for it.
-final breaker = DeviceType(
+final breaker = Sku(
   meta: Meta(id: 'qo120', notes: '', createdAt: now, updatedAt: now),
   manufacturerId: 'square-d',
   modelNumber: 'QO120',
@@ -92,7 +92,7 @@ final breaker = DeviceType(
 );
 
 // A SKU assembled from other SKUs.
-final panel = DeviceType(
+final panel = Sku(
   meta: Meta(id: 'pnl-1', notes: '', createdAt: now, updatedAt: now),
   manufacturerId: 'square-d',
   modelNumber: 'QO-16',
@@ -101,8 +101,8 @@ final panel = DeviceType(
 
 final assembly = SkuComponent(
   meta: Meta(id: 'pnl-1-holds-qo120', notes: '', createdAt: now, updatedAt: now),
-  parentDeviceTypeId: 'pnl-1',
-  childDeviceTypeId: 'qo120',
+  parentSkuId: 'pnl-1',
+  childSkuId: 'qo120',
   quantity: 16,
 );
 ```
@@ -124,10 +124,10 @@ SKUs that do not exist.
 ```dart
 await AddSkuComponent(
   repository: mySkuComponentRepository,
-  deviceTypeRepository: myDeviceTypeRepository,
+  skuRepository: mySkuRepository,
 )(
-  parentDeviceTypeId: 'pnl-1',
-  childDeviceTypeId: 'qo120',
+  parentSkuId: 'pnl-1',
+  childSkuId: 'qo120',
   quantity: 16,
 ).run();
 ```
@@ -138,7 +138,7 @@ this *folds* the tree that builds one thing.
 
 ```dart
 final bom = await AggregateBillOfMaterials(
-  deviceTypeRepository: myDeviceTypeRepository,
+  skuRepository: mySkuRepository,
   skuComponentRepository: mySkuComponentRepository,
 )(panel.meta.id, units: 12).run();
 // → one line per distinct part: quantity, level, and whether it is itself
@@ -158,11 +158,11 @@ over whatever you have (a map, a file, SQLite, an HTTP service, an object store)
 and pass them in.
 
 ```dart
-abstract interface class IDeviceTypeRepository {
-  TaskEither<DomainFailure, List<DeviceType>> fetchAll();
-  TaskEither<DomainFailure, DeviceType> fetchById(String id);
-  TaskEither<DomainFailure, DeviceType> create(DeviceType deviceType, {IUnitOfWork? uow});
-  TaskEither<DomainFailure, DeviceType> update(DeviceType deviceType, {IUnitOfWork? uow});
+abstract interface class ISkuRepository {
+  TaskEither<DomainFailure, List<Sku>> fetchAll();
+  TaskEither<DomainFailure, Sku> fetchById(String id);
+  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow});
   TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow});
   TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
 }
@@ -178,8 +178,8 @@ their own backend against these contracts.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
-it to the use cases that write more than once (`DeleteDeviceType`,
-`DeleteDevice`) and a failure half-way through rolls back. `runEither` bridges
+it to the use cases that write more than once (`DeleteSku`,
+`DeleteInstance`) and a failure half-way through rolls back. `runEither` bridges
 the two conventions: a returned `Left` becomes the throw that triggers rollback,
 and is handed back as a `Left` afterwards. `NoOpUnitOfWork` is the honest
 implementation for a store that cannot roll back.
@@ -187,17 +187,17 @@ implementation for a store that cannot roll back.
 Two deliberate consequences worth knowing:
 
 - **Domain vocabulary stays out.** Which trait means "this SKU lives inside
-  another device", and which attribute holds a short code, are *your* words —
+  another instance", and which attribute holds a short code, are *your* words —
   they are parameters (`slotBoundTraitNames`, `resolveAttributeAbbreviation`),
   not constants.
-- **The catalog does not cascade what it cannot see.** `DeleteDevice` removes the
-  device and its images. If something else references devices — a wiring graph,
+- **The catalog does not cascade what it cannot see.** `DeleteInstance` removes the
+  instance and its images. If something else references instances — a wiring graph,
   a harness, a bill of materials — that is yours to cascade, and the use case
   documents it.
 
 ## What is deliberately not here
 
-The package is the device/SKU heart plus the places and assemblies around it,
+The package is the instance/SKU heart plus the places and assemblies around it,
 and nothing else. Left out on purpose, because they belong to a consumer's
 domain: electrical concepts (panels, breakers, slot layouts, ampacity),
 topology graphs, reports, import/export bundles, and any naming convention. If
