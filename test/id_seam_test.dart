@@ -75,6 +75,41 @@ void main() {
             .should
             .beTrue();
       });
+
+      test('Then DuplicateInstance uses the injected generator', () async {
+        final instances = MemoryInstanceRepository();
+        final skus = MemorySkuRepository();
+        final traits = MemoryTraitRepository();
+        await CreateSku(skus)(
+          sku: Sku(
+            meta: meta('free'),
+            manufacturerId: 'm',
+            modelNumber: 'FREE',
+          ),
+        ).run();
+        await CreateInstance(instances)(
+          instance: Instance(
+            meta: meta('d1'),
+            skuId: 'free',
+            locateId: null,
+            name: 'Sensor 1',
+          ),
+        ).run();
+
+        final copy = await DuplicateInstance(
+          instanceRepository: instances,
+          skuRepository: skus,
+          traitRepository: traits,
+          idGenerator: () => 'DEV-0008',
+        )(id: 'd1').run();
+
+        copy
+            .getOrElse((_) => fail('expected Right'))
+            .meta
+            .id
+            .should
+            .be('DEV-0008');
+      });
     });
   });
 }

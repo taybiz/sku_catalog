@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 
 import '../domain/domain.dart';
+import 'id_generator.dart';
 import 'instance_naming.dart';
 import 'new_meta.dart';
 
@@ -17,6 +18,7 @@ class DuplicateInstance {
     required ISkuRepository skuRepository,
     required ITraitRepository traitRepository,
     this.slotBoundTraitNames = const <String>{},
+    this.idGenerator,
   }) : _instanceRepository = instanceRepository,
        _skuRepository = skuRepository,
        _traitRepository = traitRepository;
@@ -27,6 +29,9 @@ class DuplicateInstance {
 
   /// Trait names (matched case-insensitively) whose instances carry no locate.
   final Set<String> slotBoundTraitNames;
+
+  /// Mints the copy's id; defaults to a random UUID v4 when null.
+  final IdGenerator? idGenerator;
 
   /// Executes the use case.
   TaskEither<DomainFailure, Instance> call({required String id}) =>
@@ -46,7 +51,10 @@ class DuplicateInstance {
                 final copyLocate = bound ? null : current.locateId;
                 return _instanceRepository.fetchAll().flatMap((all) {
                   final copy = Instance(
-                    meta: newMeta(notes: current.meta.notes),
+                    meta: newMeta(
+                      notes: current.meta.notes,
+                      idGenerator: idGenerator,
+                    ),
                     skuId: current.skuId,
                     locateId: copyLocate,
                     name: uniqueCopyName(
