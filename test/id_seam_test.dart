@@ -137,6 +137,32 @@ void main() {
             .should
             .be('EDGE-1');
       });
+
+      test(
+        'Then UpdateSkuComponent stamps the replacement with the injected id',
+        () async {
+          final components = MemorySkuComponentRepository();
+          await components
+              .create(
+                component: SkuComponent(
+                  meta: meta('e1'),
+                  parentSkuId: 'rack',
+                  childSkuId: 'card',
+                  quantity: 2,
+                ),
+              )
+              .run();
+
+          final updated = await UpdateSkuComponent(
+            components,
+            idGenerator: () => 'EDGE-2',
+          )(skuId: 'e1', quantity: 5).run();
+
+          final row = updated.getOrElse((_) => fail('expected Right'));
+          row.meta.id.should.be('EDGE-2');
+          row.quantity.should.be(5);
+        },
+      );
     });
   });
 }
