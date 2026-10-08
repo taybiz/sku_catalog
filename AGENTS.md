@@ -2,35 +2,20 @@
 
 `sku_catalog` is a published package built to the Dart/Flutter Bible
 (`taybiz/dart-flutter-bible`; read `docs/00-compact.md` first). That doctrine is
-the standard — this file carries only **what is different here** and the local
-wiring. Do not restate bible rules below; if you need one, link it.
+the standard — this file carries only the local wiring and the calls this repo
+made for itself. Do not restate bible rules below; if you need one, link it.
 
 ## Deviations from the bible
 
-Each row is a place the code and the doctrine disagree. They are **recorded, not
-auto-fixed** — the bible may itself be wrong, so every one is a human call. The
-reasoning for each lives in [`BACKLOG.md`](BACKLOG.md) under "Deviations from the
-Bible"; one line each here. Re-checked 2026-10-08 against the bible at
-`taybiz/dart-flutter-bible` `main` (docs §1–§12, rule-code numbering).
+**The live list lives in [`BACKLOG.md`](BACKLOG.md)**, under "Deviations from the
+Bible (flagged for review — do NOT auto-fix)": one entry per place the code and
+the doctrine disagree, each with its reasoning, re-checked against
+`taybiz/dart-flutter-bible` `main` and dated. They are **recorded, not
+auto-fixed** — the bible may itself be wrong, so every one is a human call.
 
-| # | Bible says | Here |
-|---|---|---|
-| 1 | §4.6 the default seam is `Future<Either<...>>` and consumers never build or run a chain. | The seam **is** the unrun `TaskEither`; the consumer runs it. **Sanctioned** by §4 ("declare the error style, loudly") — declared in the barrel doc comment, the README and here. |
-| 2 | §2.5 named parameters always; §4.4 `call()` takes discrete business params, never cargo objects. | Contracts and `call()` are positional and pass whole entities (`create(DeviceType …)`). |
-| 3 | §2.2 never disable a rule in `analysis_options.yaml` — per-line `// ignore:` or change the code. | `prefer_initializing_formals: false` is set in the config. |
-| 4 | §9.7 the root `analysis_options.yaml` wires lints, **strict**, `public_member_api_docs`, `todo: error`. | `lints` + `public_member_api_docs` + `todo: error` are on; no `strict-casts` / `strict-raw-types`. |
-| 5 | §4.2 failure hierarchies are closed (`sealed` where the language allows) so a `switch` over them is exhaustive. | `DomainFailure` is `abstract base` — the shared root every product's failure family extends, which a `sealed` root cannot be. |
-| 6 | §4.8 / §10.2 no `throw` / `try` / `catch` anywhere inside the domain. | `contracts/unit_of_work.dart` bridges a transactional store's rollback with a hand-rolled `throw` / `on … catch`. |
-| 7 | §6.2 use-case tests mock the repository seam with `mocktail`. | All twelve test files run the use cases against the real in-memory doubles (§6.3 also says to prefer a real double where one exists). |
-| 8 | Stack table pins `equatable ^2.x`. | `equatable ^3.0.0` — the pin looks stale; 3.x is current and `dart pub outdated` is clean. |
-| 9 | §2.7 / §3 a published package's example directory is `examples/`. | `example/` (singular) — the name only. |
-| 10 | §10.4 every repository contract has ≥2 adapters and a shared contract suite run against all of them. | One (test-only, in-memory) adapter and no contract suite. Open item in `BACKLOG.md`. |
-
-There is no deviation for the layer graph: the current bible (§2.8) enforces
-boundaries by **lint and review only** and names no architecture test, so the
-repo's `import_rules` plugin and `test/boundary_test.dart` are extra hygiene
-rather than a rival to a prescribed gate. (An earlier bible revision did
-prescribe `dart_arch_test`; that rule is gone.)
+Do not restate the list here. It moves as doctrine and the code move, and a
+second copy is a second truth; the tracker is the one place it lives. This file
+says what the repo *is* and how to work on it, not where it still differs.
 
 ## One package, on purpose
 
@@ -58,8 +43,8 @@ library can never start depending on them.
   `melos.yaml`, no pub `workspace:`. The gate is four scripts, and CI calls them
   by name so a script that rots fails the build: `dart run melos run format`,
   `analyze`, `test`, `publish-dry` (after `dart pub get`; `dart run melos
-  bootstrap` once per clone, which writes `melos_<pkg>.iml` — kept out of git and
-  the archive by `*.iml` in `.gitignore` and `.pubignore`).
+  bootstrap` once per clone, which writes `melos_<pkg>.iml` and `.idea/` — kept
+  out of git and the archive by `*.iml` / `.idea/` in `.gitignore` and `.pubignore`).
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is enforced twice, deliberately. `import_rules.yaml`

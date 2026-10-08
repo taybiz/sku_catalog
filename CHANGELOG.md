@@ -21,9 +21,9 @@
   enforces boundaries by lint + review only; §3.3 "Topology C" sanctions a
   single-package repo), which resolves the two boundary/cycle items and half the
   workspace item, while the same revision makes melos mandatory for a
-  single-package repo — a gap this repo does not yet meet. `AGENTS.md` now carries
-  the full deviation table (one line each, against the current rule codes) and
-  `BACKLOG.md` records the resolutions. Documentation only: no code, dependency or
+  single-package repo — a gap this repo does not yet meet. `BACKLOG.md` is the one
+  home for the list and now records the resolutions; `AGENTS.md` points at it and
+  otherwise carries only the local wiring. Documentation only: no code, dependency or
   CI change, and the gate stays green (`dart analyze --fatal-infos
   --fatal-warnings` clean, `dart test` 86 passing, `dart pub publish --dry-run`
   0 warnings).
