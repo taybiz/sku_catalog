@@ -20,11 +20,7 @@ Future<void> main() async {
     (a) => a.meta.id,
     (a) => a.toJson(),
   );
-  final skus = _Table<DeviceType>(
-    DeviceType.fromJson,
-    (s) => s.meta.id,
-    (s) => s.toJson(),
-  );
+  final skus = _Table<Sku>(Sku.fromJson, (s) => s.meta.id, (s) => s.toJson());
   final assemblies = _Table<SkuComponent>(
     SkuComponent.fromJson,
     (c) => c.meta.id,
@@ -35,8 +31,8 @@ Future<void> main() async {
     (l) => l.meta.id,
     (l) => l.toJson(),
   );
-  final devices = _Table<Device>(
-    Device.fromJson,
+  final instances = _Table<Instance>(
+    Instance.fromJson,
     (d) => d.meta.id,
     (d) => d.toJson(),
   );
@@ -46,7 +42,7 @@ Future<void> main() async {
   final skuRepository = _Skus(skus);
   final assemblyRepository = _Components(assemblies);
   final locateRepository = _Locates(locates);
-  final deviceRepository = _Devices(devices);
+  final instanceRepository = _Instances(instances);
 
   // 1. Classify. Traits form a tree: Breaker is a Switch with more to say.
   final switchTrait = Trait(
@@ -87,26 +83,26 @@ Future<void> main() async {
   ).run();
 
   // 3. Catalogue the SKUs. A panel and a breaker are both products.
-  final breakerModel = DeviceType(
+  final breakerModel = Sku(
     meta: _meta('qo120'),
     manufacturerId: 'square-d',
     modelNumber: 'QO120',
     traitIds: [breakerTrait.meta.id],
     attributeValues: const {'rated_amps': 20, 'trip_amperage': 20},
   );
-  final panelModel = DeviceType(
+  final panelModel = Sku(
     meta: _meta('qo-16'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-16',
   );
-  await CreateDeviceType(skuRepository)(breakerModel).run();
-  await CreateDeviceType(skuRepository)(panelModel).run();
-  final subPanelModel = DeviceType(
+  await CreateSku(skuRepository)(breakerModel).run();
+  await CreateSku(skuRepository)(panelModel).run();
+  final subPanelModel = Sku(
     meta: _meta('qo-4'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-4',
   );
-  await CreateDeviceType(skuRepository)(subPanelModel).run();
+  await CreateSku(skuRepository)(subPanelModel).run();
 
   // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
   //    sub-panel holds four breakers — so a build consumes the breaker two
@@ -114,26 +110,26 @@ Future<void> main() async {
   //    cycle guard refuse it.
   final addComponent = AddSkuComponent(
     repository: assemblyRepository,
-    deviceTypeRepository: skuRepository,
+    skuRepository: skuRepository,
   );
   await addComponent(
-    parentDeviceTypeId: panelModel.meta.id,
-    childDeviceTypeId: breakerModel.meta.id,
+    parentSkuId: panelModel.meta.id,
+    childSkuId: breakerModel.meta.id,
     quantity: 8,
   ).run();
   await addComponent(
-    parentDeviceTypeId: panelModel.meta.id,
-    childDeviceTypeId: subPanelModel.meta.id,
+    parentSkuId: panelModel.meta.id,
+    childSkuId: subPanelModel.meta.id,
     quantity: 4,
   ).run();
   await addComponent(
-    parentDeviceTypeId: subPanelModel.meta.id,
-    childDeviceTypeId: breakerModel.meta.id,
+    parentSkuId: subPanelModel.meta.id,
+    childSkuId: breakerModel.meta.id,
     quantity: 4,
   ).run();
   final loop = await addComponent(
-    parentDeviceTypeId: breakerModel.meta.id,
-    childDeviceTypeId: panelModel.meta.id,
+    parentSkuId: breakerModel.meta.id,
+    childSkuId: panelModel.meta.id,
     quantity: 1,
   ).run();
 
@@ -147,14 +143,14 @@ Future<void> main() async {
   await CreateLocate(locateRepository)(garage).run();
   await CreateLocate(locateRepository)(panelPlace).run();
 
-  // 6. Instantiate: a device is one article of a SKU, at one place.
-  final panelDevice = Device(
+  // 6. Instantiate: an instance is one article of a SKU, at one place.
+  final panelInstance = Instance(
     meta: _meta('pnl-1'),
-    deviceTypeId: panelModel.meta.id,
+    skuId: panelModel.meta.id,
     locateId: panelPlace.meta.id,
     name: 'Garage Panel 1',
   );
-  await CreateDevice(deviceRepository)(panelDevice).run();
+  await CreateInstance(instanceRepository)(panelInstance).run();
 
   // 7. Ask the model what it knows. Traits inherit, so the breaker's schema
   //    carries Switch's attributes too.
@@ -169,20 +165,20 @@ Future<void> main() async {
         .map((a) => '${a.name}${a.def.unit == null ? '' : ' (${a.def.unit})'}')
         .join(', '),
   );
-  final partsCount = await FetchSkuComponentsByDeviceType(assemblyRepository)(
+  final partsCount = await FetchComponentsBySku(assemblyRepository)(
     panelModel.meta.id,
   ).run();
   final breakersDirect = partsCount.fold(
     (failure) => '?',
     (rows) =>
-        '${rows.firstWhere((c) => c.childDeviceTypeId == breakerModel.meta.id).quantity}',
+        '${rows.firstWhere((c) => c.childSkuId == breakerModel.meta.id).quantity}',
   );
   final subPanelsDirect = partsCount.fold(
     (failure) => '?',
     (rows) =>
-        '${rows.firstWhere((c) => c.childDeviceTypeId == subPanelModel.meta.id).quantity}',
+        '${rows.firstWhere((c) => c.childSkuId == subPanelModel.meta.id).quantity}',
   );
-  final devicesAtPlace = await FetchDevicesByLocate(deviceRepository)(
+  final instancesAtPlace = await FetchInstancesByLocate(instanceRepository)(
     panelPlace.meta.id,
   ).run();
 
@@ -194,7 +190,7 @@ Future<void> main() async {
   print('Schema     ${breakerModel.modelNumber} → $schemaLine');
   print(
     'Place      ${garage.name} / ${panelPlace.name} → '
-    '${devicesAtPlace.fold((f) => '?', (rows) => rows.single.name)}',
+    '${instancesAtPlace.fold((f) => '?', (rows) => rows.single.name)}',
   );
   print(
     'Assembly   panel in breaker? '
@@ -206,7 +202,7 @@ Future<void> main() async {
   //    builds one thing: quantities multiply down the levels, and the breaker,
   //    reached directly and through a sub-panel, is one line with the total.
   final bom = await AggregateBillOfMaterials(
-    deviceTypeRepository: skuRepository,
+    skuRepository: skuRepository,
     skuComponentRepository: assemblyRepository,
   )(panelModel.meta.id, units: 2).run();
 
@@ -222,9 +218,9 @@ Future<void> main() async {
   );
   print('Parts      2 × ${panelModel.modelNumber} → $bomLine');
 
-  // 9. A device carries its own classification and values, independent of the
+  // 9. An instance carries its own classification and values, independent of the
   //    model it came from — which is what lets one SKU be wired two ways.
-  final spare = panelDevice.copyWith(
+  final spare = panelInstance.copyWith(
     name: 'Spare Panel',
     locateId: null,
     traitIds: const ['spare'],
@@ -347,33 +343,27 @@ class _Attributes implements ITraitAttributeDefinitionRepository {
   }
 }
 
-class _Skus implements IDeviceTypeRepository {
+class _Skus implements ISkuRepository {
   _Skus(this.table);
-  final _Table<DeviceType> table;
+  final _Table<Sku> table;
 
   @override
-  TaskEither<DomainFailure, List<DeviceType>> fetchAll() =>
-      TaskEither.of(table.all().map(DeviceType.fromJson).toList());
+  TaskEither<DomainFailure, List<Sku>> fetchAll() =>
+      TaskEither.of(table.all().map(Sku.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, DeviceType> fetchById(String id) => table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<DeviceType>('SKU', id);
+  TaskEither<DomainFailure, Sku> fetchById(String id) =>
+      table.has(id) ? TaskEither.of(table.get(id)) : _missing<Sku>('SKU', id);
 
   @override
-  TaskEither<DomainFailure, DeviceType> create(
-    DeviceType deviceType, {
-    IUnitOfWork? uow,
-  }) {
-    table.put(deviceType);
-    return TaskEither.of(deviceType);
+  TaskEither<DomainFailure, Sku> create(Sku sku, {IUnitOfWork? uow}) {
+    table.put(sku);
+    return TaskEither.of(sku);
   }
 
   @override
-  TaskEither<DomainFailure, DeviceType> update(
-    DeviceType deviceType, {
-    IUnitOfWork? uow,
-  }) => create(deviceType);
+  TaskEither<DomainFailure, Sku> update(Sku sku, {IUnitOfWork? uow}) =>
+      create(sku);
 
   @override
   TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {
@@ -397,15 +387,14 @@ class _Components implements ISkuComponentRepository {
       TaskEither.of(table.all().map(SkuComponent.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchByDeviceType(
-    String deviceTypeId,
-  ) => TaskEither.of(
-    table
-        .all()
-        .map(SkuComponent.fromJson)
-        .where((c) => c.parentDeviceTypeId == deviceTypeId)
-        .toList(),
-  );
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId) =>
+      TaskEither.of(
+        table
+            .all()
+            .map(SkuComponent.fromJson)
+            .where((c) => c.parentSkuId == skuId)
+            .toList(),
+      );
 
   @override
   TaskEither<DomainFailure, SkuComponent> fetchById(String id) => table.has(id)
@@ -470,38 +459,43 @@ class _Locates implements ILocateRepository {
   }
 }
 
-class _Devices implements IDeviceRepository {
-  _Devices(this.table);
-  final _Table<Device> table;
+class _Instances implements IInstanceRepository {
+  _Instances(this.table);
+  final _Table<Instance> table;
 
   @override
-  TaskEither<DomainFailure, List<Device>> fetchAll() =>
-      TaskEither.of(table.all().map(Device.fromJson).toList());
+  TaskEither<DomainFailure, List<Instance>> fetchAll() =>
+      TaskEither.of(table.all().map(Instance.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<Device>> fetchByLocate(String locateId) =>
+  TaskEither<DomainFailure, List<Instance>> fetchByLocate(String locateId) =>
       TaskEither.of(
         table
             .all()
-            .map(Device.fromJson)
+            .map(Instance.fromJson)
             .where((d) => d.locateId == locateId)
             .toList(),
       );
 
   @override
-  TaskEither<DomainFailure, Device> fetchById(String id) => table.has(id)
+  TaskEither<DomainFailure, Instance> fetchById(String id) => table.has(id)
       ? TaskEither.of(table.get(id))
-      : _missing<Device>('Device', id);
+      : _missing<Instance>('Instance', id);
 
   @override
-  TaskEither<DomainFailure, Device> create(Device device, {IUnitOfWork? uow}) {
-    table.put(device);
-    return TaskEither.of(device);
+  TaskEither<DomainFailure, Instance> create(
+    Instance instance, {
+    IUnitOfWork? uow,
+  }) {
+    table.put(instance);
+    return TaskEither.of(instance);
   }
 
   @override
-  TaskEither<DomainFailure, Device> update(Device device, {IUnitOfWork? uow}) =>
-      create(device);
+  TaskEither<DomainFailure, Instance> update(
+    Instance instance, {
+    IUnitOfWork? uow,
+  }) => create(instance);
 
   @override
   TaskEither<DomainFailure, void> delete(String id, {IUnitOfWork? uow}) {

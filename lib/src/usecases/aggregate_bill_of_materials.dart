@@ -16,63 +16,63 @@ import 'package:fpdart/fpdart.dart';
 class AggregateBillOfMaterials {
   /// Creates an [AggregateBillOfMaterials] use case.
   const AggregateBillOfMaterials({
-    required IDeviceTypeRepository deviceTypeRepository,
+    required ISkuRepository skuRepository,
     required ISkuComponentRepository skuComponentRepository,
-  }) : _deviceTypeRepository = deviceTypeRepository,
+  }) : _skuRepository = skuRepository,
        _skuComponentRepository = skuComponentRepository;
 
-  final IDeviceTypeRepository _deviceTypeRepository;
+  final ISkuRepository _skuRepository;
   final ISkuComponentRepository _skuComponentRepository;
 
-  /// Folds the assembly tree of the SKU [deviceTypeId] into a
+  /// Folds the assembly tree of the SKU [skuId] into a
   /// [BillOfMaterials] for [units] units of it.
   ///
   /// Fails with [NotFoundFailure] when the catalog has no such SKU, and with
   /// [InvalidInputFailure] when [units] is below one.
   TaskEither<DomainFailure, BillOfMaterials> call(
-    String deviceTypeId, {
+    String skuId, {
     int units = 1,
   }) {
     if (units < 1) {
       return TaskEither.left(
         InvalidInputFailure(
-          'Cannot build $units of "$deviceTypeId": units must be at least 1',
+          'Cannot build $units of "$skuId": units must be at least 1',
         ),
       );
     }
 
-    return _deviceTypeRepository.fetchAll().flatMap(
+    return _skuRepository.fetchAll().flatMap(
       (skus) => _skuComponentRepository.fetchAll().flatMap(
-        (components) => _fold(deviceTypeId, units, skus, components),
+        (components) => _fold(skuId, units, skus, components),
       ),
     );
   }
 
   TaskEither<DomainFailure, BillOfMaterials> _fold(
-    String deviceTypeId,
+    String skuId,
     int units,
-    List<DeviceType> skus,
+    List<Sku> skus,
     List<SkuComponent> components,
   ) {
     final byId = {for (final sku in skus) sku.meta.id: sku};
-    final root = byId[deviceTypeId];
+    final root = byId[skuId];
     if (root == null) {
-      return TaskEither.left(NotFoundFailure('SKU "$deviceTypeId" not found'));
+      return TaskEither.left(NotFoundFailure('SKU "$skuId" not found'));
     }
 
     final componentsOf = <String, List<SkuComponent>>{};
     for (final component in components) {
-      (componentsOf[component.parentDeviceTypeId] ??= []).add(component);
+      (componentsOf[component.parentSkuId] ??= []).add(component);
     }
 
     final fold = _AssemblyFold(componentsOf);
-    final failure = fold.explode(deviceTypeId, units);
+    final failure = fold.explode(skuId, units);
     if (failure != null) return TaskEither.left(failure);
 
     final lines = [
       for (final entry in fold.totals.entries)
         BomLine(
-          deviceTypeId: entry.key,
+          skuId: entry.key,
           modelNumber: byId[entry.key]?.modelNumber,
           quantity: entry.value.quantity,
           depth: entry.value.depth,
@@ -82,7 +82,7 @@ class AggregateBillOfMaterials {
 
     return TaskEither.of(
       BillOfMaterials(
-        deviceTypeId: root.meta.id,
+        skuId: root.meta.id,
         modelNumber: root.modelNumber,
         units: units,
         lines: lines,
@@ -96,10 +96,10 @@ class AggregateBillOfMaterials {
     final byDepth = a.depth.compareTo(b.depth);
     if (byDepth != 0) return byDepth;
 
-    final byName = (a.modelNumber ?? a.deviceTypeId).compareTo(
-      b.modelNumber ?? b.deviceTypeId,
+    final byName = (a.modelNumber ?? a.skuId).compareTo(
+      b.modelNumber ?? b.skuId,
     );
-    return byName != 0 ? byName : a.deviceTypeId.compareTo(b.deviceTypeId);
+    return byName != 0 ? byName : a.skuId.compareTo(b.skuId);
   }
 }
 
@@ -119,16 +119,15 @@ class _AssemblyFold {
 
   final Set<String> _path = {};
 
-  /// Totals [units] of [deviceTypeId] and everything below it.
+  /// Totals [units] of [skuId] and everything below it.
   ///
   /// Returns the failure that stopped it, or null when the whole tree folded.
-  DomainFailure? explode(String deviceTypeId, int units) =>
-      _explode(deviceTypeId, units, 0);
+  DomainFailure? explode(String skuId, int units) => _explode(skuId, units, 0);
 
   DomainFailure? _explode(String id, int quantity, int depth) {
     _path.add(id);
     for (final component in _componentsOf[id] ?? const <SkuComponent>[]) {
-      final childId = component.childDeviceTypeId;
+      final childId = component.childSkuId;
       if (_path.contains(childId)) {
         return WouldCreateCycleFailure(
           'The assembly tree loops back to "$childId", so the quantity of '
@@ -146,10 +145,10 @@ class _AssemblyFold {
     return null;
   }
 
-  void _add(String deviceTypeId, int quantity, int depth) {
-    final total = totals[deviceTypeId];
+  void _add(String skuId, int quantity, int depth) {
+    final total = totals[skuId];
     if (total == null) {
-      totals[deviceTypeId] = _Total(quantity, depth);
+      totals[skuId] = _Total(quantity, depth);
       return;
     }
 

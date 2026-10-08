@@ -28,7 +28,7 @@ void main() {
           displayLabel: 'Thread',
           dataType: DataType.string,
         );
-        final sku = DeviceType(
+        final sku = Sku(
           meta: meta,
           manufacturerId: 'acme',
           modelNumber: 'BOLT-1',
@@ -37,13 +37,13 @@ void main() {
         );
         final component = SkuComponent(
           meta: meta,
-          parentDeviceTypeId: 'assembly',
-          childDeviceTypeId: sku.meta.id,
+          parentSkuId: 'assembly',
+          childSkuId: sku.meta.id,
           quantity: 4,
         );
-        final device = Device(
+        final instance = Instance(
           meta: meta,
-          deviceTypeId: sku.meta.id,
+          skuId: sku.meta.id,
           locateId: null,
           name: 'left bolt',
         );
@@ -52,7 +52,7 @@ void main() {
         attribute.dataType.should.be(DataType.string);
         (sku.attributeValues['thread'] as String).should.be('M6');
         component.quantity.should.be(4);
-        device.isPlaced.should.be(false);
+        instance.isPlaced.should.be(false);
       });
 
       test('Then the pure helpers behave', () {
@@ -66,13 +66,9 @@ void main() {
         () async {
           // The contract-typed local is the check: it only compiles if the
           // umbrella re-exports both the interface and the memory adapter.
-          final IDeviceTypeRepository repository = MemoryDeviceTypeRepository();
-          final created = await CreateDeviceType(repository)(
-            DeviceType(
-              meta: newMeta(),
-              manufacturerId: 'acme',
-              modelNumber: 'NUT-1',
-            ),
+          final ISkuRepository repository = MemorySkuRepository();
+          final created = await CreateSku(repository)(
+            Sku(meta: newMeta(), manufacturerId: 'acme', modelNumber: 'NUT-1'),
           ).run();
 
           created.isRight().should.be(true);
@@ -82,9 +78,9 @@ void main() {
       );
 
       test('Then every operation name resolves', () {
-        final IDeviceTypeRepository repository = MemoryDeviceTypeRepository();
+        final ISkuRepository repository = MemorySkuRepository();
         final operations = <Object>[
-          CreateDeviceType(repository),
+          CreateSku(repository),
           CreateTrait(MemoryTraitRepository()),
           CreateTraitAttributeDefinition(
             MemoryTraitAttributeDefinitionRepository(),
@@ -95,8 +91,8 @@ void main() {
             attributeRepository: MemoryTraitAttributeDefinitionRepository(),
           ),
           ResolveEffectiveAttributes(
-            deviceRepository: MemoryDeviceRepository(),
-            deviceTypeRepository: repository,
+            instanceRepository: MemoryInstanceRepository(),
+            skuRepository: repository,
             skuComponentRepository: MemorySkuComponentRepository(),
             resolveSchema: ResolveSchema(
               traitRepository: MemoryTraitRepository(),
@@ -105,16 +101,16 @@ void main() {
           ),
           AddSkuComponent(
             repository: MemorySkuComponentRepository(),
-            deviceTypeRepository: repository,
+            skuRepository: repository,
           ),
           AggregateBillOfMaterials(
-            deviceTypeRepository: repository,
+            skuRepository: repository,
             skuComponentRepository: MemorySkuComponentRepository(),
           ),
           WouldCreateAssemblyCycle(MemorySkuComponentRepository()),
-          DeleteDeviceType(
-            deviceTypeRepository: repository,
-            deviceRepository: MemoryDeviceRepository(),
+          DeleteSku(
+            skuRepository: repository,
+            instanceRepository: MemoryInstanceRepository(),
             skuComponentRepository: MemorySkuComponentRepository(),
           ),
         ];

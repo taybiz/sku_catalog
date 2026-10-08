@@ -9,10 +9,8 @@ abstract interface class ISkuComponentRepository {
   /// Fetch all SKU components.
   TaskEither<DomainFailure, List<SkuComponent>> fetchAll();
 
-  /// Fetch components for device type.
-  TaskEither<DomainFailure, List<SkuComponent>> fetchByDeviceType(
-    String deviceTypeId,
-  );
+  /// Fetch components for a SKU.
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId);
 
   /// Fetch a single component by id.
   TaskEither<DomainFailure, SkuComponent> fetchById(String id);

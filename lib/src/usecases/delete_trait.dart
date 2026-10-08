@@ -9,18 +9,18 @@ class DeleteTrait {
   /// Creates a [DeleteTrait] use case.
   const DeleteTrait({
     required ITraitRepository traitRepository,
-    required IDeviceTypeRepository deviceTypeRepository,
+    required ISkuRepository skuRepository,
     required IManufacturerRepository manufacturerRepository,
     required ILocateRepository locateRepository,
     required ITraitAttributeDefinitionRepository traitAttributeRepository,
   }) : _traitRepository = traitRepository,
-       _deviceTypeRepository = deviceTypeRepository,
+       _skuRepository = skuRepository,
        _manufacturerRepository = manufacturerRepository,
        _locateRepository = locateRepository,
        _traitAttributeRepository = traitAttributeRepository;
 
   final ITraitRepository _traitRepository;
-  final IDeviceTypeRepository _deviceTypeRepository;
+  final ISkuRepository _skuRepository;
   final IManufacturerRepository _manufacturerRepository;
   final ILocateRepository _locateRepository;
   final ITraitAttributeDefinitionRepository _traitAttributeRepository;
@@ -31,7 +31,7 @@ class DeleteTrait {
         if (traits.any((t) => t.parentTraitId == id)) {
           return TaskEither.left(InUseFailure('This trait has child traits.'));
         }
-        return _deviceTypeRepository.fetchAll().flatMap((types) {
+        return _skuRepository.fetchAll().flatMap((types) {
           if (types.any((t) => t.traitIds.contains(id))) {
             return TaskEither.left(
               InUseFailure('This trait is attached to one or more SKUs.'),

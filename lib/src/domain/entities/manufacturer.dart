@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../json_coercion.dart';
 import 'meta.dart';
 
-/// A device manufacturer / vendor.
+/// A manufacturer / vendor.
 class Manufacturer extends Equatable {
   /// Creation metadata.
   final Meta meta;

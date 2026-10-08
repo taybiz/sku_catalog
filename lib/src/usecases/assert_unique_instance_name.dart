@@ -1,15 +1,15 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'device_naming.dart';
+import 'instance_naming.dart';
 
-/// Fails with [AlreadyExistsFailure] when another device at [locateId]
+/// Fails with [AlreadyExistsFailure] when another instance at [locateId]
 /// already carries [name] (case-insensitive), excluding [excludeId].
 ///
-/// The per-locate unique name rule lives here so [UpdateDevice] and any
+/// The per-locate unique name rule lives here so [UpdateInstance] and any
 /// caller's own creation use case share one implementation.
-TaskEither<DomainFailure, Unit> assertUniqueDeviceName(
-  IDeviceRepository repository, {
+TaskEither<DomainFailure, Unit> assertUniqueInstanceName(
+  IInstanceRepository repository, {
   required String name,
   required String? locateId,
   String? excludeId,
@@ -23,7 +23,7 @@ TaskEither<DomainFailure, Unit> assertUniqueDeviceName(
   if (clash) {
     return TaskEither.left(
       AlreadyExistsFailure(
-        'A device named "$name" already exists at this locate',
+        'An instance named "$name" already exists at this locate',
       ),
     );
   }

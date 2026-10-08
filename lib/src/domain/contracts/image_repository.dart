@@ -5,9 +5,9 @@ import '../enums/image_owner.dart';
 import '../failures/catalog_failures.dart';
 import 'unit_of_work.dart';
 
-/// Contract for image record persistence (device/locate/SKU images).
+/// Contract for image record persistence (instance/locate/SKU images).
 ///
-/// Replaces the former `IDeviceImageRepository` + `ILocateImageRepository`
+/// Replaces the former `IInstanceImageRepository` + `ILocateImageRepository`
 /// pair with one owner-tagged contract.
 abstract interface class IImageRepository {
   /// Fetch all image records.

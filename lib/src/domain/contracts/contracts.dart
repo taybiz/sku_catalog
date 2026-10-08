@@ -1,8 +1,8 @@
 /// Repository contracts and unit of work for the shared catalog entities.
 library;
 
-export 'device_repository.dart';
-export 'device_type_repository.dart';
+export 'instance_repository.dart';
+export 'sku_repository.dart';
 export 'image_repository.dart';
 export 'locate_repository.dart';
 export 'manufacturer_repository.dart';

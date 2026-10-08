@@ -14,20 +14,17 @@ void main() {
     updatedAt: '2026-01-01T00:00:00.000Z',
   );
 
-  DeviceType sku(String id) => DeviceType(
-    meta: meta(id),
-    manufacturerId: 'm',
-    modelNumber: id.toUpperCase(),
-  );
+  Sku sku(String id) =>
+      Sku(meta: meta(id), manufacturerId: 'm', modelNumber: id.toUpperCase());
 
-  Future<List<String>> ids(MemoryDeviceTypeRepository repo) async =>
+  Future<List<String>> ids(MemorySkuRepository repo) async =>
       (await repo.fetchAll().run())
           .getOrElse((_) => [])
           .map((s) => s.meta.id)
           .toList();
 
   test('a thrown body restores every registered store', () async {
-    final skus = MemoryDeviceTypeRepository();
+    final skus = MemorySkuRepository();
     final locates = MemoryLocateRepository();
     await skus.create(sku('a')).run();
     final uow = MemoryUnitOfWork([skus, locates]);
@@ -46,7 +43,7 @@ void main() {
   });
 
   test('runEither rolls back on a Left and returns the failure', () async {
-    final skus = MemoryDeviceTypeRepository();
+    final skus = MemorySkuRepository();
     await skus.create(sku('a')).run();
     final uow = MemoryUnitOfWork([skus]);
 
@@ -64,7 +61,7 @@ void main() {
   });
 
   test('a successful body commits', () async {
-    final skus = MemoryDeviceTypeRepository();
+    final skus = MemorySkuRepository();
     final uow = MemoryUnitOfWork([skus]);
 
     final result = await uow.runEither<DomainFailure, void>(() async {
@@ -77,7 +74,7 @@ void main() {
   });
 
   test('a store that is not registered is left alone', () async {
-    final skus = MemoryDeviceTypeRepository();
+    final skus = MemorySkuRepository();
     final others = MemoryLocateRepository();
     final uow = MemoryUnitOfWork([skus]);
 

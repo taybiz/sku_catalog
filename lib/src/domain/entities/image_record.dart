@@ -2,10 +2,10 @@ import 'package:equatable/equatable.dart';
 
 import '../enums/image_owner.dart';
 
-/// An image file attached to a catalog entity: a [Device], [Locate], or
-/// [DeviceType] (SKU).
+/// An image file attached to a catalog entity: an [Instance], [Locate], or
+/// [Sku] (SKU).
 ///
-/// Unifies the former DeviceImage/LocateImage pair into one record with an
+/// Unifies the former InstanceImage/LocateImage pair into one record with an
 /// owner selector; SKU images are a new capability the original app lacked.
 class ImageRecord extends Equatable {
   /// Image record id.
@@ -14,7 +14,7 @@ class ImageRecord extends Equatable {
   /// Which catalog entity owns this image.
   final ImageOwner owner;
 
-  /// Id of the owning entity (device/locate/sku).
+  /// Id of the owning entity (instance/locate/sku).
   final String ownerId;
 
   /// Original filename.
@@ -37,7 +37,7 @@ class ImageRecord extends Equatable {
   });
 
   /// Converts to snake_case JSON with the owner-typed key used on the wire
-  /// (e.g. `device_id`, `locate_id`, `device_type_id`).
+  /// (e.g. `instance_id`, `locate_id`, `sku_id`).
   Map<String, dynamic> toJson() => {
     'id': id,
     'owner': owner.name,
@@ -76,14 +76,14 @@ class ImageRecord extends Equatable {
 
   static ImageOwner _parseOwner(Object? v) {
     switch (v?.toString().toLowerCase()) {
-      case 'device':
-        return ImageOwner.device;
+      case 'instance':
+        return ImageOwner.instance;
       case 'locate':
         return ImageOwner.locate;
       case 'sku':
         return ImageOwner.sku;
       default:
-        return ImageOwner.device;
+        return ImageOwner.instance;
     }
   }
 

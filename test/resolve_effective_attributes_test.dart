@@ -13,9 +13,9 @@ import 'package:test/test.dart';
 void main() {
   late MemoryTraitRepository traits;
   late MemoryTraitAttributeDefinitionRepository attributes;
-  late MemoryDeviceTypeRepository skus;
+  late MemorySkuRepository skus;
   late MemorySkuComponentRepository components;
-  late MemoryDeviceRepository devices;
+  late MemoryInstanceRepository instances;
   late ResolveEffectiveAttributes resolve;
 
   Meta meta(String id) => Meta(
@@ -41,11 +41,11 @@ void main() {
     defaultValue: defaultValue,
   );
 
-  DeviceType sku(
+  Sku sku(
     String id,
     List<String> traitIds, [
     Map<String, dynamic> values = const {},
-  ]) => DeviceType(
+  ]) => Sku(
     meta: meta(id),
     manufacturerId: 'acme',
     modelNumber: id,
@@ -53,13 +53,13 @@ void main() {
     attributeValues: values,
   );
 
-  Device device(
+  Instance instance(
     String id,
     String skuId, [
     Map<String, dynamic> values = const {},
-  ]) => Device(
+  ]) => Instance(
     meta: meta(id),
-    deviceTypeId: skuId,
+    skuId: skuId,
     locateId: null,
     name: id,
     attributeValues: values,
@@ -77,8 +77,8 @@ void main() {
         ),
       );
 
-  Future<List<ResolvedAttribute>> effective(String deviceId) async {
-    final result = await resolve(deviceId).run();
+  Future<List<ResolvedAttribute>> effective(String instanceId) async {
+    final result = await resolve(instanceId).run();
     result.isRight().should.be(true);
     return result.getOrElse((_) => []);
   }
@@ -92,13 +92,13 @@ void main() {
   setUp(() async {
     traits = MemoryTraitRepository();
     attributes = MemoryTraitAttributeDefinitionRepository();
-    skus = MemoryDeviceTypeRepository();
+    skus = MemorySkuRepository();
     components = MemorySkuComponentRepository();
-    devices = MemoryDeviceRepository();
+    instances = MemoryInstanceRepository();
 
     resolve = ResolveEffectiveAttributes(
-      deviceRepository: devices,
-      deviceTypeRepository: skus,
+      instanceRepository: instances,
+      skuRepository: skus,
       skuComponentRepository: components,
       resolveSchema: ResolveSchema(
         traitRepository: traits,
@@ -142,8 +142,8 @@ void main() {
       components.create(
         SkuComponent(
           meta: meta('edge-assembly-flipper-set'),
-          parentDeviceTypeId: 'assembly',
-          childDeviceTypeId: 'flipper-set',
+          parentSkuId: 'assembly',
+          childSkuId: 'flipper-set',
           quantity: 2,
         ),
       ),
@@ -152,8 +152,8 @@ void main() {
       components.create(
         SkuComponent(
           meta: meta('edge-assembly-flipper-plain'),
-          parentDeviceTypeId: 'assembly',
-          childDeviceTypeId: 'flipper-plain',
+          parentSkuId: 'assembly',
+          childSkuId: 'flipper-plain',
           quantity: 1,
         ),
       ),
@@ -162,17 +162,17 @@ void main() {
       components.create(
         SkuComponent(
           meta: meta('edge-top-assembly'),
-          parentDeviceTypeId: 'top-assembly',
-          childDeviceTypeId: 'assembly',
+          parentSkuId: 'top-assembly',
+          childSkuId: 'assembly',
           quantity: 1,
         ),
       ),
     );
 
     await create(
-      devices.create(device('d-instance', 'flipper-set', {'travel': 42})),
+      instances.create(instance('d-instance', 'flipper-set', {'travel': 42})),
     );
-    await create(devices.create(device('d-plain', 'flipper-set')));
+    await create(instances.create(instance('d-plain', 'flipper-set')));
   });
 
   group('Given ResolveEffectiveAttributes', () {
@@ -180,7 +180,7 @@ void main() {
       test('Then the instance wins and says so', () async {
         final travel = attribute(await effective('d-instance'), 'travel');
 
-        travel.source.should.be('device');
+        travel.source.should.be('instance');
         (travel.value as int).should.be(42);
         travel.unit.should.be('mm');
         travel.inheritedFrom.should.beNull();
@@ -191,7 +191,7 @@ void main() {
       test('Then the SKU supplies the value', () async {
         final travel = attribute(await effective('d-plain'), 'travel');
 
-        travel.source.should.be('device_type');
+        travel.source.should.be('sku');
         (travel.value as int).should.be(40);
         travel.inheritedFrom.should.beNull();
       });
@@ -204,7 +204,7 @@ void main() {
           'travel',
         );
 
-        travel.source.should.be('device_type');
+        travel.source.should.be('sku');
         (travel.value as int).should.be(55);
         travel.inheritedFrom.should.be('assembly');
       });
@@ -234,8 +234,8 @@ void main() {
     group('When a value has no definition behind it', () {
       test('Then it is not returned as an attribute', () async {
         await create(
-          devices.create(
-            device('d-stray', 'flipper-set', {'no_trait_defines_this': 7}),
+          instances.create(
+            instance('d-stray', 'flipper-set', {'no_trait_defines_this': 7}),
           ),
         );
 
@@ -250,10 +250,10 @@ void main() {
     group('When the instance carries a trait of its own', () {
       test('Then that trait attributes join the resolved set', () async {
         await create(
-          devices.create(
-            Device(
+          instances.create(
+            Instance(
               meta: meta('d-classified'),
-              deviceTypeId: 'flipper-plain',
+              skuId: 'flipper-plain',
               locateId: null,
               name: 'classified',
               traitIds: const ['mech'],
@@ -274,8 +274,8 @@ void main() {
           components.create(
             SkuComponent(
               meta: meta('edge-back'),
-              parentDeviceTypeId: 'flipper-set',
-              childDeviceTypeId: 'assembly',
+              parentSkuId: 'flipper-set',
+              childSkuId: 'assembly',
               quantity: 1,
             ),
           ),
@@ -289,7 +289,7 @@ void main() {
       });
     });
 
-    group('When the device does not exist', () {
+    group('When the instance does not exist', () {
       test('Then the failure comes back on the Left', () async {
         final result = await resolve('nope').run();
 

@@ -1,5 +1,5 @@
 /// Operations on the catalog model — CRUD, trait and schema resolution, assembly
-/// edges with a cycle guard, and the device and place rules.
+/// edges with a cycle guard, and the instance and place rules.
 ///
 /// Everything is typed against the repository contracts in `../domain`; this
 /// library ships no persistence.
@@ -12,17 +12,17 @@ library;
 export 'add_sku_component.dart';
 export 'aggregate_bill_of_materials.dart';
 export 'assembly_use_cases.dart';
-export 'assert_unique_device_name.dart';
-export 'create_device.dart';
-export 'create_device_type.dart';
+export 'assert_unique_instance_name.dart';
+export 'create_instance.dart';
+export 'create_sku.dart';
 export 'create_image_record.dart';
 export 'create_locate.dart';
 export 'create_manufacturer.dart';
 export 'create_sku_component.dart';
 export 'create_trait.dart';
 export 'create_trait_attribute_definition.dart';
-export 'delete_device.dart';
-export 'delete_device_type.dart';
+export 'delete_instance.dart';
+export 'delete_sku.dart';
 export 'delete_image_record.dart';
 export 'delete_locate.dart';
 export 'delete_manufacturer.dart';
@@ -30,26 +30,26 @@ export 'delete_sku_component.dart';
 export 'delete_trait.dart';
 export 'delete_trait_attribute_definition.dart';
 export 'descendant_locate_ids.dart';
-export 'device_naming.dart';
-export 'device_type_use_cases.dart';
-export 'duplicate_device.dart';
-export 'duplicate_device_type.dart';
-export 'fetch_all_device_types.dart';
-export 'fetch_all_devices.dart';
+export 'instance_naming.dart';
+export 'sku_use_cases.dart';
+export 'duplicate_instance.dart';
+export 'duplicate_sku.dart';
+export 'fetch_all_skus.dart';
+export 'fetch_all_instances.dart';
 export 'fetch_all_locates.dart';
 export 'fetch_all_manufacturers.dart';
 export 'fetch_all_sku_components.dart';
 export 'fetch_all_trait_attribute_definitions.dart';
 export 'fetch_all_traits.dart';
 export 'fetch_attributes_by_trait.dart';
-export 'fetch_device_by_id.dart';
-export 'fetch_device_type_by_id.dart';
-export 'fetch_devices_by_locate.dart';
+export 'fetch_instance_by_id.dart';
+export 'fetch_sku_by_id.dart';
+export 'fetch_instances_by_locate.dart';
 export 'fetch_image_records.dart';
 export 'fetch_locate_by_id.dart';
 export 'fetch_manufacturer_by_id.dart';
 export 'fetch_meta.dart';
-export 'fetch_sku_components_by_device_type.dart';
+export 'fetch_components_by_sku.dart';
 export 'fetch_trait_attribute_definition_by_id.dart';
 export 'fetch_trait_by_id.dart';
 export 'image_record_use_cases.dart';
@@ -67,8 +67,8 @@ export 'sku_component_use_cases.dart';
 export 'trait_attribute_definition_use_cases.dart';
 export 'trait_use_cases.dart';
 export 'tree_use_cases.dart';
-export 'update_device.dart';
-export 'update_device_type.dart';
+export 'update_instance.dart';
+export 'update_sku.dart';
 export 'update_locate.dart';
 export 'update_manufacturer.dart';
 export 'update_meta.dart';

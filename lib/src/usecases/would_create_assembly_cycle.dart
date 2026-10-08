@@ -8,27 +8,22 @@ class WouldCreateAssemblyCycle {
 
   final ISkuComponentRepository _repository;
 
-  /// Returns `true` if adding an edge from [parentDeviceTypeId] to
-  /// [childDeviceTypeId] would create a cycle.
-  TaskEither<DomainFailure, bool> call(
-    String parentDeviceTypeId,
-    String childDeviceTypeId,
-  ) {
-    if (parentDeviceTypeId == childDeviceTypeId) return TaskEither.of(true);
+  /// Returns `true` if adding an edge from [parentSkuId] to
+  /// [childSkuId] would create a cycle.
+  TaskEither<DomainFailure, bool> call(String parentSkuId, String childSkuId) {
+    if (parentSkuId == childSkuId) return TaskEither.of(true);
 
     return _repository.fetchAll().map((components) {
       final adj = <String, List<String>>{};
       for (final comp in components) {
-        adj
-            .putIfAbsent(comp.parentDeviceTypeId, () => [])
-            .add(comp.childDeviceTypeId);
+        adj.putIfAbsent(comp.parentSkuId, () => []).add(comp.childSkuId);
       }
 
       final visited = <String>{};
-      final queue = [childDeviceTypeId];
+      final queue = [childSkuId];
       while (queue.isNotEmpty) {
         final current = queue.removeLast();
-        if (current == parentDeviceTypeId) return true;
+        if (current == parentSkuId) return true;
         if (!visited.add(current)) continue;
         for (final neighbor in (adj[current] ?? [])) {
           queue.add(neighbor);

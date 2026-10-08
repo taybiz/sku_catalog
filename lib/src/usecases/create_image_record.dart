@@ -1,7 +1,7 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// Create a new image record (device/locate/SKU image).
+/// Create a new image record (instance/locate/SKU image).
 class CreateImageRecord {
   /// Creates a [CreateImageRecord] use case.
   const CreateImageRecord(this._repository);

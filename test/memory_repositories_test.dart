@@ -14,10 +14,10 @@ void main() {
   );
 
   test('a SKU round-trips through create, fetch and update', () async {
-    final repo = MemoryDeviceTypeRepository();
+    final repo = MemorySkuRepository();
     await repo
         .create(
-          DeviceType(
+          Sku(
             meta: meta('qo120'),
             manufacturerId: 'square-d',
             modelNumber: 'QO120',
@@ -37,7 +37,7 @@ void main() {
 
     await repo
         .update(
-          DeviceType(
+          Sku(
             meta: meta('qo120'),
             manufacturerId: 'square-d',
             modelNumber: 'QO120-2',
@@ -52,7 +52,7 @@ void main() {
   });
 
   test('a missing record fails as a value, not an exception', () async {
-    final repo = MemoryDeviceTypeRepository();
+    final repo = MemorySkuRepository();
     final result = await repo.fetchById('nope').run();
 
     result.isLeft().should.beTrue();
@@ -85,8 +85,8 @@ void main() {
         .create(
           SkuComponent(
             meta: meta('e1'),
-            parentDeviceTypeId: 'rack',
-            childDeviceTypeId: 'card',
+            parentSkuId: 'rack',
+            childSkuId: 'card',
             quantity: 4,
           ),
         )
@@ -95,14 +95,14 @@ void main() {
         .create(
           SkuComponent(
             meta: meta('e2'),
-            parentDeviceTypeId: 'other',
-            childDeviceTypeId: 'card',
+            parentSkuId: 'other',
+            childSkuId: 'card',
             quantity: 1,
           ),
         )
         .run();
 
-    final rows = await repo.fetchByDeviceType('rack').run();
+    final rows = await repo.fetchBySku('rack').run();
     rows.getOrElse((_) => fail('expected Right')).single.quantity.should.be(4);
   });
 }

@@ -4,13 +4,13 @@ import 'support/memory_backends.dart';
 import 'package:test/test.dart';
 
 /// Images hang off three kinds of owner, and the owner kind is part of the
-/// query — asking for a SKU's images must not return the device's.
+/// query — asking for a SKU's images must not return the instance's.
 void main() {
   late MemoryImageRepository repository;
 
   ImageRecord record(
     String id, {
-    ImageOwner owner = ImageOwner.device,
+    ImageOwner owner = ImageOwner.instance,
     String ownerId = 'd1',
   }) => ImageRecord(
     id: id,
@@ -47,11 +47,11 @@ void main() {
     ).run();
     skuImages.getOrElse((_) => []).map((i) => i.id).should.be(['s1']);
 
-    final deviceImages = await FetchImageRecords(repository)(
-      ImageOwner.device,
+    final instanceImages = await FetchImageRecords(repository)(
+      ImageOwner.instance,
       'd1',
     ).run();
-    deviceImages.getOrElse((_) => []).map((i) => i.id).should.be(['d1a']);
+    instanceImages.getOrElse((_) => []).map((i) => i.id).should.be(['d1a']);
   });
 
   test('deleting an image record removes it', () async {

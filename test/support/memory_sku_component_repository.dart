@@ -25,14 +25,13 @@ class MemorySkuComponentRepository
       TaskEither.of(_store.values.map(SkuComponent.fromJson).toList());
 
   @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchByDeviceType(
-    String deviceTypeId,
-  ) => TaskEither.of(
-    _store.values
-        .map(SkuComponent.fromJson)
-        .where((c) => c.parentDeviceTypeId == deviceTypeId)
-        .toList(),
-  );
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku(String skuId) =>
+      TaskEither.of(
+        _store.values
+            .map(SkuComponent.fromJson)
+            .where((c) => c.parentSkuId == skuId)
+            .toList(),
+      );
 
   @override
   TaskEither<DomainFailure, SkuComponent> fetchById(String id) {

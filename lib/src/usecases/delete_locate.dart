@@ -2,17 +2,17 @@ import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
 /// Delete a locate by id, blocked while it still has sub-locates or assigned
-/// devices.
+/// instances.
 class DeleteLocate {
   /// Creates a [DeleteLocate] use case.
   const DeleteLocate({
     required ILocateRepository locateRepository,
-    required IDeviceRepository deviceRepository,
+    required IInstanceRepository instanceRepository,
   }) : _locateRepository = locateRepository,
-       _deviceRepository = deviceRepository;
+       _instanceRepository = instanceRepository;
 
   final ILocateRepository _locateRepository;
-  final IDeviceRepository _deviceRepository;
+  final IInstanceRepository _instanceRepository;
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call(String id) =>
@@ -20,10 +20,10 @@ class DeleteLocate {
         if (locates.any((l) => l.parentLocateId == id)) {
           return TaskEither.left(InUseFailure('This locate has sub-locates.'));
         }
-        return _deviceRepository.fetchAll().flatMap((devices) {
-          if (devices.any((d) => d.locateId == id)) {
+        return _instanceRepository.fetchAll().flatMap((instances) {
+          if (instances.any((d) => d.locateId == id)) {
             return TaskEither.left(
-              InUseFailure('This locate has assigned devices.'),
+              InUseFailure('This locate has assigned instances.'),
             );
           }
           return _locateRepository.delete(id);

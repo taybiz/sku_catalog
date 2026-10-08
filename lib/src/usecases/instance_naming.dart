@@ -1,6 +1,6 @@
 import '../domain/domain.dart';
 
-/// Default device name template (settings fallback).
+/// Default instance name template (settings fallback).
 const defaultNameTemplate = '{trait}_{locate}_{sku}_{n}';
 
 /// Collapses doubled-up separators and trims leading/trailing ones — cleans
@@ -33,7 +33,7 @@ String formatName(String template, Map<String, String> tokens, int n) =>
 /// Error message when [template] cannot produce unique auto-names, else null.
 ///
 /// Auto-names are uniquified per locate by the {n} sequence token; a template
-/// without it would stamp every device in the locate with the same name.
+/// without it would stamp every instance in the locate with the same name.
 String? validateNameTemplate(String template) => template.trim().contains('{n}')
     ? null
     : 'Naming template must include the "{n}" sequence token';
@@ -66,7 +66,7 @@ bool namesClash(String a, String b) =>
     a.trim().toLowerCase() == b.trim().toLowerCase();
 
 /// A unique "copy" name: "X copy", "X copy 2", ...
-String uniqueCopyName(String baseName, String? locateId, List<Device> all) {
+String uniqueCopyName(String baseName, String? locateId, List<Instance> all) {
   final atLocate = all.where((d) => d.locateId == locateId).toList();
   var candidate = '$baseName copy';
   var n = 2;
@@ -145,16 +145,16 @@ String resolveAttributeAbbreviation(
 /// Whether the SKU [typeId] carries any of [traitNames], inherited or direct.
 ///
 /// This is how a caller expresses its own structural conventions — "a Slottable
-/// SKU lives inside another device, so it carries no locate of its own" — without
+/// SKU lives inside another instance, so it carries no locate of its own" — without
 /// the catalog having to know the word.
 bool isSlotBound(
   String typeId,
-  List<DeviceType> deviceTypes,
+  List<Sku> skus,
   List<Trait> traits,
   Set<String> traitNames,
 ) {
   if (traitNames.isEmpty) return false;
-  final names = traitNamesForType(typeId, deviceTypes, traits);
+  final names = traitNamesForType(typeId, skus, traits);
   return traitNames.any((n) => names.contains(n.toLowerCase()));
 }
 
@@ -162,11 +162,11 @@ bool isSlotBound(
 /// chains (lower-cased, deduped).
 Set<String> traitNamesForType(
   String typeId,
-  List<DeviceType> deviceTypes,
+  List<Sku> skus,
   List<Trait> traits,
 ) {
   final names = <String>{};
-  final dts = deviceTypes.where((d) => d.meta.id == typeId).toList();
+  final dts = skus.where((d) => d.meta.id == typeId).toList();
   if (dts.isEmpty) return names;
   final byId = {for (final t in traits) t.meta.id: t};
   for (final tid in dts.first.traitIds) {
@@ -181,14 +181,14 @@ Set<String> traitNamesForType(
   return names;
 }
 
-/// Whether [device]'s SKU carries [traitName] (inherited or direct).
-bool deviceHasTrait(
-  Device device,
-  List<DeviceType> deviceTypes,
+/// Whether [instance]'s SKU carries [traitName] (inherited or direct).
+bool instanceHasTrait(
+  Instance instance,
+  List<Sku> skus,
   List<Trait> traits,
   String traitName,
 ) => traitNamesForType(
-  device.deviceTypeId,
-  deviceTypes,
+  instance.skuId,
+  skus,
   traits,
 ).contains(traitName.toLowerCase());

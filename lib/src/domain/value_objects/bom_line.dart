@@ -7,7 +7,7 @@ import 'package:equatable/equatable.dart';
 /// [quantity] is the sum over every path.
 class BomLine extends Equatable {
   /// Id of the SKU this line is for.
-  final String deviceTypeId;
+  final String skuId;
 
   /// Model number of that SKU, or null when the catalog has no SKU row for it
   /// (an assembly edge pointing at something that is not there). The line still
@@ -28,7 +28,7 @@ class BomLine extends Equatable {
 
   /// Creates a [BomLine].
   const BomLine({
-    required this.deviceTypeId,
+    required this.skuId,
     this.modelNumber,
     required this.quantity,
     required this.depth,
@@ -36,11 +36,5 @@ class BomLine extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-    deviceTypeId,
-    modelNumber,
-    quantity,
-    depth,
-    isAssembly,
-  ];
+  List<Object?> get props => [skuId, modelNumber, quantity, depth, isAssembly];
 }

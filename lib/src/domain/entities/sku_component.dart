@@ -7,11 +7,11 @@ class SkuComponent extends Equatable {
   /// Creation metadata.
   final Meta meta;
 
-  /// Id of the parent [DeviceType].
-  final String parentDeviceTypeId;
+  /// Id of the parent [Sku].
+  final String parentSkuId;
 
-  /// Id of the child [DeviceType].
-  final String childDeviceTypeId;
+  /// Id of the child [Sku].
+  final String childSkuId;
 
   /// Quantity of the child in one unit of the parent.
   final int quantity;
@@ -19,32 +19,27 @@ class SkuComponent extends Equatable {
   /// Creates a [SkuComponent].
   const SkuComponent({
     required this.meta,
-    required this.parentDeviceTypeId,
-    required this.childDeviceTypeId,
+    required this.parentSkuId,
+    required this.childSkuId,
     required this.quantity,
   });
 
   /// Converts to JSON with snake_case keys.
   Map<String, dynamic> toJson() => {
     ...meta.toJson(),
-    'parent_device_type_id': parentDeviceTypeId,
-    'child_device_type_id': childDeviceTypeId,
+    'parent_sku_id': parentSkuId,
+    'child_sku_id': childSkuId,
     'quantity': quantity,
   };
 
   /// Parses a [SkuComponent] from the original app's snake_case JSON record.
   factory SkuComponent.fromJson(Map<String, dynamic> json) => SkuComponent(
     meta: Meta.fromJson(json),
-    parentDeviceTypeId: json['parent_device_type_id'] as String? ?? '',
-    childDeviceTypeId: json['child_device_type_id'] as String? ?? '',
+    parentSkuId: json['parent_sku_id'] as String? ?? '',
+    childSkuId: json['child_sku_id'] as String? ?? '',
     quantity: (json['quantity'] as num?)?.toInt() ?? 1,
   );
 
   @override
-  List<Object?> get props => [
-    meta,
-    parentDeviceTypeId,
-    childDeviceTypeId,
-    quantity,
-  ];
+  List<Object?> get props => [meta, parentSkuId, childSkuId, quantity];
 }

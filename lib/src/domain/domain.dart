@@ -11,8 +11,8 @@
 library;
 
 export 'json_coercion.dart';
-export 'entities/device.dart';
-export 'entities/device_type.dart';
+export 'entities/instance.dart';
+export 'entities/sku.dart';
 export 'entities/image_record.dart';
 export 'entities/locate.dart';
 export 'entities/manufacturer.dart';
@@ -26,11 +26,11 @@ export 'enums/trait_scope.dart';
 export 'failures/catalog_failures.dart';
 export 'value_objects/bill_of_materials.dart';
 export 'value_objects/bom_line.dart';
-export 'value_objects/device_report_property.dart';
+export 'value_objects/report_property.dart';
 export 'value_objects/resolved_attribute.dart';
 export 'contracts/contracts.dart';
-export 'contracts/device_repository.dart';
-export 'contracts/device_type_repository.dart';
+export 'contracts/instance_repository.dart';
+export 'contracts/sku_repository.dart';
 export 'contracts/image_repository.dart';
 export 'contracts/locate_repository.dart';
 export 'contracts/manufacturer_repository.dart';

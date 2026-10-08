@@ -18,8 +18,8 @@ class UpdateSkuComponent {
       _repository.fetchById(skuId).flatMap((current) {
         final replacement = SkuComponent(
           meta: newMeta(),
-          parentDeviceTypeId: current.parentDeviceTypeId,
-          childDeviceTypeId: current.childDeviceTypeId,
+          parentSkuId: current.parentSkuId,
+          childSkuId: current.childSkuId,
           quantity: quantity,
         );
         return _repository.delete(skuId).flatMap((_) {

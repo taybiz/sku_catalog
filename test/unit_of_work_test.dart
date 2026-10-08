@@ -7,9 +7,9 @@ import 'package:test/test.dart';
 /// that can roll back. These tests pin both halves of that: with a unit of work
 /// the partial write is undone, and without one it is not.
 void main() {
-  late MemoryDeviceTypeRepository skus;
+  late MemorySkuRepository skus;
   late MemorySkuComponentRepository components;
-  late MemoryDeviceRepository devices;
+  late MemoryInstanceRepository instances;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -19,32 +19,32 @@ void main() {
   );
 
   setUp(() async {
-    skus = MemoryDeviceTypeRepository();
+    skus = MemorySkuRepository();
     components = MemorySkuComponentRepository();
-    devices = MemoryDeviceRepository();
-    await CreateDeviceType(skus)(
-      DeviceType(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
+    instances = MemoryInstanceRepository();
+    await CreateSku(skus)(
+      Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
     ).run();
     // An edge whose child SKU is deliberately absent from the SKU store, so the
     // SKU delete fails *after* the edge delete has already succeeded.
     await CreateSkuComponent(components)(
       SkuComponent(
         meta: meta('edge'),
-        parentDeviceTypeId: 'rack',
-        childDeviceTypeId: 'card',
+        parentSkuId: 'rack',
+        childSkuId: 'card',
         quantity: 8,
       ),
     ).run();
   });
 
-  Future<int> edgeCount() async => (await FetchSkuComponentsByDeviceType(
-    components,
-  )('rack').run()).getOrElse((_) => []).length;
+  Future<int> edgeCount() async => (await FetchComponentsBySku(components)(
+    'rack',
+  ).run()).getOrElse((_) => []).length;
 
   test('a unit of work rolls a failed SKU delete back', () async {
-    final result = await DeleteDeviceType(
-      deviceTypeRepository: skus,
-      deviceRepository: devices,
+    final result = await DeleteSku(
+      skuRepository: skus,
+      instanceRepository: instances,
       skuComponentRepository: components,
       unitOfWork: MemoryUnitOfWork([skus, components]),
     )('card').run();
@@ -54,9 +54,9 @@ void main() {
   });
 
   test('without a unit of work the assembly line is already gone', () async {
-    final result = await DeleteDeviceType(
-      deviceTypeRepository: skus,
-      deviceRepository: devices,
+    final result = await DeleteSku(
+      skuRepository: skus,
+      instanceRepository: instances,
       skuComponentRepository: components,
     )('card').run();
 
@@ -66,35 +66,38 @@ void main() {
     (await edgeCount()).should.be(0);
   });
 
-  test('a device delete takes its images and the device in one unit', () async {
-    final images = MemoryImageRepository();
-    await CreateDevice(devices)(
-      Device(
-        meta: meta('d1'),
-        deviceTypeId: 'rack',
-        locateId: null,
-        name: 'Dev 1',
-      ),
-    ).run();
-    await CreateImageRecord(images)(
-      ImageRecord(
-        id: 'img1',
-        owner: ImageOwner.device,
-        ownerId: 'd1',
-        filename: 'one.jpg',
-        storedPath: 'data:image/jpeg;base64,AAAA',
-        createdAt: '2024-01-01T00:00:00.000Z',
-      ),
-    ).run();
+  test(
+    'an instance delete takes its images and the instance in one unit',
+    () async {
+      final images = MemoryImageRepository();
+      await CreateInstance(instances)(
+        Instance(
+          meta: meta('d1'),
+          skuId: 'rack',
+          locateId: null,
+          name: 'Dev 1',
+        ),
+      ).run();
+      await CreateImageRecord(images)(
+        ImageRecord(
+          id: 'img1',
+          owner: ImageOwner.instance,
+          ownerId: 'd1',
+          filename: 'one.jpg',
+          storedPath: 'data:image/jpeg;base64,AAAA',
+          createdAt: '2024-01-01T00:00:00.000Z',
+        ),
+      ).run();
 
-    final result = await DeleteDevice(
-      deviceRepository: devices,
-      imageRepository: images,
-      unitOfWork: MemoryUnitOfWork([devices, images]),
-    )('d1').run();
+      final result = await DeleteInstance(
+        instanceRepository: instances,
+        imageRepository: images,
+        unitOfWork: MemoryUnitOfWork([instances, images]),
+      )('d1').run();
 
-    result.isRight().should.beTrue();
-    (await devices.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
-    (await images.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
-  });
+      result.isRight().should.beTrue();
+      (await instances.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
+      (await images.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
+    },
+  );
 }

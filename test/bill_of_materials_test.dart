@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 /// parts, a loop that reports a finite quantity, or a level that depends on the
 /// order a store handed its rows back.
 void main() {
-  late MemoryDeviceTypeRepository skus;
+  late MemorySkuRepository skus;
   late MemorySkuComponentRepository components;
   late AggregateBillOfMaterials aggregate;
 
@@ -20,7 +20,7 @@ void main() {
     updatedAt: '2026-01-01T00:00:00.000Z',
   );
 
-  DeviceType sku(String id) => DeviceType(
+  Sku sku(String id) => Sku(
     meta: meta(id),
     manufacturerId: 'acme',
     modelNumber: id.toUpperCase(),
@@ -28,16 +28,10 @@ void main() {
 
   /// An assembly edge, written the way a consumer writes one.
   Future<void> edge(String parent, String child, int quantity) async {
-    final result =
-        await AddSkuComponent(
-              repository: components,
-              deviceTypeRepository: skus,
-            )(
-              parentDeviceTypeId: parent,
-              childDeviceTypeId: child,
-              quantity: quantity,
-            )
-            .run();
+    final result = await AddSkuComponent(
+      repository: components,
+      skuRepository: skus,
+    )(parentSkuId: parent, childSkuId: child, quantity: quantity).run();
 
     result.isRight().should.be(true);
   }
@@ -55,22 +49,21 @@ void main() {
   }
 
   BomLine line(BillOfMaterials bill, String id) => bill.lines.firstWhere(
-    (line) => line.deviceTypeId == id,
-    orElse: () => fail(
-      'no "$id" among ${bill.lines.map((l) => l.deviceTypeId).join(', ')}',
-    ),
+    (line) => line.skuId == id,
+    orElse: () =>
+        fail('no "$id" among ${bill.lines.map((l) => l.skuId).join(', ')}'),
   );
 
   setUp(() async {
-    skus = MemoryDeviceTypeRepository();
+    skus = MemorySkuRepository();
     components = MemorySkuComponentRepository();
     aggregate = AggregateBillOfMaterials(
-      deviceTypeRepository: skus,
+      skuRepository: skus,
       skuComponentRepository: components,
     );
 
     for (final id in ['machine', 'rack', 'card', 'shelf', 'bolt']) {
-      await CreateDeviceType(skus)(sku(id)).run();
+      await CreateSku(skus)(sku(id)).run();
     }
   });
 
@@ -79,7 +72,7 @@ void main() {
       test('Then the bill is empty rather than an error', () async {
         final bill = await bom('machine');
 
-        bill.deviceTypeId.should.be('machine');
+        bill.skuId.should.be('machine');
         bill.modelNumber.should.be('MACHINE');
         bill.units.should.be(1);
         bill.lines.should.beEmpty();
@@ -143,7 +136,7 @@ void main() {
 
         final bill = await bom('machine');
 
-        bill.lines.where((l) => l.deviceTypeId == 'bolt').length.should.be(1);
+        bill.lines.where((l) => l.skuId == 'bolt').length.should.be(1);
         line(bill, 'bolt').quantity.should.be(9);
         line(bill, 'bolt').depth.should.be(2);
       });
@@ -186,7 +179,7 @@ void main() {
 
         final bill = await bom('machine');
 
-        bill.lines.map((l) => l.deviceTypeId).should.be([
+        bill.lines.map((l) => l.skuId).should.be([
           'card',
           'shelf',
           'bolt',
@@ -252,8 +245,8 @@ void main() {
             .create(
               SkuComponent(
                 meta: meta('edge-rack-machine'),
-                parentDeviceTypeId: 'rack',
-                childDeviceTypeId: 'machine',
+                parentSkuId: 'rack',
+                childSkuId: 'machine',
                 quantity: 1,
               ),
             )

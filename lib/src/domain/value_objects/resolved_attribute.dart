@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../entities/trait_attribute_definition.dart';
 
-/// One attribute resolved across trait inheritance and device overrides.
+/// One attribute resolved across trait inheritance and instance overrides.
 class ResolvedAttribute extends Equatable {
   /// Id of the attribute definition.
   final String attributeId;
@@ -18,8 +18,8 @@ class ResolvedAttribute extends Equatable {
 
   /// Where the value came from:
   ///
-  /// - `'device'` — this instance set it;
-  /// - `'device_type'` — the SKU, or an ancestor SKU in one of its assemblies,
+  /// - `'instance'` — this instance set it;
+  /// - `'sku'` — the SKU, or an ancestor SKU in one of its assemblies,
   ///   set it (see [inheritedFrom]);
   /// - `'default'` — nobody set it and [def]'s default applies;
   /// - `'trait'` — no value anywhere; the entry is the schema definition only.

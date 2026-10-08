@@ -6,9 +6,9 @@ import 'package:test/test.dart';
 /// SKUs assemble from SKUs. The edge carries a quantity, and the graph must
 /// never close a loop — a machine cannot contain itself.
 void main() {
-  late MemoryDeviceTypeRepository skus;
+  late MemorySkuRepository skus;
   late MemorySkuComponentRepository components;
-  late MemoryDeviceRepository devices;
+  late MemoryInstanceRepository instances;
   late AddSkuComponent addEdge;
 
   Meta meta(String id) => Meta(
@@ -18,47 +18,39 @@ void main() {
     updatedAt: '2026-01-01T00:00:00.000Z',
   );
 
-  DeviceType sku(String id) => DeviceType(
-    meta: meta(id),
-    manufacturerId: 'm',
-    modelNumber: id.toUpperCase(),
-  );
+  Sku sku(String id) =>
+      Sku(meta: meta(id), manufacturerId: 'm', modelNumber: id.toUpperCase());
 
   setUp(() async {
-    skus = MemoryDeviceTypeRepository();
+    skus = MemorySkuRepository();
     components = MemorySkuComponentRepository();
-    devices = MemoryDeviceRepository();
-    addEdge = AddSkuComponent(
-      repository: components,
-      deviceTypeRepository: skus,
-    );
+    instances = MemoryInstanceRepository();
+    addEdge = AddSkuComponent(repository: components, skuRepository: skus);
     for (final id in ['base', 'card', 'rack']) {
-      await CreateDeviceType(skus)(sku(id)).run();
+      await CreateSku(skus)(sku(id)).run();
     }
   });
 
   test('a SKU can contain another SKU, with a quantity', () async {
     final result = await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'card',
+      parentSkuId: 'rack',
+      childSkuId: 'card',
       quantity: 8,
     ).run();
 
     result.isRight().should.beTrue();
 
-    final edges = await FetchSkuComponentsByDeviceType(components)(
-      'rack',
-    ).run();
+    final edges = await FetchComponentsBySku(components)('rack').run();
     final rows = edges.getOrElse((_) => fail('expected Right'));
     rows.should.haveCount(1);
     rows.single.quantity.should.be(8);
-    rows.single.childDeviceTypeId.should.be('card');
+    rows.single.childSkuId.should.be('card');
   });
 
   test('an edge to a SKU that does not exist is refused', () async {
     final result = await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'ghost',
+      parentSkuId: 'rack',
+      childSkuId: 'ghost',
       quantity: 1,
     ).run();
 
@@ -67,14 +59,14 @@ void main() {
 
   test('a two-SKU loop is refused', () async {
     (await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'card',
+      parentSkuId: 'rack',
+      childSkuId: 'card',
       quantity: 1,
     ).run()).isRight().should.beTrue();
 
     final loop = await addEdge(
-      parentDeviceTypeId: 'card',
-      childDeviceTypeId: 'rack',
+      parentSkuId: 'card',
+      childSkuId: 'rack',
       quantity: 1,
     ).run();
 
@@ -86,20 +78,12 @@ void main() {
   });
 
   test('a three-SKU loop is refused', () async {
-    await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'card',
-      quantity: 1,
-    ).run();
-    await addEdge(
-      parentDeviceTypeId: 'card',
-      childDeviceTypeId: 'base',
-      quantity: 1,
-    ).run();
+    await addEdge(parentSkuId: 'rack', childSkuId: 'card', quantity: 1).run();
+    await addEdge(parentSkuId: 'card', childSkuId: 'base', quantity: 1).run();
 
     final loop = await addEdge(
-      parentDeviceTypeId: 'base',
-      childDeviceTypeId: 'rack',
+      parentSkuId: 'base',
+      childSkuId: 'rack',
       quantity: 1,
     ).run();
 
@@ -108,43 +92,34 @@ void main() {
 
   test('a SKU cannot contain itself', () async {
     (await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'rack',
+      parentSkuId: 'rack',
+      childSkuId: 'rack',
       quantity: 1,
     ).run()).isLeft().should.beTrue();
   });
 
   test('an assembly edge can be removed', () async {
-    await addEdge(
-      parentDeviceTypeId: 'rack',
-      childDeviceTypeId: 'card',
-      quantity: 8,
-    ).run();
-    final rows = (await FetchSkuComponentsByDeviceType(components)(
+    await addEdge(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
+    final rows = (await FetchComponentsBySku(components)(
       'rack',
     ).run()).getOrElse((_) => fail('expected Right'));
 
     (await DeleteSkuComponent(components)(
       rows.single.meta.id,
     ).run()).isRight().should.beTrue();
-    (await FetchSkuComponentsByDeviceType(components)(
+    (await FetchComponentsBySku(components)(
       'rack',
     ).run()).getOrElse((_) => []).should.beEmpty();
   });
 
-  test('deleting a SKU that a device instantiates is refused', () async {
-    await CreateDevice(devices)(
-      Device(
-        meta: meta('d1'),
-        deviceTypeId: 'base',
-        locateId: null,
-        name: 'Base 1',
-      ),
+  test('deleting a SKU that an instance instantiates is refused', () async {
+    await CreateInstance(instances)(
+      Instance(meta: meta('d1'), skuId: 'base', locateId: null, name: 'Base 1'),
     ).run();
 
-    final result = await DeleteDeviceType(
-      deviceTypeRepository: skus,
-      deviceRepository: devices,
+    final result = await DeleteSku(
+      skuRepository: skus,
+      instanceRepository: instances,
       skuComponentRepository: components,
     )('base').run();
 
@@ -158,23 +133,19 @@ void main() {
   test(
     'deleting a SKU cascades the assembly lines that referenced it',
     () async {
-      await addEdge(
-        parentDeviceTypeId: 'rack',
-        childDeviceTypeId: 'card',
-        quantity: 8,
-      ).run();
+      await addEdge(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
 
-      final deleted = await DeleteDeviceType(
-        deviceTypeRepository: skus,
-        deviceRepository: devices,
+      final deleted = await DeleteSku(
+        skuRepository: skus,
+        instanceRepository: instances,
         skuComponentRepository: components,
       )('card').run();
       deleted.isRight().should.beTrue();
 
-      (await FetchSkuComponentsByDeviceType(components)(
+      (await FetchComponentsBySku(components)(
         'rack',
       ).run()).getOrElse((_) => []).should.beEmpty();
-      (await FetchAllDeviceTypes(skus)().run())
+      (await FetchAllSkus(skus)().run())
           .getOrElse((_) => [])
           .map((s) => s.meta.id)
           .should

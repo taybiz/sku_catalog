@@ -1,5 +1,5 @@
 /// A catalog model for physical parts: SKUs with traits and typed attributes,
-/// assemblies of SKUs, manufacturers, the places they go, and the devices that
+/// assemblies of SKUs, manufacturers, the places they go, and the instances that
 /// instantiate them.
 ///
 /// This is the front door: it re-exports the model and the operations, so one

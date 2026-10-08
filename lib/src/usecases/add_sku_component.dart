@@ -9,27 +9,24 @@ class AddSkuComponent {
   /// Creates an [AddSkuComponent] use case.
   const AddSkuComponent({
     required ISkuComponentRepository repository,
-    required IDeviceTypeRepository deviceTypeRepository,
+    required ISkuRepository skuRepository,
   }) : _repository = repository,
-       _deviceTypeRepository = deviceTypeRepository;
+       _skuRepository = skuRepository;
 
   final ISkuComponentRepository _repository;
-  final IDeviceTypeRepository _deviceTypeRepository;
+  final ISkuRepository _skuRepository;
 
-  /// Adds a new SKU component linking [parentDeviceTypeId] to
-  /// [childDeviceTypeId].
+  /// Adds a new SKU component linking [parentSkuId] to
+  /// [childSkuId].
   TaskEither<DomainFailure, SkuComponent> call({
-    required String parentDeviceTypeId,
-    required String childDeviceTypeId,
+    required String parentSkuId,
+    required String childSkuId,
     required int quantity,
-  }) => _deviceTypeRepository
-      .fetchById(parentDeviceTypeId)
-      .andThen(() => _deviceTypeRepository.fetchById(childDeviceTypeId))
+  }) => _skuRepository
+      .fetchById(parentSkuId)
+      .andThen(() => _skuRepository.fetchById(childSkuId))
       .flatMap(
-        (_) => WouldCreateAssemblyCycle(_repository)(
-          parentDeviceTypeId,
-          childDeviceTypeId,
-        ),
+        (_) => WouldCreateAssemblyCycle(_repository)(parentSkuId, childSkuId),
       )
       .flatMap((wouldCycle) {
         if (wouldCycle) {
@@ -44,8 +41,8 @@ class AddSkuComponent {
         // a timestamp is not an identifier.
         final component = SkuComponent(
           meta: newMeta(),
-          parentDeviceTypeId: parentDeviceTypeId,
-          childDeviceTypeId: childDeviceTypeId,
+          parentSkuId: parentSkuId,
+          childSkuId: childSkuId,
           quantity: quantity,
         );
 

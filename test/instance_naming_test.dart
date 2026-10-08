@@ -63,10 +63,10 @@ void main() {
 
   group('uniqueCopyName', () {
     test('suffixes each successive copy', () {
-      final all = <Device>[
-        Device(
+      final all = <Instance>[
+        Instance(
           meta: meta('d1'),
-          deviceTypeId: 'sku',
+          skuId: 'sku',
           locateId: 'loc',
           name: 'Sensor',
         ),
@@ -74,9 +74,9 @@ void main() {
       uniqueCopyName('Sensor', 'loc', all).should.be('Sensor copy');
 
       all.add(
-        Device(
+        Instance(
           meta: meta('d2'),
-          deviceTypeId: 'sku',
+          skuId: 'sku',
           locateId: 'loc',
           name: 'Sensor copy',
         ),
@@ -95,8 +95,8 @@ void main() {
         Trait(meta: meta('root'), name: 'Housed'),
         Trait(meta: meta('leaf'), name: 'Slotted', parentTraitId: 'root'),
       ];
-      final skus = <DeviceType>[
-        DeviceType(
+      final skus = <Sku>[
+        Sku(
           meta: meta('sku'),
           manufacturerId: 'm',
           modelNumber: 'X',

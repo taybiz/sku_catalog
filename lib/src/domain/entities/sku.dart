@@ -4,7 +4,7 @@ import '../json_coercion.dart';
 import 'meta.dart';
 
 /// A stock-keeping unit (product model) manufactured by a [Manufacturer].
-class DeviceType extends Equatable {
+class Sku extends Equatable {
   /// Creation metadata.
   final Meta meta;
 
@@ -29,8 +29,8 @@ class DeviceType extends Equatable {
   /// Optional icon name for the UI.
   final String? icon;
 
-  /// Creates a [DeviceType].
-  const DeviceType({
+  /// Creates a [Sku].
+  const Sku({
     required this.meta,
     required this.manufacturerId,
     required this.modelNumber,
@@ -54,8 +54,8 @@ class DeviceType extends Equatable {
     'icon': icon,
   };
 
-  /// Creates [DeviceType] from snake_case JSON.
-  factory DeviceType.fromJson(Map<String, dynamic> json) => DeviceType(
+  /// Creates [Sku] from snake_case JSON.
+  factory Sku.fromJson(Map<String, dynamic> json) => Sku(
     meta: Meta.fromJson(json),
     manufacturerId: json['manufacturer_id'] as String? ?? '',
     modelNumber: json['model_number'] as String? ?? '',
@@ -67,7 +67,7 @@ class DeviceType extends Equatable {
   );
 
   /// Creates a copy with optional field overrides.
-  DeviceType copyWith({
+  Sku copyWith({
     Meta? meta,
     String? manufacturerId,
     String? modelNumber,
@@ -76,7 +76,7 @@ class DeviceType extends Equatable {
     List<String>? imageIds,
     Map<String, dynamic>? attributeValues,
     Object? icon = _unset,
-  }) => DeviceType(
+  }) => Sku(
     meta: meta ?? this.meta,
     manufacturerId: manufacturerId ?? this.manufacturerId,
     modelNumber: modelNumber ?? this.modelNumber,

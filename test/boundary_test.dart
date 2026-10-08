@@ -121,7 +121,7 @@ void main() {
         offenders.should.beEmpty();
       });
 
-      test('Then none of them still calls anything a device', () {
+      test('Then none of them still names a device', () {
         final offenders = <String>[];
         for (final entity in Directory('lib').listSync(recursive: true)) {
           if (entity is! File || !entity.path.endsWith('.dart')) continue;
