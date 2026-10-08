@@ -17,8 +17,8 @@ enum DataType {
 extension DataTypeX on DataType {
   /// Parses a stored wire value into a [DataType], defaulting to
   /// [DataType.string] when the value is missing or unknown.
-  static DataType? fromWire(Object? v) {
-    switch (v?.toString().toLowerCase()) {
+  static DataType? fromWire({required Object? value}) {
+    switch (value?.toString().toLowerCase()) {
       case 'number':
         return DataType.number;
       case 'boolean':

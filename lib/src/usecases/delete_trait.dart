@@ -56,10 +56,12 @@ class DeleteTrait {
               return _traitAttributeRepository
                   .fetchByTrait(traitId: id)
                   .flatMap(
-                    (attrs) => sequenceTaskEither([
-                      for (final a in attrs)
-                        _traitAttributeRepository.delete(id: a.meta.id),
-                    ]),
+                    (attrs) => sequenceTaskEither(
+                      tasks: [
+                        for (final a in attrs)
+                          _traitAttributeRepository.delete(id: a.meta.id),
+                      ],
+                    ),
                   )
                   .flatMap((_) => _traitRepository.delete(id: id));
             });

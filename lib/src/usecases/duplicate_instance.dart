@@ -38,18 +38,22 @@ class DuplicateInstance {
                 final bound =
                     slotBoundTraitNames.isNotEmpty &&
                     isSlotBound(
-                      current.skuId,
-                      types,
-                      traits,
-                      slotBoundTraitNames,
+                      typeId: current.skuId,
+                      skus: types,
+                      traits: traits,
+                      traitNames: slotBoundTraitNames,
                     );
                 final copyLocate = bound ? null : current.locateId;
                 return _instanceRepository.fetchAll().flatMap((all) {
                   final copy = Instance(
-                    meta: newMeta(current.meta.notes),
+                    meta: newMeta(notes: current.meta.notes),
                     skuId: current.skuId,
                     locateId: copyLocate,
-                    name: uniqueCopyName(current.name, copyLocate, all),
+                    name: uniqueCopyName(
+                      baseName: current.name,
+                      locateId: copyLocate,
+                      all: all,
+                    ),
                     skuModelNumber: current.skuModelNumber,
                     traitIds: current.traitIds,
                     attributeValues: current.attributeValues,

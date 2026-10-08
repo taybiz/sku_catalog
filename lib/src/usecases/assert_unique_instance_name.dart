@@ -18,7 +18,7 @@ TaskEither<DomainFailure, Unit> assertUniqueInstanceName({
     (d) =>
         d.meta.id != excludeId &&
         d.locateId == locateId &&
-        namesClash(d.name, name),
+        namesClash(a: d.name, b: name),
   );
   if (clash) {
     return TaskEither.left(

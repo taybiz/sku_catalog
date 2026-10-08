@@ -60,9 +60,9 @@ class Sku extends Equatable {
     manufacturerId: json['manufacturer_id'] as String? ?? '',
     modelNumber: json['model_number'] as String? ?? '',
     manufacturerModelNumber: json['manufacturer_model_number'] as String?,
-    traitIds: stringListFromWire(json['trait_ids']),
-    imageIds: stringListFromWire(json['image_ids']),
-    attributeValues: asStringMap(json['attribute_values']),
+    traitIds: stringListFromWire(value: json['trait_ids']),
+    imageIds: stringListFromWire(value: json['image_ids']),
+    attributeValues: asStringMap(value: json['attribute_values']),
     icon: json['icon'] as String?,
   );
 

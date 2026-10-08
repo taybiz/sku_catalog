@@ -43,17 +43,22 @@ class AggregateBillOfMaterials {
 
     return _skuRepository.fetchAll().flatMap(
       (skus) => _skuComponentRepository.fetchAll().flatMap(
-        (components) => _fold(skuId, units, skus, components),
+        (components) => _fold(
+          skuId: skuId,
+          units: units,
+          skus: skus,
+          components: components,
+        ),
       ),
     );
   }
 
-  TaskEither<DomainFailure, BillOfMaterials> _fold(
-    String skuId,
-    int units,
-    List<Sku> skus,
-    List<SkuComponent> components,
-  ) {
+  TaskEither<DomainFailure, BillOfMaterials> _fold({
+    required String skuId,
+    required int units,
+    required List<Sku> skus,
+    required List<SkuComponent> components,
+  }) {
     final byId = {for (final sku in skus) sku.meta.id: sku};
     final root = byId[skuId];
     if (root == null) {
@@ -66,7 +71,7 @@ class AggregateBillOfMaterials {
     }
 
     final fold = _AssemblyFold(componentsOf);
-    final failure = fold.explode(skuId, units);
+    final failure = fold.explode(skuId: skuId, units: units);
     if (failure != null) return TaskEither.left(failure);
 
     final lines = [
@@ -92,6 +97,8 @@ class AggregateBillOfMaterials {
 
   /// Level first, so a report prints the tree top down; then model number and
   /// id, so the order does not depend on how a store handed its rows back.
+  // A List.sort comparator: the framework mandates a positional two-arg
+  // signature, so this stays positional (§2.5 exempts framework-mandated).
   int _inLevelOrder(BomLine a, BomLine b) {
     final byDepth = a.depth.compareTo(b.depth);
     if (byDepth != 0) return byDepth;
@@ -122,9 +129,14 @@ class _AssemblyFold {
   /// Totals [units] of [skuId] and everything below it.
   ///
   /// Returns the failure that stopped it, or null when the whole tree folded.
-  DomainFailure? explode(String skuId, int units) => _explode(skuId, units, 0);
+  DomainFailure? explode({required String skuId, required int units}) =>
+      _explode(id: skuId, quantity: units, depth: 0);
 
-  DomainFailure? _explode(String id, int quantity, int depth) {
+  DomainFailure? _explode({
+    required String id,
+    required int quantity,
+    required int depth,
+  }) {
     _path.add(id);
     for (final component in _componentsOf[id] ?? const <SkuComponent>[]) {
       final childId = component.childSkuId;
@@ -136,8 +148,8 @@ class _AssemblyFold {
       }
 
       final needed = quantity * component.quantity;
-      _add(childId, needed, depth + 1);
-      final failure = _explode(childId, needed, depth + 1);
+      _add(skuId: childId, quantity: needed, depth: depth + 1);
+      final failure = _explode(id: childId, quantity: needed, depth: depth + 1);
       if (failure != null) return failure;
     }
 
@@ -145,7 +157,11 @@ class _AssemblyFold {
     return null;
   }
 
-  void _add(String skuId, int quantity, int depth) {
+  void _add({
+    required String skuId,
+    required int quantity,
+    required int depth,
+  }) {
     final total = totals[skuId];
     if (total == null) {
       totals[skuId] = _Total(quantity, depth);

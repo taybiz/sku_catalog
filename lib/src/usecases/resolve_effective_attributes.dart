@@ -46,7 +46,9 @@ class ResolveEffectiveAttributes {
     required String instanceId,
   }) => _instanceRepository
       .fetchById(id: instanceId)
-      .flatMap((instance) => _resolve(instance.skuId, instance: instance));
+      .flatMap(
+        (instance) => _resolve(skuId: instance.skuId, instance: instance),
+      );
 
   /// Effective attributes for a SKU with no instance layer.
   ///
@@ -55,21 +57,21 @@ class ResolveEffectiveAttributes {
   /// values it would have in place.
   TaskEither<DomainFailure, List<ResolvedAttribute>> forSku({
     required String skuId,
-  }) => _resolve(skuId);
+  }) => _resolve(skuId: skuId);
 
-  TaskEither<DomainFailure, List<ResolvedAttribute>> _resolve(
-    String skuId, {
+  TaskEither<DomainFailure, List<ResolvedAttribute>> _resolve({
+    required String skuId,
     Instance? instance,
-  }) => _assemblyChain(skuId).flatMap((chain) {
+  }) => _assemblyChain(skuId: skuId).flatMap((chain) {
     final traitIds = <String>[
       ...?instance?.traitIds,
       for (final sku in chain) ...sku.traitIds,
     ];
     return _resolveSchema(traitIds: traitIds).map((schema) {
-      final winners = _winners(instance, chain);
+      final winners = _winners(instance: instance, chain: chain);
       return [
         for (final entry in schema)
-          _attribute(entry.def, winners[entry.def.key]),
+          _attribute(definition: entry.def, won: winners[entry.def.key]),
       ];
     });
   });
@@ -82,33 +84,37 @@ class ResolveEffectiveAttributes {
   /// turn, in the order the edges come back. The visited set makes a cycle
   /// terminate instead of hanging: the write path refuses to create one, and
   /// this is only the backstop.
-  TaskEither<DomainFailure, List<Sku>> _assemblyChain(String skuId) =>
-      _skuRepository.fetchAll().flatMap(
-        (skus) => _skuComponentRepository.fetchAll().map((components) {
-          final byId = {for (final sku in skus) sku.meta.id: sku};
-          final parentsOf = <String, List<String>>{};
-          for (final component in components) {
-            (parentsOf[component.childSkuId] ??= []).add(component.parentSkuId);
-          }
+  TaskEither<DomainFailure, List<Sku>> _assemblyChain({
+    required String skuId,
+  }) => _skuRepository.fetchAll().flatMap(
+    (skus) => _skuComponentRepository.fetchAll().map((components) {
+      final byId = {for (final sku in skus) sku.meta.id: sku};
+      final parentsOf = <String, List<String>>{};
+      for (final component in components) {
+        (parentsOf[component.childSkuId] ??= []).add(component.parentSkuId);
+      }
 
-          final chain = <Sku>[];
-          final visited = <String>{};
-          final queue = <String>[skuId];
-          while (queue.isNotEmpty) {
-            final id = queue.removeAt(0);
-            if (!visited.add(id)) continue;
-            final sku = byId[id];
-            if (sku == null) continue;
-            chain.add(sku);
-            queue.addAll(parentsOf[id] ?? const []);
-          }
-          return chain;
-        }),
-      );
+      final chain = <Sku>[];
+      final visited = <String>{};
+      final queue = <String>[skuId];
+      while (queue.isNotEmpty) {
+        final id = queue.removeAt(0);
+        if (!visited.add(id)) continue;
+        final sku = byId[id];
+        if (sku == null) continue;
+        chain.add(sku);
+        queue.addAll(parentsOf[id] ?? const []);
+      }
+      return chain;
+    }),
+  );
 
   /// The value that wins each key, gathered from the weakest claim to the
   /// strongest so the last write is the nearest one.
-  Map<String, _Value> _winners(Instance? instance, List<Sku> chain) {
+  Map<String, _Value> _winners({
+    required Instance? instance,
+    required List<Sku> chain,
+  }) {
     final winners = <String, _Value>{};
     final nearestId = chain.isEmpty ? null : chain.first.meta.id;
 
@@ -127,10 +133,10 @@ class ResolveEffectiveAttributes {
     return winners;
   }
 
-  ResolvedAttribute _attribute(
-    TraitAttributeDefinition definition,
+  ResolvedAttribute _attribute({
+    required TraitAttributeDefinition definition,
     _Value? won,
-  ) {
+  }) {
     if (won != null) {
       return ResolvedAttribute(
         attributeId: definition.meta.id,

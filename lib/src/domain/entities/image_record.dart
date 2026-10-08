@@ -50,7 +50,7 @@ class ImageRecord extends Equatable {
   /// Creates an [ImageRecord] from snake_case JSON.
   factory ImageRecord.fromJson(Map<String, dynamic> json) => ImageRecord(
     id: json['id'] as String? ?? '',
-    owner: _parseOwner(json['owner']),
+    owner: _parseOwner(value: json['owner']),
     ownerId: json['owner_id'] as String? ?? '',
     filename: json['filename'] as String? ?? '',
     storedPath: json['stored_path'] as String? ?? '',
@@ -74,8 +74,8 @@ class ImageRecord extends Equatable {
     createdAt: createdAt ?? this.createdAt,
   );
 
-  static ImageOwner _parseOwner(Object? v) {
-    switch (v?.toString().toLowerCase()) {
+  static ImageOwner _parseOwner({required Object? value}) {
+    switch (value?.toString().toLowerCase()) {
       case 'instance':
         return ImageOwner.instance;
       case 'locate':

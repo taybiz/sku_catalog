@@ -15,49 +15,56 @@ void main() {
 
   group('validateNameTemplate', () {
     test('accepts a template carrying the {n} sequence token', () {
-      validateNameTemplate('{trait}_{locate}_{sku}_{n}').should.beNull();
-      validateNameTemplate('  {base} #{n}  ').should.beNull();
+      validateNameTemplate(
+        template: '{trait}_{locate}_{sku}_{n}',
+      ).should.beNull();
+      validateNameTemplate(template: '  {base} #{n}  ').should.beNull();
     });
 
     test('rejects a template without the {n} sequence token', () {
-      final error = validateNameTemplate('{trait}_{locate}_{sku}');
+      final error = validateNameTemplate(template: '{trait}_{locate}_{sku}');
       error.should.not.beNull();
       error!.should.contain('{n}');
     });
 
     test('the default template is valid', () {
-      validateNameTemplate(defaultNameTemplate).should.beNull();
+      validateNameTemplate(template: defaultNameTemplate).should.beNull();
     });
   });
 
   group('formatName', () {
     test('fills fixed tokens and collapses the gaps left by empty ones', () {
-      formatName('{trait}_{locate}_{sku}_{n}', {
-        'trait': 'Bracket',
-        'locate': '',
-        'sku': 'AB12',
-      }, 3).should.be('Bracket_AB12_3');
+      formatName(
+        template: '{trait}_{locate}_{sku}_{n}',
+        tokens: {'trait': 'Bracket', 'locate': '', 'sku': 'AB12'},
+        n: 3,
+      ).should.be('Bracket_AB12_3');
     });
 
     test('keeps the leading token when the first one is empty', () {
-      formatName('{base}_{locate}_{n}', {
-        'base': '',
-        'locate': 'Rack 1',
-      }, 2).should.be('Rack 1_2');
+      formatName(
+        template: '{base}_{locate}_{n}',
+        tokens: {'base': '', 'locate': 'Rack 1'},
+        n: 2,
+      ).should.be('Rack 1_2');
     });
   });
 
   group('nextSequenceStart', () {
     test('continues past the highest existing number', () {
       nextSequenceStart(
-        '{base} {n}',
-        {'base': 'Unit'},
-        ['Unit 1', 'Unit 2', 'Something else'],
+        template: '{base} {n}',
+        tokens: {'base': 'Unit'},
+        existingNames: ['Unit 1', 'Unit 2', 'Something else'],
       ).should.be(3);
     });
 
     test('starts at one when nothing matches', () {
-      nextSequenceStart('{base} {n}', {'base': 'Unit'}, ['Other']).should.be(1);
+      nextSequenceStart(
+        template: '{base} {n}',
+        tokens: {'base': 'Unit'},
+        existingNames: ['Other'],
+      ).should.be(1);
     });
   });
 
@@ -71,7 +78,11 @@ void main() {
           name: 'Sensor',
         ),
       ];
-      uniqueCopyName('Sensor', 'loc', all).should.be('Sensor copy');
+      uniqueCopyName(
+        baseName: 'Sensor',
+        locateId: 'loc',
+        all: all,
+      ).should.be('Sensor copy');
 
       all.add(
         Instance(
@@ -81,13 +92,22 @@ void main() {
           name: 'Sensor copy',
         ),
       );
-      uniqueCopyName('Sensor', 'loc', all).should.be('Sensor copy 2');
+      uniqueCopyName(
+        baseName: 'Sensor',
+        locateId: 'loc',
+        all: all,
+      ).should.be('Sensor copy 2');
     });
   });
 
   group('isSlotBound', () {
     test('is false when the caller names no slot-bound traits', () {
-      isSlotBound('sku', const [], const [], const {}).should.beFalse();
+      isSlotBound(
+        typeId: 'sku',
+        skus: const [],
+        traits: const [],
+        traitNames: const {},
+      ).should.beFalse();
     });
 
     test('matches an inherited trait name case-insensitively', () {
@@ -103,9 +123,24 @@ void main() {
           traitIds: const ['leaf'],
         ),
       ];
-      isSlotBound('sku', skus, traits, const {'slotted'}).should.beTrue();
-      isSlotBound('sku', skus, traits, const {'Housed'}).should.beTrue();
-      isSlotBound('sku', skus, traits, const {'Floating'}).should.beFalse();
+      isSlotBound(
+        typeId: 'sku',
+        skus: skus,
+        traits: traits,
+        traitNames: const {'slotted'},
+      ).should.beTrue();
+      isSlotBound(
+        typeId: 'sku',
+        skus: skus,
+        traits: traits,
+        traitNames: const {'Housed'},
+      ).should.beTrue();
+      isSlotBound(
+        typeId: 'sku',
+        skus: skus,
+        traits: traits,
+        traitNames: const {'Floating'},
+      ).should.beFalse();
     });
   });
 
@@ -113,9 +148,9 @@ void main() {
     test('reads the code from the named trait and attribute', () {
       final traits = <Trait>[Trait(meta: meta('coded'), name: 'Coded')];
       resolveAttributeAbbreviation(
-        const ['coded'],
-        traits,
-        const {'code': ' cb '},
+        traitIds: const ['coded'],
+        traits: traits,
+        attributeValues: const {'code': ' cb '},
         traitName: 'coded',
         attributeKey: 'code',
       ).should.be('CB');
@@ -124,16 +159,16 @@ void main() {
     test('returns empty when the trait is absent or the code is blank', () {
       final traits = <Trait>[Trait(meta: meta('coded'), name: 'Coded')];
       resolveAttributeAbbreviation(
-        const [],
-        traits,
-        const {'code': 'CB'},
+        traitIds: const [],
+        traits: traits,
+        attributeValues: const {'code': 'CB'},
         traitName: 'coded',
         attributeKey: 'code',
       ).should.be('');
       resolveAttributeAbbreviation(
-        const ['coded'],
-        traits,
-        const {'code': '  '},
+        traitIds: const ['coded'],
+        traits: traits,
+        attributeValues: const {'code': '  '},
         traitName: 'coded',
         attributeKey: 'code',
       ).should.be('');

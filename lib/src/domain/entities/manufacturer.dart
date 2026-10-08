@@ -49,8 +49,8 @@ class Manufacturer extends Equatable {
     name: json['name'] as String? ?? '',
     website: json['website'] as String?,
     description: json['description'] as String?,
-    traitIds: stringListFromWire(json['trait_ids']),
-    attributeValues: asStringMap(json['attribute_values']),
+    traitIds: stringListFromWire(value: json['trait_ids']),
+    attributeValues: asStringMap(value: json['attribute_values']),
   );
 
   @override

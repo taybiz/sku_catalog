@@ -53,10 +53,10 @@ class Locate extends Equatable {
     meta: Meta.fromJson(json),
     name: json['name'] as String? ?? '',
     parentLocateId: json['parent_locate_id'] as String?,
-    imageIds: stringListFromWire(json['image_ids']),
+    imageIds: stringListFromWire(value: json['image_ids']),
     icon: json['icon'] as String?,
-    traitIds: stringListFromWire(json['trait_ids']),
-    attributeValues: asStringMap(json['attribute_values']),
+    traitIds: stringListFromWire(value: json['trait_ids']),
+    attributeValues: asStringMap(value: json['attribute_values']),
   );
 
   @override

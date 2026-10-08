@@ -1,5 +1,16 @@
 ## Unreleased
 
+- Finished the bible §2.5 parameter pass. The earlier "named params across
+  contracts + use cases" refactor left the *helpers* positional; they are named
+  now too: every function in `instance_naming.dart`, `sequenceTaskEither`,
+  `newMeta` (plus its local hex helper), the private methods in
+  `resolve_effective_attributes.dart` and `aggregate_bill_of_materials.dart`,
+  and the domain wire-parse helpers (`asStringMap`, `stringListFromWire`,
+  `DataType.fromWire`, the entity `_parseOwner`/`_parseScope`). Constructor
+  field-formals (a single injected dependency) and the one `List.sort`
+  comparator stay positional — §2.5 exempts framework-mandated signatures.
+  Signature-only, no behaviour change: gate green (`dart analyze --fatal-infos
+  --fatal-warnings` clean, `dart test` passing).
 - Audited against the Dart/Flutter Bible (`taybiz/dart-flutter-bible`,
   `docs/01`–`docs/12`) and rebuilt on the Windows lane, Dart 3.13.1. Gate is
   green with zero diagnostics: `dart pub get`, `dart format --output=none

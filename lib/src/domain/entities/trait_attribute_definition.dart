@@ -70,9 +70,10 @@ class TraitAttributeDefinition extends Equatable {
         traitId: json['trait_id'] as String? ?? '',
         key: json['key'] as String? ?? '',
         displayLabel: json['display_label'] as String? ?? '',
-        dataType: DataTypeX.fromWire(json['data_type']) ?? DataType.string,
+        dataType:
+            DataTypeX.fromWire(value: json['data_type']) ?? DataType.string,
         unit: json['unit'] as String?,
-        enumOptions: stringListFromWire(json['enum_options']),
+        enumOptions: stringListFromWire(value: json['enum_options']),
         isRequired: json['is_required'] as bool? ?? false,
         defaultValue: json['default_value'],
       );

@@ -43,10 +43,12 @@ class DeleteSku {
           // *success* value and hand back Right(Left(...)).
           return TaskEither<DomainFailure, void>(
             () => _unitOfWork.runEither<DomainFailure, void>(
-              body: () => sequenceTaskEither([
-                for (final c in touching)
-                  _skuComponentRepository.delete(id: c.meta.id),
-              ]).flatMap((_) => _skuRepository.delete(id: id)).run(),
+              body: () => sequenceTaskEither(
+                tasks: [
+                  for (final c in touching)
+                    _skuComponentRepository.delete(id: c.meta.id),
+                ],
+              ).flatMap((_) => _skuRepository.delete(id: id)).run(),
             ),
           );
         });

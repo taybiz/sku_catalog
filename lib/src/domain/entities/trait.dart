@@ -40,13 +40,13 @@ class Trait extends Equatable {
     meta: Meta.fromJson(json),
     name: json['name'] as String? ?? '',
     parentTraitId: json['parent_trait_id'] as String?,
-    scope: _parseScope(json['scope']),
+    scope: _parseScope(value: json['scope']),
   );
 
-  static List<TraitScope> _parseScope(Object? v) {
-    if (v is! List) return TraitScope.values;
+  static List<TraitScope> _parseScope({required Object? value}) {
+    if (value is! List) return TraitScope.values;
     final result = <TraitScope>[];
-    for (final item in v) {
+    for (final item in value) {
       final parsed = TraitScope.values.asNameMap()[item.toString()];
       if (parsed != null) result.add(parsed);
     }

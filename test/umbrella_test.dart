@@ -56,7 +56,7 @@ void main() {
       });
 
       test('Then the pure helpers behave', () {
-        collapseSeparators('bolt__m6--x').should.be('bolt_m6-x');
+        collapseSeparators(text: 'bolt__m6--x').should.be('bolt_m6-x');
       });
     });
 

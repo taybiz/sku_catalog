@@ -8,7 +8,7 @@ const defaultNameTemplate = '{trait}_{locate}_{sku}_{n}';
 ///
 /// Uses `replaceAllMapped` so the group backreference substitutes correctly
 /// (Dart's `replaceAll` treats `$1` as a literal).
-String collapseSeparators(String text) {
+String collapseSeparators({required String text}) {
   final collapsed = text.replaceAllMapped(
     RegExp(r'([_\-\\s#])\1+'),
     (m) => m.group(1)!,
@@ -18,36 +18,43 @@ String collapseSeparators(String text) {
 
 /// Fills every fixed token ({base}, {trait}, {locate}, {sku}, ...) in the
 /// template, leaving {n} untouched for the caller to resolve.
-String fillFixedTokens(String template, Map<String, String> tokens) =>
-    collapseSeparators(
-      template.replaceAllMapped(
-        RegExp(r'\{(\w+)\}'),
-        (m) => m.group(1) == 'n' ? m.group(0)! : (tokens[m.group(1)] ?? ''),
-      ),
-    );
+String fillFixedTokens({
+  required String template,
+  required Map<String, String> tokens,
+}) => collapseSeparators(
+  text: template.replaceAllMapped(
+    RegExp(r'\{(\w+)\}'),
+    (m) => m.group(1) == 'n' ? m.group(0)! : (tokens[m.group(1)] ?? ''),
+  ),
+);
 
 /// Formats a name for sequence [n].
-String formatName(String template, Map<String, String> tokens, int n) =>
-    fillFixedTokens(template, tokens).replaceAll('{n}', '$n');
+String formatName({
+  required String template,
+  required Map<String, String> tokens,
+  required int n,
+}) =>
+    fillFixedTokens(template: template, tokens: tokens).replaceAll('{n}', '$n');
 
 /// Error message when [template] cannot produce unique auto-names, else null.
 ///
 /// Auto-names are uniquified per locate by the {n} sequence token; a template
 /// without it would stamp every instance in the locate with the same name.
-String? validateNameTemplate(String template) => template.trim().contains('{n}')
+String? validateNameTemplate({required String template}) =>
+    template.trim().contains('{n}')
     ? null
     : 'Naming template must include the "{n}" sequence token';
 
 /// Highest N among existing names matching the template (with every fixed
 /// token resolved and {n} captured) at this locate; the next unit starts at
 /// that + 1.
-int nextSequenceStart(
-  String template,
-  Map<String, String> tokens,
-  List<String> existingNames,
-) {
+int nextSequenceStart({
+  required String template,
+  required Map<String, String> tokens,
+  required List<String> existingNames,
+}) {
   final pattern = RegExp.escape(
-    fillFixedTokens(template, tokens),
+    fillFixedTokens(template: template, tokens: tokens),
   ).replaceAll(r'\{n\}', r'(\d+)');
   final re = RegExp('^$pattern\$', caseSensitive: false);
   var max = 0;
@@ -62,15 +69,19 @@ int nextSequenceStart(
 }
 
 /// Case-insensitive name clash at the same locate.
-bool namesClash(String a, String b) =>
+bool namesClash({required String a, required String b}) =>
     a.trim().toLowerCase() == b.trim().toLowerCase();
 
 /// A unique "copy" name: "X copy", "X copy 2", ...
-String uniqueCopyName(String baseName, String? locateId, List<Instance> all) {
+String uniqueCopyName({
+  required String baseName,
+  required String? locateId,
+  required List<Instance> all,
+}) {
   final atLocate = all.where((d) => d.locateId == locateId).toList();
   var candidate = '$baseName copy';
   var n = 2;
-  while (atLocate.any((d) => namesClash(d.name, candidate))) {
+  while (atLocate.any((d) => namesClash(a: d.name, b: candidate))) {
     candidate = '$baseName copy $n';
     n += 1;
   }
@@ -79,7 +90,7 @@ String uniqueCopyName(String baseName, String? locateId, List<Instance> all) {
 
 /// Lower-cases and slugifies a locate name for the {locate} naming token
 /// (max [maxLen] chars, trailing hyphens trimmed).
-String slugifyLocate(String name, [int maxLen = 14]) {
+String slugifyLocate({required String name, int maxLen = 14}) {
   var slug = name
       .trim()
       .toLowerCase()
@@ -93,7 +104,7 @@ String slugifyLocate(String name, [int maxLen = 14]) {
 
 /// Compacts a model number into a short uppercase token for the {sku} naming
 /// token (max [maxLen] chars; falls back to "SKU" when empty).
-String abbreviateSku(String modelNumber, [int maxLen = 10]) {
+String abbreviateSku({required String modelNumber, int maxLen = 10}) {
   final trimmed = modelNumber.trim();
   final compact = trimmed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '');
   if (compact.length <= maxLen) {
@@ -117,15 +128,16 @@ String abbreviateSku(String modelNumber, [int maxLen = 10]) {
 }
 
 /// The uppercase code held in [attributeKey] on the trait named [traitName],
-/// else  — e.g. a "coded" trait's "code" attribute, for short tags.
+/// else the empty string — e.g. a "coded" trait's "code" attribute, for short
+/// tags.
 ///
 /// The names are parameters rather than constants on purpose: which trait
 /// carries a short code, and which attribute holds it, is one product's
 /// convention. This package carries no product vocabulary.
-String resolveAttributeAbbreviation(
-  List<String> traitIds,
-  List<Trait> traits,
-  Map<String, dynamic> attributeValues, {
+String resolveAttributeAbbreviation({
+  required List<String> traitIds,
+  required List<Trait> traits,
+  required Map<String, dynamic> attributeValues,
   required String traitName,
   required String attributeKey,
 }) {
@@ -147,24 +159,24 @@ String resolveAttributeAbbreviation(
 /// This is how a caller expresses its own structural conventions — "a Slottable
 /// SKU lives inside another instance, so it carries no locate of its own" — without
 /// the catalog having to know the word.
-bool isSlotBound(
-  String typeId,
-  List<Sku> skus,
-  List<Trait> traits,
-  Set<String> traitNames,
-) {
+bool isSlotBound({
+  required String typeId,
+  required List<Sku> skus,
+  required List<Trait> traits,
+  required Set<String> traitNames,
+}) {
   if (traitNames.isEmpty) return false;
-  final names = traitNamesForType(typeId, skus, traits);
+  final names = traitNamesForType(typeId: typeId, skus: skus, traits: traits);
   return traitNames.any((n) => names.contains(n.toLowerCase()));
 }
 
 /// Every trait name reachable from [typeId]'s trait ids, walking parent
 /// chains (lower-cased, deduped).
-Set<String> traitNamesForType(
-  String typeId,
-  List<Sku> skus,
-  List<Trait> traits,
-) {
+Set<String> traitNamesForType({
+  required String typeId,
+  required List<Sku> skus,
+  required List<Trait> traits,
+}) {
   final names = <String>{};
   final dts = skus.where((d) => d.meta.id == typeId).toList();
   if (dts.isEmpty) return names;
@@ -182,13 +194,13 @@ Set<String> traitNamesForType(
 }
 
 /// Whether [instance]'s SKU carries [traitName] (inherited or direct).
-bool instanceHasTrait(
-  Instance instance,
-  List<Sku> skus,
-  List<Trait> traits,
-  String traitName,
-) => traitNamesForType(
-  instance.skuId,
-  skus,
-  traits,
+bool instanceHasTrait({
+  required Instance instance,
+  required List<Sku> skus,
+  required List<Trait> traits,
+  required String traitName,
+}) => traitNamesForType(
+  typeId: instance.skuId,
+  skus: skus,
+  traits: traits,
 ).contains(traitName.toLowerCase());

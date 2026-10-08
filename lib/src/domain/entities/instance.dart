@@ -118,9 +118,9 @@ class Instance extends Equatable {
     name: json['name'] as String? ?? '',
     skuModelNumber: json['sku_model_number'] as String?,
     serialNumber: json['serial_number'] as String?,
-    imageIds: stringListFromWire(json['image_ids']),
-    traitIds: stringListFromWire(json['trait_ids']),
-    attributeValues: asStringMap(json['attribute_values']),
+    imageIds: stringListFromWire(value: json['image_ids']),
+    traitIds: stringListFromWire(value: json['trait_ids']),
+    attributeValues: asStringMap(value: json['attribute_values']),
     icon: json['icon'] as String?,
   );
 

@@ -31,26 +31,32 @@ class UpdateInstance {
   final Set<String> slotBoundTraitNames;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Instance> call({
-    required Instance instance,
-  }) => _instanceRepository
-      .fetchById(id: instance.meta.id)
-      .flatMap(
-        (original) => _traitRepository.fetchAll().flatMap(
-          (traits) => _skuRepository.fetchAll().flatMap((types) {
-            final bound =
-                slotBoundTraitNames.isNotEmpty &&
-                isSlotBound(instance.skuId, types, traits, slotBoundTraitNames);
-            final effective = bound
-                ? instance.copyWith(locateId: null)
-                : instance;
-            return assertUniqueInstanceName(
-              repository: _instanceRepository,
-              name: effective.name,
-              locateId: effective.locateId,
-              excludeId: effective.meta.id,
-            ).flatMap((_) => _instanceRepository.update(instance: effective));
-          }),
-        ),
-      );
+  TaskEither<DomainFailure, Instance> call({required Instance instance}) =>
+      _instanceRepository
+          .fetchById(id: instance.meta.id)
+          .flatMap(
+            (original) => _traitRepository.fetchAll().flatMap(
+              (traits) => _skuRepository.fetchAll().flatMap((types) {
+                final bound =
+                    slotBoundTraitNames.isNotEmpty &&
+                    isSlotBound(
+                      typeId: instance.skuId,
+                      skus: types,
+                      traits: traits,
+                      traitNames: slotBoundTraitNames,
+                    );
+                final effective = bound
+                    ? instance.copyWith(locateId: null)
+                    : instance;
+                return assertUniqueInstanceName(
+                  repository: _instanceRepository,
+                  name: effective.name,
+                  locateId: effective.locateId,
+                  excludeId: effective.meta.id,
+                ).flatMap(
+                  (_) => _instanceRepository.update(instance: effective),
+                );
+              }),
+            ),
+          );
 }
