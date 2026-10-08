@@ -1,5 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
+import 'support/memory_backends.dart';
 import 'package:test/test.dart';
 
 /// Identity is a seam, not a constant: the catalog mints ids through `newMeta`,
@@ -30,6 +31,49 @@ void main() {
       test('Then an opaque id survives a JSON round-trip unchanged', () {
         final odd = meta('  Cafe-SNOWMAN / 00:07  ');
         Meta.fromJson(odd.toJson()).id.should.be('  Cafe-SNOWMAN / 00:07  ');
+      });
+    });
+
+    group('When a use case mints an id internally', () {
+      test('Then DuplicateSku uses the injected generator', () async {
+        final skus = MemorySkuRepository();
+        await CreateSku(skus)(
+          sku: Sku(
+            meta: meta('qo120'),
+            manufacturerId: 'm',
+            modelNumber: 'QO120',
+          ),
+        ).run();
+
+        final copy = await DuplicateSku(
+          skus,
+          idGenerator: () => 'DEV-0007',
+        )(id: 'qo120').run();
+
+        copy
+            .getOrElse((_) => fail('expected Right'))
+            .meta
+            .id
+            .should
+            .be('DEV-0007');
+      });
+
+      test('Then DuplicateSku still defaults to a UUID v4', () async {
+        final skus = MemorySkuRepository();
+        await CreateSku(skus)(
+          sku: Sku(
+            meta: meta('qo120'),
+            manufacturerId: 'm',
+            modelNumber: 'QO120',
+          ),
+        ).run();
+
+        final copy = await DuplicateSku(skus)(id: 'qo120').run();
+
+        uuidV4
+            .hasMatch(copy.getOrElse((_) => fail('expected Right')).meta.id)
+            .should
+            .beTrue();
       });
     });
   });
