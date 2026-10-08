@@ -1,16 +1,15 @@
 import 'package:equatable/equatable.dart';
 
-/// Base class for all domain failures, product-agnostic ones and a product's
-/// own alike.
+/// Base of this layer's failure hierarchy — every way the catalog can fail.
 ///
-/// Deliberately `abstract base` rather than `sealed`. A sealed class may only be
-/// extended from its own library, and this type is the shared root every
-/// product's failure family descends from — the catalog contracts are typed
-/// against it, so it cannot live inside one product. Nothing in the estate
-/// switches exhaustively over [DomainFailure]; consumers read [message].
+/// `sealed`, so the leaves are exhaustively switchable: a consumer can list
+/// every failure this package can return and let the analyzer prove the list
+/// complete. A product that needs its own failure adds a `final class` here (or
+/// keeps a separate hierarchy) rather than descending from outside — a root
+/// that any library could extend could never be switched over exhaustively.
 ///
 /// The UI ring converts these to exceptions. Never thrown from the bulls-eye.
-abstract base class DomainFailure extends Equatable {
+sealed class DomainFailure extends Equatable {
   /// Message describing what went wrong.
   final String message;
 
