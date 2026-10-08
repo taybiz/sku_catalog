@@ -57,11 +57,23 @@ the auditor. None blocks a publish.
   part `docs/02` distrusts about it. With one package there are no cross-package
   `package:` URIs for `dart_arch_test`'s boundary assertions to key on, so the
   bible's rule may not fit a single-package repo at all.
+  **RESOLVED 2026-10-08:** the gate now exists — `test/architecture_test.dart`,
+  a `dart_arch_test` test over the resolved import graph, covers area direction,
+  front-door cycles, `lib/src/` privacy, `file:`/product-dependency leakage, and
+  workspace-wide cycle-freedom, all inside `dart test`. The single-package worry
+  above does not hold: the assertions key on `package:sku_catalog/src/<area>/`
+  URIs, not on cross-package URIs, so they fit a one-package repo. `import_rules`
+  stays as the as-you-type nicety `docs/02` allows; `test/boundary_test.dart`
+  shrinks to the text-only tripwire (product name / doubles). Verified: the domain
+  rule was proved to fire by planting a `domain -> usecases` import and reading the
+  failure; the suite is green.
 
 - **Deviation: `test/boundary_test.dart` (cycle-freedom)** — cycle-freedom is
   asserted by area-level import-direction scanning and the plugin's rules, not
   by `shouldBeFreeOfCycles(allFiles(), graph)` over the resolved graph as
   `docs/02` prescribes. Same root cause as the item above.
+  **RESOLVED 2026-10-08:** `test/architecture_test.dart` now runs
+  `shouldBeFreeOfCycles(allFiles(), graph)` over the resolved graph, workspace-wide.
 
 - **Deviation: `test/support/` — one repository adapter, no shared contract
   suite** — `docs/01` calls the at-least-two-adapter rule "the one we never
