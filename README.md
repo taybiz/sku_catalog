@@ -27,6 +27,7 @@ Why this seam is a tuple rather than a `Future` is recorded in
 | `Trait` | A **classification attached to a SKU, an instance, a place or a manufacturer**. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
 | `TraitAttributeDefinition` | A **typed field** a trait contributes: `rated_amps` (number, `A`, required), `gfci` (boolean), `load_type` (enum). |
 | `SkuComponent` | An **assembly edge**: this SKU contains *n* of that SKU. |
+| `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). |
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
 | `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, with its own traits and attribute values. |
@@ -41,6 +42,11 @@ Two ideas do most of the work:
 - **SKUs assemble from SKUs.** A panel is a SKU containing breakers, a machine
   is a SKU containing boards and mechanisms. The assembly is a graph with a
   quantity per edge, and a cycle guard that refuses to close a loop.
+- **Edges come in two kinds.** `SkuComponent` is *composition* — "this is made
+  of N of that", folded into a bill of materials with a cycle guard.
+  `SkuAssociation` is *relationship* — "this acts as `kind` on that", a labeled,
+  directed edge with no quantity and no fold, for facts that are not parts of a
+  build (an author `edited` an anthology).
 
 ## One package
 

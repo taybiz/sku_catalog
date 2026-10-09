@@ -12,6 +12,7 @@ export 'memory_image_repository.dart';
 export 'memory_locate_repository.dart';
 export 'memory_manufacturer_repository.dart';
 export 'memory_meta_repository.dart';
+export 'memory_sku_association_repository.dart';
 export 'memory_sku_component_repository.dart';
 export 'memory_trait_attribute_definition_repository.dart';
 export 'memory_trait_repository.dart';

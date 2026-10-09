@@ -1,3 +1,19 @@
+# sku_catalog changelog
+
+## 1.2.0
+
+- Additive: a **labeled, directed relationship edge** — `SkuAssociation`
+  (`source_sku_id`, `target_sku_id`, `kind`) — alongside the assembly edge.
+  Unlike `SkuComponent`, an association carries no quantity, is never folded by
+  the bill of materials, and has no cycle guard, so an ontology of relationships
+  (`Smith --edited--> Anthology`, `Jones --contributed_to--> Anthology`) is
+  representable as distinct rows without contaminating BOM semantics. New:
+  `SkuAssociation`, `ISkuAssociationRepository`, and the `AddSkuAssociation`,
+  `FetchAssociationsBySku` (matched on source *or* target, filterable by
+  `kind`) and `DeleteSkuAssociation` use cases. Pure addition — every existing
+  `call()` is unchanged. Gate green: `analyze` clean, `test` 6 new cases
+  passing, `publish-dry` 0 warnings.
+
 ## 1.1.0
 
 - Additive: an **injectable id seam**. `newMeta` takes an optional

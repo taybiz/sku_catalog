@@ -64,6 +64,7 @@ export 'resolve_schema.dart';
 export 'resolve_trait_chain.dart';
 export 'schema_resolver_use_cases.dart';
 export 'sequence.dart';
+export 'sku_association_use_cases.dart';
 export 'sku_component_use_cases.dart';
 export 'trait_attribute_definition_use_cases.dart';
 export 'trait_use_cases.dart';
