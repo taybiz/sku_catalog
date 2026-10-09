@@ -59,3 +59,13 @@ library can never start depending on them.
   published too.
 - Open items live in `BACKLOG.md`, including the outstanding doctrine delta
   (a second repository adapter plus a shared contract suite).
+
+## Done means shipped
+
+The line for "ready to report done" and "ready to merge" is the **same line**.
+If the work clears the gate — formatted, analyzed, tested, covered, CI'd
+(green, all clear) — and is good enough to tell the human it's done, then it is
+good enough to commit, **push to `main`**, and **delete the branch**. No extra
+review gate, no waiting, no "should I push?" — velocity wins.
+We will move to PRs later; for now, direct-to-main. When the repo does land
+changes via PRs, opening the PR is the default end of a task instead.
