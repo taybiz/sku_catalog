@@ -36,3 +36,11 @@ melos:
     analyze: dart analyze --fatal-infos --fatal-warnings
     test: dart test
     publish-dry: dart pub publish --dry-run
+    # Standard clean: melos-native clean removes generated pub/IDE droppings
+    # (.packages, .flutter-plugins*, .dart_tool links) for this workspace.
+    clean: dart run melos clean
+    # Deep clean: remove every file the repo does not track (logs, build
+    # folders, caches, tooling droppings). .gitignore is authoritative, so
+    # only untracked-and-unignored files are deleted. Nothing tracked is ever
+    # touched by `git clean`.
+    clean:deep: git clean -fdx
