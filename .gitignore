@@ -42,3 +42,9 @@ doc/api/
 
 # VS Code settings
 .vscode/
+
+# macOS
+.DS_Store
+
+# melos noise
+.melos/
