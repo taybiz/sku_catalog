@@ -36,3 +36,9 @@ doc/api/
 # Hermes agent artifacts (plan mode writes .hermes/plans/). Repo-only scratch —
 # never tracked, never published.
 .hermes/
+
+# Logs and temp files
+*.log
+
+# VS Code settings
+.vscode/
