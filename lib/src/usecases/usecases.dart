@@ -13,6 +13,7 @@ export 'add_sku_component.dart';
 export 'aggregate_bill_of_materials.dart';
 export 'assembly_use_cases.dart';
 export 'assert_unique_instance_name.dart';
+export 'assert_unique_trait_attribute_value.dart';
 export 'create_instance.dart';
 export 'create_sku.dart';
 export 'create_image_record.dart';

@@ -1,5 +1,20 @@
 # sku_catalog changelog
 
+## Unreleased
+
+- Additive: **unique trait attributes are enforced at the use-case seam.**
+  `CreateTraitAttributeDefinition` and `UpdateTraitAttributeDefinition` run the
+  new `assertUniqueTraitAttributeValue` helper before persisting: when a
+  definition is marked `isUnique`, the write is rejected with
+  `AlreadyExistsFailure` if two instances that carry the trait already hold the
+  same value for the attribute (`TraitAttributeDefinition.isUnique`, added in the
+  same feature). Uniqueness is scoped to the trait; each colliding instance is
+  named by its SKU in the message, blank/unset values do not compete, and a
+  non-unique definition is unaffected. Both use cases now take a required
+  `instanceRepository` constructor argument. Breaking for callers that built the
+  two use cases positionally. Gate green: `analyze` clean, `test` 9 new cases
+  passing.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`

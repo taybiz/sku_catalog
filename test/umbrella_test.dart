@@ -88,6 +88,7 @@ void main() {
           CreateTrait(MemoryTraitRepository()),
           CreateTraitAttributeDefinition(
             MemoryTraitAttributeDefinitionRepository(),
+            instanceRepository: MemoryInstanceRepository(),
           ),
           ResolveTraitChain(MemoryTraitRepository()),
           ResolveSchema(

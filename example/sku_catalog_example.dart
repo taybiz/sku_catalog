@@ -60,27 +60,35 @@ Future<void> main() async {
   await CreateTrait(traitRepository)(trait: breakerTrait).run();
 
   // 2. Value: each trait contributes typed fields, and a child overrides them.
-  await CreateTraitAttributeDefinition(attributeRepository)(
-    attribute: TraitAttributeDefinition(
-      meta: _meta('switch-rated_amps'),
-      traitId: switchTrait.meta.id,
-      key: 'rated_amps',
-      displayLabel: 'Rated Amperage',
-      dataType: DataType.number,
-      unit: 'A',
-      isRequired: true,
-    ),
-  ).run();
-  await CreateTraitAttributeDefinition(attributeRepository)(
-    attribute: TraitAttributeDefinition(
-      meta: _meta('breaker-trip_amperage'),
-      traitId: breakerTrait.meta.id,
-      key: 'trip_amperage',
-      displayLabel: 'Trip Amperage',
-      dataType: DataType.number,
-      unit: 'A',
-    ),
-  ).run();
+  await CreateTraitAttributeDefinition(
+        attributeRepository,
+        instanceRepository: instanceRepository,
+      )(
+        attribute: TraitAttributeDefinition(
+          meta: _meta('switch-rated_amps'),
+          traitId: switchTrait.meta.id,
+          key: 'rated_amps',
+          displayLabel: 'Rated Amperage',
+          dataType: DataType.number,
+          unit: 'A',
+          isRequired: true,
+        ),
+      )
+      .run();
+  await CreateTraitAttributeDefinition(
+        attributeRepository,
+        instanceRepository: instanceRepository,
+      )(
+        attribute: TraitAttributeDefinition(
+          meta: _meta('breaker-trip_amperage'),
+          traitId: breakerTrait.meta.id,
+          key: 'trip_amperage',
+          displayLabel: 'Trip Amperage',
+          dataType: DataType.number,
+          unit: 'A',
+        ),
+      )
+      .run();
 
   // 3. Catalogue the SKUs. A panel and a breaker are both products.
   final breakerModel = Sku(

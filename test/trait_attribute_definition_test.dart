@@ -73,9 +73,10 @@ void main() {
         isUnique: true,
       );
 
-      await CreateTraitAttributeDefinition(repository)(
-        attribute: attribute,
-      ).run();
+      await CreateTraitAttributeDefinition(
+        repository,
+        instanceRepository: MemoryInstanceRepository(),
+      )(attribute: attribute).run();
 
       final fetched = await repository.fetchById(id: attribute.meta.id).run();
       fetched.isRight().should.be(true);

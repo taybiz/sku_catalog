@@ -13,6 +13,7 @@ import 'package:test/test.dart';
 void main() {
   late MemoryTraitRepository traits;
   late MemoryTraitAttributeDefinitionRepository attrs;
+  late MemoryInstanceRepository instances;
   late ResolveSchema resolve;
 
   Meta meta(String id) => Meta(
@@ -41,6 +42,7 @@ void main() {
   setUp(() async {
     traits = MemoryTraitRepository();
     attrs = MemoryTraitAttributeDefinitionRepository();
+    instances = MemoryInstanceRepository();
 
     final part = Trait(
       meta: meta('part'),
@@ -63,20 +65,20 @@ void main() {
     await CreateTrait(traits)(trait: bolt).run();
     await CreateTrait(traits)(trait: coated).run();
 
-    await CreateTraitAttributeDefinition(attrs)(
+    await CreateTraitAttributeDefinition(attrs, instanceRepository: instances)(
       attribute: attr('part', 'size', unit: 'mm', required: true),
     ).run();
-    await CreateTraitAttributeDefinition(attrs)(
+    await CreateTraitAttributeDefinition(attrs, instanceRepository: instances)(
       attribute: attr('part', 'mass', unit: 'g'),
     ).run();
     // The child redeclares `size` with its own unit — the child must win.
-    await CreateTraitAttributeDefinition(attrs)(
+    await CreateTraitAttributeDefinition(attrs, instanceRepository: instances)(
       attribute: attr('bolt', 'size', unit: 'in'),
     ).run();
-    await CreateTraitAttributeDefinition(attrs)(
+    await CreateTraitAttributeDefinition(attrs, instanceRepository: instances)(
       attribute: attr('bolt', 'thread'),
     ).run();
-    await CreateTraitAttributeDefinition(attrs)(
+    await CreateTraitAttributeDefinition(attrs, instanceRepository: instances)(
       attribute: attr('coated', 'coating', type: DataType.string),
     ).run();
 
