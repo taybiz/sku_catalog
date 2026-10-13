@@ -30,6 +30,10 @@ class TraitAttributeDefinition extends Equatable {
   /// Whether this attribute is required.
   final bool isRequired;
 
+  /// Whether this attribute must be unique across all instances that carry
+  /// its trait — no two instances may hold the same value for it.
+  final bool isUnique;
+
   /// Value that applies when neither an instance nor a SKU sets one.
   ///
   /// Typed by [dataType]. Null means there is no default, and an attribute
@@ -46,6 +50,7 @@ class TraitAttributeDefinition extends Equatable {
     this.unit,
     this.enumOptions = const [],
     this.isRequired = false,
+    this.isUnique = false,
     this.defaultValue,
   });
 
@@ -59,6 +64,7 @@ class TraitAttributeDefinition extends Equatable {
     if (unit != null) 'unit': unit,
     'enum_options': enumOptions,
     'is_required': isRequired,
+    'is_unique': isUnique,
     if (defaultValue != null) 'default_value': defaultValue,
   };
 
@@ -75,6 +81,7 @@ class TraitAttributeDefinition extends Equatable {
         unit: json['unit'] as String?,
         enumOptions: stringListFromWire(value: json['enum_options']),
         isRequired: json['is_required'] as bool? ?? false,
+        isUnique: json['is_unique'] as bool? ?? false,
         defaultValue: json['default_value'],
       );
 
@@ -88,6 +95,7 @@ class TraitAttributeDefinition extends Equatable {
     unit,
     enumOptions,
     isRequired,
+    isUnique,
     defaultValue,
   ];
 }
