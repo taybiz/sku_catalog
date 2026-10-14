@@ -88,6 +88,7 @@ void main() {
         ).run();
         await CreateInstance(
               instanceRepository: instances,
+              assertUniqueInstanceName: AssertUniqueInstanceName(instances),
               assertUniqueAttributeValues: uniqueValuesOn(
                 instanceRepository: instances,
                 skuRepository: skus,

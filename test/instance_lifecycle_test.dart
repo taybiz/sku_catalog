@@ -43,6 +43,7 @@ void main() {
 
   CreateInstance createInstance() => CreateInstance(
     instanceRepository: instances,
+    assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
@@ -149,6 +150,28 @@ void main() {
       elsewhere.isRight().should.beTrue();
     },
   );
+
+  test('a name clash is refused on create too', () async {
+    await createInstance()(instance: instance('d1', 'Sensor 1')).run();
+
+    final clash = await createInstance()(
+      instance: instance('d2', 'sensor 1'),
+    ).run();
+
+    clash.isLeft().should.beTrue();
+    clash
+        .fold((f) => f, (_) => fail('expected Left'))
+        .should
+        .beAssignableTo<AlreadyExistsFailure>();
+    // The refused article was never stored.
+    (await instances.fetchAll().run()).getOrElse((_) => []).should.haveCount(1);
+
+    // The same name at another place is fine, on create as on update.
+    final elsewhere = await createInstance()(
+      instance: instance('d2', 'Sensor 1', locateId: 'rack-2'),
+    ).run();
+    elsewhere.isRight().should.beTrue();
+  });
 
   test('a slot-bound SKU is never given a place of its own', () async {
     await createInstance()(

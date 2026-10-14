@@ -52,6 +52,12 @@ the SKU), the *article* carries one particular number (a value on the instance).
   `TraitAttributeDefinition.valuesMatch`). One use case per file, each a class with
   a single public `call()` — `AssertUniqueAttributeValues` no longer carries a
   second public method for the copy path to reach for.
+- **Changed (behaviour):** `CreateInstance` now applies the per-locate unique
+  name rule the update path already applied, so a create is no longer a way to
+  write a name clash into the store — it was recorded in `BACKLOG.md` as exactly
+  that hole. A create that would clash at its locate fails with
+  `AlreadyExistsFailure` (nothing is written); the same name at another locate is
+  still accepted.
 - **Tests:** `test/attribute_uniqueness_test.dart`, 25 cases: the canonical
   serializable trait, a unique attribute on a trait of the caller's own, on one
   inherited from a parent trait, on a trait the instance carries itself, two
