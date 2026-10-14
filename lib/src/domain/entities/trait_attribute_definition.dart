@@ -30,6 +30,20 @@ class TraitAttributeDefinition extends Equatable {
   /// Whether this attribute is required.
   final bool isRequired;
 
+  /// Whether a value for this attribute may be held by at most one instance.
+  ///
+  /// A serial number is the case this exists for: the model says "this thing is
+  /// serializable", and the value identifies *one* article, so two instances
+  /// carrying the same one is not a coincidence, it is a mistake. The catalog
+  /// enforces it on the instance write path — `AssertUniqueAttributeValues`
+  /// refuses a value another instance already holds — so a definition is where
+  /// the intent is stated and the rule is a use case, not a storage feature.
+  ///
+  /// Uniqueness is a statement about articles, not about models: a SKU-level
+  /// value for a unique attribute (a default the instances inherit) is not
+  /// asserted against, because only the articles hold an identity.
+  final bool isUnique;
+
   /// Value that applies when neither an instance nor a SKU sets one.
   ///
   /// Typed by [dataType]. Null means there is no default, and an attribute
@@ -46,6 +60,7 @@ class TraitAttributeDefinition extends Equatable {
     this.unit,
     this.enumOptions = const [],
     this.isRequired = false,
+    this.isUnique = false,
     this.defaultValue,
   });
 
@@ -59,6 +74,7 @@ class TraitAttributeDefinition extends Equatable {
     if (unit != null) 'unit': unit,
     'enum_options': enumOptions,
     'is_required': isRequired,
+    'is_unique': isUnique,
     if (defaultValue != null) 'default_value': defaultValue,
   };
 
@@ -75,6 +91,9 @@ class TraitAttributeDefinition extends Equatable {
         unit: json['unit'] as String?,
         enumOptions: stringListFromWire(value: json['enum_options']),
         isRequired: json['is_required'] as bool? ?? false,
+        // A record written before the flag existed is not unique: the rule is
+        // opted into, never inherited from silence.
+        isUnique: json['is_unique'] as bool? ?? false,
         defaultValue: json['default_value'],
       );
 
@@ -88,6 +107,7 @@ class TraitAttributeDefinition extends Equatable {
     unit,
     enumOptions,
     isRequired,
+    isUnique,
     defaultValue,
   ];
 }

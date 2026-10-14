@@ -60,6 +60,20 @@ Future<void> main() async {
   await CreateTrait(traitRepository)(trait: breakerTrait).run();
 
   // 2. Value: each trait contributes typed fields, and a child overrides them.
+  //
+  //    The serializable trait is the package's one canonical one: a serial
+  //    number is not a field on the instance, it is an attribute value — the
+  //    model carries the trait, the article carries the number, and `isUnique`
+  //    is what makes the catalog refuse a second article holding the same one.
+  final serializable = SerializableTrait.define(
+    traitMeta: _meta('serializable'),
+    attributeMeta: _meta('serializable-serial_number'),
+  );
+  await CreateTrait(traitRepository)(trait: serializable.trait).run();
+  await CreateTraitAttributeDefinition(attributeRepository)(
+    attribute: serializable.serialNumber,
+  ).run();
+
   await CreateTraitAttributeDefinition(attributeRepository)(
     attribute: TraitAttributeDefinition(
       meta: _meta('switch-rated_amps'),
@@ -94,6 +108,7 @@ Future<void> main() async {
     meta: _meta('qo-16'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-16',
+    traitIds: [serializable.trait.meta.id],
   );
   await CreateSku(skuRepository)(sku: breakerModel).run();
   await CreateSku(skuRepository)(sku: panelModel).run();
@@ -143,14 +158,32 @@ Future<void> main() async {
   await CreateLocate(locateRepository)(locate: garage).run();
   await CreateLocate(locateRepository)(locate: panelPlace).run();
 
-  // 6. Instantiate: an instance is one article of a SKU, at one place.
+  // 6. Instantiate: an instance is one article of a SKU, at one place. Its
+  //    serial number is an attribute value, and because the trait marks it
+  //    unique the write path refuses a second article claiming the same one.
+  final createInstance = CreateInstance(
+    instanceRepository: instanceRepository,
+    assertUniqueAttributeValues: AssertUniqueAttributeValues(
+      instanceRepository: instanceRepository,
+      skuRepository: skuRepository,
+      traitRepository: traitRepository,
+      attributeRepository: attributeRepository,
+    ),
+  );
   final panelInstance = Instance(
     meta: _meta('pnl-1'),
     skuId: panelModel.meta.id,
     locateId: panelPlace.meta.id,
     name: 'Garage Panel 1',
+    attributeValues: const {SerializableTrait.serialNumberKey: 'QO-0001'},
   );
-  await CreateInstance(instanceRepository)(instance: panelInstance).run();
+  await createInstance(instance: panelInstance).run();
+  final duplicateSerial = await createInstance(
+    instance: panelInstance.copyWith(
+      meta: _meta('pnl-2'),
+      name: 'Garage Panel 2',
+    ),
+  ).run();
 
   // 7. Ask the model what it knows. Traits inherit, so the breaker's schema
   //    carries Switch's attributes too.
@@ -195,6 +228,10 @@ Future<void> main() async {
   print(
     'Assembly   panel in breaker? '
     '${loop.fold((failure) => 'refused (${failure.message})', (_) => 'allowed — BUG')}',
+  );
+  print(
+    'Serial     QO-0001 on a second panel? '
+    '${duplicateSerial.fold((failure) => 'refused (${failure.message})', (_) => 'allowed — BUG')}',
   );
 
   // 8. Fold: what does a build of two panels consume? This is not resolution —

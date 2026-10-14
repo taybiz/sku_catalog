@@ -70,14 +70,23 @@ void main() {
     'an instance delete takes its images and the instance in one unit',
     () async {
       final images = MemoryImageRepository();
-      await CreateInstance(instances)(
-        instance: Instance(
-          meta: meta('d1'),
-          skuId: 'rack',
-          locateId: null,
-          name: 'Dev 1',
-        ),
-      ).run();
+      await CreateInstance(
+            instanceRepository: instances,
+            assertUniqueAttributeValues: AssertUniqueAttributeValues(
+              instanceRepository: instances,
+              skuRepository: skus,
+              traitRepository: MemoryTraitRepository(),
+              attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+            ),
+          )(
+            instance: Instance(
+              meta: meta('d1'),
+              skuId: 'rack',
+              locateId: null,
+              name: 'Dev 1',
+            ),
+          )
+          .run();
       await CreateImageRecord(images)(
         image: ImageRecord(
           id: 'img1',

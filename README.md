@@ -48,6 +48,63 @@ Two ideas do most of the work:
   directed edge with no quantity and no fold, for facts that are not parts of a
   build (an author `edited` an anthology).
 
+## Serial numbers, and the one trait the package names
+
+A serial number is not a field on `Instance`. It is an attribute value, because the
+two halves are different facts: the **model** is serializable — a trait on the SKU,
+which is why the trait is `sku`-scoped — and the **article** carries one particular
+number. The package names that pair, because the rule that comes with it is a
+catalog invariant rather than your spelling of it:
+
+```dart
+final serializable = SerializableTrait.define(
+  traitMeta: Meta(id: 'serializable', notes: '', createdAt: now, updatedAt: now),
+  attributeMeta: Meta(
+    id: 'serializable-serial_number', notes: '', createdAt: now, updatedAt: now,
+  ),
+);
+// serializable.trait        → Trait('Serializable', scope: [TraitScope.sku])
+// serializable.serialNumber → TraitAttributeDefinition('serial_number', string, isUnique: true)
+```
+
+`isUnique` is a flag **any** trait's attribute can carry — `serializable` is not
+special. It means *at most one instance in the catalog may hold a value for this
+attribute*, and the catalog enforces that on the instance write path: a
+`CreateInstance`, `UpdateInstance` or `DuplicateInstance` you build is guarded by
+an `AssertUniqueAttributeValues`, which resolves the schema in scope (the instance's
+own traits plus the traits of the SKU it instantiates, walked up their parent
+chains) and refuses a value another instance already holds with a
+`DuplicateAttributeValueFailure`:
+
+```dart
+final createInstance = CreateInstance(
+  instanceRepository: myInstanceRepository,
+  assertUniqueAttributeValues: AssertUniqueAttributeValues(
+    instanceRepository: myInstanceRepository,
+    skuRepository: mySkuRepository,
+    traitRepository: myTraitRepository,
+    attributeRepository: myAttributeRepository,
+  ),
+);
+
+// The first article takes SN-0001...
+await createInstance(instance: panelWithSerial('SN-0001')).run();
+// ...so a second one claiming it is refused with a
+// DuplicateAttributeValueFailure rather than stored.
+```
+
+Values compare the way this package's other identity rules compare them: strings
+trimmed and case-insensitively, numbers by value, different types as different
+values, and a value nobody set never clashes with anything. A copy is a new
+article, so `DuplicateInstance` carries the classification and the non-unique
+values over and starts with the unique ones unset — the same shape as the locate a
+copy does not inherit. Deleting the article frees its serial number.
+
+Nothing new to implement in a backend: the check reads through
+`IInstanceRepository.fetchAll()`, so the contracts you already implement are
+enough, and the rule stays a use case rather than a storage feature. An adapter
+that wants it cheap can index the unique keys on its own side.
+
 ## One package
 
 `sku_catalog` is the whole thing — the model **and** the operations:
@@ -211,7 +268,9 @@ Two deliberate consequences worth knowing:
 - **Domain vocabulary stays out.** Which trait means "this SKU lives inside
   another instance", and which attribute holds a short code, are *your* words —
   they are parameters (`slotBoundTraitNames`, `resolveAttributeAbbreviation`),
-  not constants.
+  not constants. The one pair the package names is `serializable` and its
+  `serial_number`, because `isUnique` turns it into a catalog-wide rule rather
+  than a convention (see above).
 - **The catalog does not cascade what it cannot see.** `DeleteInstance` removes the
   instance and its images. If something else references instances — a wiring graph,
   a harness, a bill of materials — that is yours to cascade, and the use case

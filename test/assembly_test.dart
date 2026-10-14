@@ -113,14 +113,23 @@ void main() {
   });
 
   test('deleting a SKU that an instance instantiates is refused', () async {
-    await CreateInstance(instances)(
-      instance: Instance(
-        meta: meta('d1'),
-        skuId: 'base',
-        locateId: null,
-        name: 'Base 1',
-      ),
-    ).run();
+    await CreateInstance(
+          instanceRepository: instances,
+          assertUniqueAttributeValues: AssertUniqueAttributeValues(
+            instanceRepository: instances,
+            skuRepository: skus,
+            traitRepository: MemoryTraitRepository(),
+            attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+          ),
+        )(
+          instance: Instance(
+            meta: meta('d1'),
+            skuId: 'base',
+            locateId: null,
+            name: 'Base 1',
+          ),
+        )
+        .run();
 
     final result = await DeleteSku(
       skuRepository: skus,

@@ -10,6 +10,7 @@ void main() {
   late MemoryInstanceRepository instances;
   late MemorySkuRepository skus;
   late MemoryTraitRepository traits;
+  late MemoryTraitAttributeDefinitionRepository attributes;
   late MemoryImageRepository images;
   late MemoryLocateRepository locates;
 
@@ -27,10 +28,23 @@ void main() {
     String typeId = 'free',
   }) => Instance(meta: meta(id), skuId: typeId, locateId: locateId, name: name);
 
+  AssertUniqueAttributeValues uniqueness() => AssertUniqueAttributeValues(
+    instanceRepository: instances,
+    skuRepository: skus,
+    traitRepository: traits,
+    attributeRepository: attributes,
+  );
+
+  CreateInstance createInstance() => CreateInstance(
+    instanceRepository: instances,
+    assertUniqueAttributeValues: uniqueness(),
+  );
+
   UpdateInstance updateInstance() => UpdateInstance(
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
+    assertUniqueAttributeValues: uniqueness(),
     slotBoundTraitNames: const {'slotted'},
   );
 
@@ -38,6 +52,7 @@ void main() {
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
+    assertUniqueAttributeValues: uniqueness(),
     slotBoundTraitNames: const {'slotted'},
   );
 
@@ -45,6 +60,7 @@ void main() {
     instances = MemoryInstanceRepository();
     skus = MemorySkuRepository();
     traits = MemoryTraitRepository();
+    attributes = MemoryTraitAttributeDefinitionRepository();
     images = MemoryImageRepository();
     locates = MemoryLocateRepository();
 
@@ -76,7 +92,7 @@ void main() {
   });
 
   test('a created instance is fetched back and found by its place', () async {
-    await CreateInstance(instances)(instance: instance('d1', 'Sensor 1')).run();
+    await createInstance()(instance: instance('d1', 'Sensor 1')).run();
 
     (await FetchAllInstances(
       instances,
@@ -104,11 +120,9 @@ void main() {
   test(
     'a name clash at the same place is refused, and allowed elsewhere',
     () async {
-      await CreateInstance(instances)(
-        instance: instance('d1', 'Sensor 1'),
-      ).run();
-      await CreateInstance(instances)(instance: instance('d2', 'Other')).run();
-      await CreateInstance(instances)(
+      await createInstance()(instance: instance('d1', 'Sensor 1')).run();
+      await createInstance()(instance: instance('d2', 'Other')).run();
+      await createInstance()(
         instance: instance('d3', 'Third', locateId: 'rack-2'),
       ).run();
 
@@ -130,7 +144,7 @@ void main() {
   );
 
   test('a slot-bound SKU is never given a place of its own', () async {
-    await CreateInstance(instances)(
+    await createInstance()(
       instance: instance('d1', 'Card 1', typeId: 'slotted'),
     ).run();
 
@@ -144,9 +158,7 @@ void main() {
   test(
     'an instance whose SKU names no slot-bound trait keeps its place',
     () async {
-      await CreateInstance(instances)(
-        instance: instance('d1', 'Sensor 1'),
-      ).run();
+      await createInstance()(instance: instance('d1', 'Sensor 1')).run();
 
       final saved = await updateInstance()(
         instance: instance('d1', 'Sensor 1'),
@@ -161,7 +173,7 @@ void main() {
   );
 
   test('a copy gets a unique name and the original keeps its place', () async {
-    await CreateInstance(instances)(instance: instance('d1', 'Sensor 1')).run();
+    await createInstance()(instance: instance('d1', 'Sensor 1')).run();
 
     final first = await duplicator()(id: 'd1').run();
     first
@@ -179,7 +191,7 @@ void main() {
   });
 
   test('a copy of a slot-bound instance is not fitted anywhere', () async {
-    await CreateInstance(instances)(
+    await createInstance()(
       instance: instance('d1', 'Card 1', typeId: 'slotted'),
     ).run();
 
@@ -189,7 +201,7 @@ void main() {
   });
 
   test('deleting an instance takes its images with it', () async {
-    await CreateInstance(instances)(instance: instance('d1', 'Sensor 1')).run();
+    await createInstance()(instance: instance('d1', 'Sensor 1')).run();
     await CreateImageRecord(images)(
       image: ImageRecord(
         id: 'img-d1',
@@ -216,9 +228,7 @@ void main() {
   test(
     'deleting an instance leaves images owned by something else alone',
     () async {
-      await CreateInstance(instances)(
-        instance: instance('d1', 'Sensor 1'),
-      ).run();
+      await createInstance()(instance: instance('d1', 'Sensor 1')).run();
       await CreateImageRecord(images)(
         image: ImageRecord(
           id: 'img-sku',
@@ -247,7 +257,7 @@ void main() {
         attributeValues: const {'calibrated_on': '2026-01-01'},
       );
 
-      final saved = await CreateInstance(instances)(instance: one).run();
+      final saved = await createInstance()(instance: one).run();
       final back = saved.getOrElse((_) => fail('expected Right'));
 
       back.traitIds.should.be(['calibrated']);

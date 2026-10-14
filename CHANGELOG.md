@@ -1,5 +1,49 @@
 # sku_catalog changelog
 
+## 2.0.0
+
+**Breaking.** A serial number is no longer a field on `Instance` — it is a trait
+attribute value, and the trait's attribute is marked unique. Two halves of one
+fact, and each now lives where it belongs: the *model* is serializable (a trait on
+the SKU), the *article* carries one particular number (a value on the instance).
+
+- **Removed:** `Instance.serialNumber`, its `copyWith` parameter, and the
+  `serial_number` key in `Instance.toJson()`. Reading or setting the field no
+  longer compiles, which is the point — the value has moved into the model. A
+  stored record that still carries the key parses without it (the key is ignored
+  and is not written back); migrate by moving the value into
+  `attribute_values['serial_number']` under the serializable trait below.
+- **New:** `TraitAttributeDefinition.isUnique` (`is_unique` on the wire, default
+  `false`) — at most one instance in the catalog may hold a value for this
+  attribute. A record written before the flag existed reads back as not unique.
+- **New:** `SerializableTrait`, the one trait the package names.
+  `SerializableTrait.define(traitMeta:, attributeMeta:, key:, displayLabel:)`
+  returns the `sku`-scoped `Serializable` trait plus its `serial_number` attribute
+  (`string`, `isUnique: true`); ids stay the caller's, like every other id here.
+- **New:** `AssertUniqueAttributeValues` plus the pure helpers in
+  `attribute_uniqueness.dart` (`attributeValuesClash`, `uniqueAttributeKeys`,
+  `withoutKeys`). The check resolves the schema in scope — the instance's own
+  traits plus the traits of the SKU it instantiates, walked up their parent chains
+  — and reads instances through `IInstanceRepository.fetchAll()`, so **no
+  repository contract changed** and a backend needs nothing new to implement.
+- **New failure:** `DuplicateAttributeValueFailure`. `DomainFailure` is sealed and
+  documented as exhaustively switchable, so a consumer that switches over it must
+  add the case — the second half of the major bump.
+- **Changed (breaking signatures):** `CreateInstance`, `UpdateInstance` and
+  `DuplicateInstance` take `required AssertUniqueAttributeValues
+  assertUniqueAttributeValues`, and `CreateInstance` moves from one positional
+  repository to named `instanceRepository:`. The rule fires on create and update;
+  `DuplicateInstance` instead drops every unique value, because a copy is a new
+  article — it carries the classification and the non-unique values over and can
+  never be refused for a serial number it should not have inherited.
+- **Tests:** `test/attribute_uniqueness_test.dart`, 23 cases: the canonical
+  serializable trait, a unique attribute on a trait of the caller's own, on one
+  inherited from a parent trait, on a trait the instance carries itself, two
+  articles of *different* SKUs sharing one trait, case/whitespace normalization,
+  number vs. string, unset values, update-own/swap/reuse-after-delete, the copy
+  rule, the JSON round-trip and a legacy record. Gate green: `analyze` clean, 131
+  tests passing, `publish-dry` 0 warnings.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`

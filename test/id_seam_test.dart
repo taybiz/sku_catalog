@@ -86,19 +86,34 @@ void main() {
             modelNumber: 'FREE',
           ),
         ).run();
-        await CreateInstance(instances)(
-          instance: Instance(
-            meta: meta('d1'),
-            skuId: 'free',
-            locateId: null,
-            name: 'Sensor 1',
-          ),
-        ).run();
+        await CreateInstance(
+              instanceRepository: instances,
+              assertUniqueAttributeValues: AssertUniqueAttributeValues(
+                instanceRepository: instances,
+                skuRepository: skus,
+                traitRepository: traits,
+                attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+              ),
+            )(
+              instance: Instance(
+                meta: meta('d1'),
+                skuId: 'free',
+                locateId: null,
+                name: 'Sensor 1',
+              ),
+            )
+            .run();
 
         final copy = await DuplicateInstance(
           instanceRepository: instances,
           skuRepository: skus,
           traitRepository: traits,
+          assertUniqueAttributeValues: AssertUniqueAttributeValues(
+            instanceRepository: instances,
+            skuRepository: skus,
+            traitRepository: traits,
+            attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+          ),
           idGenerator: () => 'DEV-0008',
         )(id: 'd1').run();
 

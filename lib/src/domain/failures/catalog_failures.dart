@@ -73,3 +73,13 @@ final class SerializationFailure extends DomainFailure {
   /// Creates a [SerializationFailure].
   const SerializationFailure(super.message);
 }
+
+/// A value for an attribute marked unique is already held by another instance.
+///
+/// Raised on the instance write path by `AssertUniqueAttributeValues`: a unique
+/// attribute identifies one article, so a second article claiming the same value
+/// is a duplicate, not a variation.
+final class DuplicateAttributeValueFailure extends DomainFailure {
+  /// Creates a [DuplicateAttributeValueFailure].
+  const DuplicateAttributeValueFailure(super.message);
+}
