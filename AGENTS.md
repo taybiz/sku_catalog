@@ -69,8 +69,7 @@ are.
   `BACKLOG.md` and the whole `test/` tree; check `dart pub publish --dry-run`'s
   file list before trusting it — stale untracked directories in a working clone get
   published too.
-- Open items live in `BACKLOG.md`, including the outstanding doctrine delta
-  (a second repository adapter plus a shared contract suite).
+- Open items live in `BACKLOG.md`.
 
 ## Done means shipped
 
