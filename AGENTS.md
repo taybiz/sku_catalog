@@ -36,10 +36,11 @@ An `Instance` is one article of a SKU at one place; it owns no parts, and there 
 no `parentId` on it — do not add instance-level parentage. Composition already has
 two homes and a third would duplicate both: a SKU containing SKUs (`SkuComponent`,
 folded into a bill of materials) and a place inside a place (`Locate`). An article
-that lives inside a host stays the caller's own convention, which the catalog takes
-as a parameter: `UpdateInstance` and `DuplicateInstance` accept
-`slotBoundTraitNames` (Circuit Planner passes `{'slottable'}`), and an instance
-whose SKU carries one of those traits is forced to carry no locate of its own.
+that lives inside a host is the consumer's own convention, and it needs nothing
+from the catalog to express it: leave the article's `locate` unset and the host
+holds the place. The catalog does not force that on a trait name — an article with
+no place of its own simply has no place, and only the consumer knows which those
+are.
 
 ## Local wiring
 
