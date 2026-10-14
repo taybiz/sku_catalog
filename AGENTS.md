@@ -30,6 +30,17 @@ expected to build their own backend against the contracts. `test/boundary_test.d
 asserts that nothing under `lib/` reaches for those doubles, so the published
 library can never start depending on them.
 
+## Not doing: instance composition
+
+An `Instance` is one article of a SKU at one place; it owns no parts, and there is
+no `parentId` on it — do not add instance-level parentage. Composition already has
+two homes and a third would duplicate both: a SKU containing SKUs (`SkuComponent`,
+folded into a bill of materials) and a place inside a place (`Locate`). An article
+that lives inside a host stays the caller's own convention, which the catalog takes
+as a parameter: `UpdateInstance` and `DuplicateInstance` accept
+`slotBoundTraitNames` (Circuit Planner passes `{'slottable'}`), and an instance
+whose SKU carries one of those traits is forced to carry no locate of its own.
+
 ## Local wiring
 
 - Melos workspace of one (bible §3.3 "Topology C"): the package *is* the
