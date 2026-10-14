@@ -8,8 +8,8 @@ import 'meta.dart';
 /// The SKU is the class ("a 20 A single-pole switch"); an [Instance] is the
 /// individual article ("the one in rack 3, position 2"). Everything true of
 /// the model lives on the SKU; everything true of *this* article lives here,
-/// and this class carries its own traits and attribute values so an instance
-/// can be classified and valued independently of the model it came from.
+/// and this class carries its own attribute values — for the traits in scope
+/// for it — so an article can differ from its model without the model changing.
 class Instance extends Equatable {
   static const Object _unset = Object();
 
@@ -33,7 +33,12 @@ class Instance extends Equatable {
   /// Ids of images attached to this instance.
   final List<String> imageIds;
 
-  /// Ids of traits attached to this instance (instance-level classification).
+  /// Ids of traits attached to this article.
+  ///
+  /// A trait is classed to a SKU, a place or a manufacturer ([TraitScope]) — there
+  /// is no instance scope. An article still carries traits, and does so for one
+  /// reason: a value the article holds needs its definition in scope, whether the
+  /// trait comes from its SKU or from the article itself.
   final List<String> traitIds;
 
   /// Trait attribute values keyed by attribute key, for this instance.
