@@ -155,6 +155,67 @@ final bom = await AggregateBillOfMaterials(
 A runnable end-to-end version — with a small in-memory backend you can copy —
 is in [`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
 
+## Required attributes
+
+A trait attribute is **optional unless you mark it required**. The flag is
+`isRequired` on `TraitAttributeDefinition`, and it defaults to `false`, so a
+definition that omits it is unchanged:
+
+```dart
+final ratedAmps = TraitAttributeDefinition(
+  meta: Meta(id: 'switch-rated_amps', notes: '', createdAt: now, updatedAt: now),
+  traitId: 'switch',
+  key: 'rated_amps',
+  displayLabel: 'Rated Amperage',
+  dataType: DataType.number,
+  unit: 'A',
+  isRequired: true, // omit it (or pass false) for an optional attribute
+);
+```
+
+Required-ness belongs to the **definition**, not to any one value. It travels in
+JSON as `is_required`, and a record written before the flag existed — no
+`is_required` key, or `null` — reads back as **optional**, so existing data is not
+retro-fitted into missing-field errors.
+
+It bites at resolution time, and only against an **effective value**: an
+attribute is satisfied when `ResolveEffectiveAttributes` gives it one — from the
+instance, its SKU, an ancestor SKU in an assembly, or the definition's own
+`defaultValue`. A required attribute backed by a default is therefore satisfied
+by that default and is never reported missing; only a required attribute still
+`null` after resolution counts.
+
+Two operations apply that rule to a resolved list:
+
+```dart
+final attributes = await ResolveEffectiveAttributes(
+  instanceRepository: myInstanceRepository,
+  skuRepository: mySkuRepository,
+  skuComponentRepository: mySkuComponentRepository,
+  resolveSchema: myResolveSchema,
+)(instanceId: 'pnl-1').run();
+
+// Render: which required fields still need a value? (in schema order)
+final missing = attributes.fold(
+  (failure) => const <String>[],
+  (resolved) => missingRequiredAttributeKeys(attributes: resolved),
+);
+// → ['rated_amps']
+
+// Enforce, on a write path: refuse the write when one is unset.
+final checked = attributes.flatMap(
+  (resolved) => assertRequiredAttributes(attributes: resolved),
+);
+// Right(unit) when every required attribute resolves, otherwise
+// Left(InvalidInputFailure) naming the missing keys.
+```
+
+`missingRequiredAttributeKeys` is the probe — use it when you only want to
+*prompt* (mark the empty fields on a form) without failing.
+`assertRequiredAttributes` is the enforcement leaf — hand its `Left` back
+unchanged and the write is refused. Neither throws; like everything else here,
+they are values.
+
 ## Bringing your own storage
 
 Every aggregate has a repository contract under `lib/src/domain/contracts/`,

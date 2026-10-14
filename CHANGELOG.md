@@ -1,5 +1,25 @@
 # sku_catalog changelog
 
+## Unreleased
+
+- Additive: **required trait attributes are now enforced, not just declared.**
+  `TraitAttributeDefinition.isRequired` (default `false`, JSON key
+  `is_required`) already marked an attribute as required, and a record that
+  omits the key reads back as optional — so the flag is backward compatible and
+  older data is not retro-fitted into missing-field errors. What was missing was
+  the rule at *use* time: new `lib/src/usecases/validate_attributes.dart` adds
+  `missingRequiredAttributeKeys` — a probe returning the `key` of every required
+  attribute that resolves to no value, in schema order — and
+  `assertRequiredAttributes` — the enforcement leaf, `Right(unit)` when all are
+  satisfied and `Left(InvalidInputFailure)` naming the missing keys. "Satisfied"
+  means an **effective** value from `ResolveEffectiveAttributes`, so a required
+  attribute backed by a `defaultValue` is satisfied by that default and is never
+  reported missing. The probe is kept separate from the leaf so a caller that
+  only wants to *render* a required prompt can read the keys without failing.
+  Pure addition — every existing `call()` is unchanged. The README gains a
+  "Required attributes" section and the example demonstrates the refusal.
+  Gate green: `analyze` clean, `test` passing, `publish-dry` 0 warnings.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`
