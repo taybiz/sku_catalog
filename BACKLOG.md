@@ -2,15 +2,6 @@
 
 ## Open
 
-- [ ] **`ResolveEffectiveAttributes` carries a second public method** beside
-  `call()`: `forSku(skuId)` answers "what does this part owe its assembly". It is a
-  real second question, but splitting it needs either a third class holding the
-  shared assembly-chain resolution or a duplicated orchestration step — more
-  surface than the method costs. Left deliberately; revisit if the shared
-  resolution ever becomes its own use case. (`AggregateBillOfMaterials.explode` is
-  *not* the same thing: it is a member of the private `_AssemblyFold`, so it never
-  reaches the public API.)
-
 - [ ] **`isUnique` is enforced on the instance layer only.** `CreateInstance`,
   `UpdateInstance` and `DuplicateInstance` assert it against instances; a value
   written on a SKU, a `Locate` or a `Manufacturer` — all three hold

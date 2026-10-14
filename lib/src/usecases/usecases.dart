@@ -60,6 +60,7 @@ export 'resolve_effective_attributes.dart';
 export 'resolve_instance_schema.dart';
 export 'resolve_locate_path.dart';
 export 'resolve_schema.dart';
+export 'resolve_sku_attributes.dart';
 export 'resolve_trait_chain.dart';
 export 'update_instance.dart';
 export 'update_locate.dart';
