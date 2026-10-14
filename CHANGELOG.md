@@ -119,6 +119,13 @@ the SKU), the *article* carries one particular number (a value on the instance).
   defect to fix and not a rule this repo is failing — it is a category the rule was
   never about.
 
+- **Decided:** **no bundle import/export in the package either.** A slug-stable
+  export and idempotent re-import of a whole catalog — stable ids, referential
+  integrity — is a storage story, and this package holds no storage, so it holds
+  no adapter and no bundle format. The work is the consumer's and already lives
+  where it belongs; what the package owes it is the contracts, which is exactly
+  what it ships.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`

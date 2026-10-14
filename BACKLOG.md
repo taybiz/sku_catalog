@@ -9,10 +9,6 @@
   articles. If a unique attribute on a place or a maker is wanted, the same
   `AssertUniqueAttributeValues` shape extends to those write paths.
 
-- [ ] A JSON bundle adapter: slug-stable export/import of a whole catalog
-  (stable ids, referential integrity, idempotent re-import). Currently
-  product-side in Circuit Planner.
-
 ## Deviations from the Bible (flagged for review — do NOT auto-fix)
 
 A deviation is a place the code and the bible disagree; it is recorded for a
