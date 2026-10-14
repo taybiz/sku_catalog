@@ -72,6 +72,17 @@ the SKU), the *article* carries one particular number (a value on the instance).
   the area barrel already exported, except `sku_association_use_cases.dart`, whose
   three files the area barrel now exports directly — the public surface is
   unchanged, and `usecases.dart` is one alphabetical list.
+- **Removed:** the naming **engine** — `defaultNameTemplate`,
+  `validateNameTemplate`, `formatName`, `fillFixedTokens`, `nextSequenceStart`,
+  `slugifyLocate`, `abbreviateSku`, `resolveAttributeAbbreviation` and the
+  `collapseSeparators` helper. Generating a name for a new article from a template,
+  a sequence token and a shortened model number is a settings/UI concern, and this
+  package's README already said naming conventions are not here — the toolkit
+  contradicted it. What stays is what the catalog's own rules need:
+  `namesClash` (the case-insensitive comparison behind the per-locate rule) and
+  `uniqueCopyName` (the name a copy gets, which is the only one that satisfies that
+  rule). `instance_naming.dart` is now `instance_names.dart`, two rules instead of
+  ten functions.
 - **Tests:** `test/attribute_uniqueness_test.dart`, 25 cases: the canonical
   serializable trait, a unique attribute on a trait of the caller's own, on one
   inherited from a parent trait, on a trait the instance carries itself, two

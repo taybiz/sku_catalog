@@ -269,11 +269,10 @@ stores must read back unchanged.
 
 Two deliberate consequences worth knowing:
 
-- **Domain vocabulary stays out.** Which attribute holds a short code, and which
-  trait carries it, are *your* words — they are parameters
-  (`resolveAttributeAbbreviation`), not constants. The package names exactly one
-  pair, `serializable` and its `serial_number`, because `isUnique` turns it into a
-  catalog-wide rule rather than a convention (see above).
+- **Domain vocabulary stays out.** What a short code on an article means, and
+  which trait holds it, are *your* words and *your* screen. The package names
+  exactly one pair, `serializable` and its `serial_number`, because `isUnique`
+  turns it into a catalog-wide rule rather than a convention (see above).
 - **The catalog does not cascade what it cannot see.** `DeleteInstance` removes the
   instance and its images. If something else references instances — a wiring graph,
   a harness, a bill of materials — that is yours to cascade, and the use case

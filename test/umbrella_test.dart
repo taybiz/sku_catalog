@@ -56,7 +56,7 @@ void main() {
       });
 
       test('Then the pure helpers behave', () {
-        collapseSeparators(text: 'bolt__m6--x').should.be('bolt_m6-x');
+        namesClash(a: 'Sensor 1', b: ' sensor 1 ').should.beTrue();
       });
     });
 
