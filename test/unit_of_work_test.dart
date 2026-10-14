@@ -72,7 +72,7 @@ void main() {
       final images = MemoryImageRepository();
       await CreateInstance(
             instanceRepository: instances,
-            assertUniqueAttributeValues: AssertUniqueAttributeValues(
+            assertUniqueAttributeValues: uniqueValuesOn(
               instanceRepository: instances,
               skuRepository: skus,
               traitRepository: MemoryTraitRepository(),

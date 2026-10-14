@@ -1,5 +1,6 @@
-import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
+
+import 'failures/catalog_failures.dart';
 
 /// Runs [tasks] in order, collecting their right values; the first failure
 /// short-circuits and is preserved.

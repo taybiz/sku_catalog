@@ -1,8 +1,6 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'sequence.dart';
-
 /// Delete a trait by id, blocked while it has child traits or is attached to
 /// SKUs, manufacturers, or locates; its attribute definitions cascade.
 class DeleteTrait {

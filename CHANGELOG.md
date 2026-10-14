@@ -20,23 +20,39 @@ the SKU), the *article* carries one particular number (a value on the instance).
   `SerializableTrait.define(traitMeta:, attributeMeta:, key:, displayLabel:)`
   returns the `sku`-scoped `Serializable` trait plus its `serial_number` attribute
   (`string`, `isUnique: true`); ids stay the caller's, like every other id here.
-- **New:** `AssertUniqueAttributeValues` plus the pure helpers in
-  `attribute_uniqueness.dart` (`attributeValuesClash`, `uniqueAttributeKeys`,
-  `withoutKeys`). The check resolves the schema in scope — the instance's own
-  traits plus the traits of the SKU it instantiates, walked up their parent chains
-  — and reads instances through `IInstanceRepository.fetchAll()`, so **no
-  repository contract changed** and a backend needs nothing new to implement.
+- **New:** `ResolveInstanceSchema` — the schema in scope for one article: the
+  traits the instance carries itself plus the traits of the SKU it instantiates,
+  each walked up its parent chain. It is what a form for that article renders, and
+  what the uniqueness rule measures a write against.
+- **New:** `AssertUniqueAttributeValues` (a use case: its contracts through the
+  constructor, one `call()`). It resolves the schema through
+  `ResolveInstanceSchema` and reads instances through
+  `IInstanceRepository.fetchAll()`, so **no repository contract changed** and a
+  backend needs nothing new to implement.
+- **New:** `TraitAttributeDefinition.valuesMatch(a:, b:)` — the attribute decides
+  what counts as the same value: strings trimmed and case-insensitive, numbers by
+  value, different types as different values, and an unset value matching nothing.
 - **New failure:** `DuplicateAttributeValueFailure`. `DomainFailure` is sealed and
   documented as exhaustively switchable, so a consumer that switches over it must
   add the case — the second half of the major bump.
 - **Changed (breaking signatures):** `CreateInstance`, `UpdateInstance` and
-  `DuplicateInstance` take `required AssertUniqueAttributeValues
-  assertUniqueAttributeValues`, and `CreateInstance` moves from one positional
-  repository to named `instanceRepository:`. The rule fires on create and update;
-  `DuplicateInstance` instead drops every unique value, because a copy is a new
-  article — it carries the classification and the non-unique values over and can
-  never be refused for a serial number it should not have inherited.
-- **Tests:** `test/attribute_uniqueness_test.dart`, 23 cases: the canonical
+  `DuplicateInstance` take their rules as dependencies — the attribute-value check,
+  and for update the name rule, now `AssertUniqueInstanceName`, a use case class in
+  place of the free function `assertUniqueInstanceName`; `CreateInstance` also
+  moves from one positional repository to named `instanceRepository:`. The rule
+  fires on create and update; `DuplicateInstance` instead drops every unique value,
+  because a copy is a new article — it carries the classification and the
+  non-unique values over and can never be refused for a serial number it should not
+  have inherited.
+- **The use-case layer now holds use cases only.** The pure helpers that were
+  misfiled there moved to the domain, where the model's own rules live:
+  `IdGenerator`, `newMeta`, the instance-naming rules and the `sequenceTaskEither`
+  combinator are now `lib/src/domain/`, re-exported through the same barrel, and
+  `attribute_uniqueness.dart` is gone (its rule is
+  `TraitAttributeDefinition.valuesMatch`). One use case per file, each a class with
+  a single public `call()` — `AssertUniqueAttributeValues` no longer carries a
+  second public method for the copy path to reach for.
+- **Tests:** `test/attribute_uniqueness_test.dart`, 25 cases: the canonical
   serializable trait, a unique attribute on a trait of the caller's own, on one
   inherited from a parent trait, on a trait the instance carries itself, two
   articles of *different* SKUs sharing one trait, case/whitespace normalization,

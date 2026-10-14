@@ -1,31 +1,38 @@
-import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'instance_naming.dart';
+import '../domain/domain.dart';
 
-/// Fails with [AlreadyExistsFailure] when another instance at [locateId]
-/// already carries [name] (case-insensitive), excluding [excludeId].
+/// Fails with [AlreadyExistsFailure] when another instance at the same locate
+/// already carries the name (case-insensitive).
 ///
 /// The per-locate unique name rule lives here so [UpdateInstance] and any
-/// caller's own creation use case share one implementation.
-TaskEither<DomainFailure, Unit> assertUniqueInstanceName({
-  required IInstanceRepository repository,
-  required String name,
-  required String? locateId,
-  String? excludeId,
-}) => repository.fetchAll().flatMap((all) {
-  final clash = all.any(
-    (d) =>
-        d.meta.id != excludeId &&
-        d.locateId == locateId &&
-        namesClash(a: d.name, b: name),
-  );
-  if (clash) {
-    return TaskEither.left(
-      AlreadyExistsFailure(
-        'An instance named "$name" already exists at this locate',
-      ),
+/// caller's own naming flow share one implementation.
+class AssertUniqueInstanceName {
+  /// Creates an [AssertUniqueInstanceName] use case.
+  const AssertUniqueInstanceName(this._repository);
+
+  final IInstanceRepository _repository;
+
+  /// Executes the use case: checks [name] at [locateId], ignoring the instance
+  /// [excludeId] when an existing article is being renamed.
+  TaskEither<DomainFailure, Unit> call({
+    required String name,
+    required String? locateId,
+    String? excludeId,
+  }) => _repository.fetchAll().flatMap((all) {
+    final clash = all.any(
+      (instance) =>
+          instance.meta.id != excludeId &&
+          instance.locateId == locateId &&
+          namesClash(a: instance.name, b: name),
     );
-  }
-  return TaskEither.of(unit);
-});
+    if (clash) {
+      return TaskEither<DomainFailure, Unit>.left(
+        AlreadyExistsFailure(
+          'An instance named "$name" already exists at this locate',
+        ),
+      );
+    }
+    return TaskEither<DomainFailure, Unit>.of(unit);
+  });
+}

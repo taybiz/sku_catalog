@@ -1,8 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../domain/domain.dart';
 
-import 'sequence.dart';
-
 /// Delete a SKU by id, blocked while instances use it; its
 /// component lines cascade.
 ///

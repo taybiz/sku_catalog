@@ -1,8 +1,8 @@
-/// The catalog model — entities, enums, value objects, failures and the
-/// repository contracts.
+/// The catalog model — entities, enums, value objects, failures, the repository
+/// contracts, and the pure rules and helpers that are true of the model itself.
 ///
-/// No operations live here, and no storage: implement the contracts over
-/// whatever you have, and reach the operations through the front door,
+/// No storage lives here: implement the contracts over whatever you have, and
+/// reach the operations through the front door,
 /// `package:sku_catalog/sku_catalog.dart`.
 ///
 /// Presents FP-style tuples: every repository method and use case call returns a
@@ -11,6 +11,10 @@
 library;
 
 export 'json_coercion.dart';
+export 'id_generator.dart';
+export 'instance_naming.dart';
+export 'new_meta.dart';
+export 'sequence.dart';
 export 'entities/instance.dart';
 export 'entities/sku.dart';
 export 'entities/image_record.dart';

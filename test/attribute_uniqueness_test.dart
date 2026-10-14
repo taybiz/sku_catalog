@@ -31,11 +31,17 @@ void main() {
     updatedAt: '2026-01-01T00:00:00.000Z',
   );
 
+  ResolveInstanceSchema schemaResolver() => ResolveInstanceSchema(
+    skuRepository: skus,
+    resolveSchema: ResolveSchema(
+      traitRepository: traits,
+      attributeRepository: attributes,
+    ),
+  );
+
   AssertUniqueAttributeValues uniqueness() => AssertUniqueAttributeValues(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
-    attributeRepository: attributes,
+    resolveInstanceSchema: schemaResolver(),
   );
 
   CreateInstance createInstance() => CreateInstance(
@@ -47,6 +53,7 @@ void main() {
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
+    assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
@@ -54,7 +61,7 @@ void main() {
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
-    assertUniqueAttributeValues: uniqueness(),
+    resolveInstanceSchema: schemaResolver(),
   );
 
   Instance article(
@@ -575,29 +582,78 @@ void main() {
     });
   });
 
+  group('Given the schema in scope for an article', () {
+    test("Then the instance's own traits and its model's are merged", () async {
+      final resolved = await schemaResolver()(
+        instance: article('i1', 'Article 1', traitIds: const ['batch']),
+      ).run();
+
+      final keys = {
+        for (final entry in resolved.getOrElse((_) => fail('expected Right')))
+          entry.def.key,
+      };
+      // The batch keys came from the instance, the serial number from its model.
+      keys.should.contain('lot_code');
+      keys.should.contain('batch_ref');
+      keys.should.contain('serial_number');
+    });
+
+    test(
+      'Then an article whose model nobody stored still resolves its own',
+      () async {
+        final resolved = await schemaResolver()(
+          instance: article(
+            'i1',
+            'Article 1',
+            sku: 'ghost',
+            traitIds: const ['batch'],
+          ),
+        ).run();
+
+        final keys = {
+          for (final entry in resolved.getOrElse((_) => fail('expected Right')))
+            entry.def.key,
+        };
+        keys.should.contain('lot_code');
+        keys.contains('serial_number').should.beFalse();
+      },
+    );
+  });
+
   group('Given two values for a unique attribute', () {
+    // The attribute decides: a serial number is the same serial number whether it
+    // was typed in another case or with space around it.
+    late TraitAttributeDefinition serialNumber;
+
+    setUp(() {
+      serialNumber = SerializableTrait.define(
+        traitMeta: meta('serializable'),
+        attributeMeta: meta('serializable-serial_number'),
+      ).serialNumber;
+    });
+
     test(
       'Then the same string in another case or spacing is the same value',
       () {
-        attributeValuesClash(a: 'SN-1', b: ' sn-1 ').should.beTrue();
+        serialNumber.valuesMatch(a: 'SN-1', b: ' sn-1 ').should.beTrue();
       },
     );
 
     test('Then 20 and 20.0 are one number', () {
-      attributeValuesClash(a: 20, b: 20.0).should.beTrue();
+      serialNumber.valuesMatch(a: 20, b: 20.0).should.beTrue();
     });
 
     test(
       'Then a number and the string that reads like it are different values',
       () {
-        attributeValuesClash(a: 20, b: '20').should.beFalse();
+        serialNumber.valuesMatch(a: 20, b: '20').should.beFalse();
       },
     );
 
     test('Then a value nobody set clashes with nothing', () {
-      attributeValuesClash(a: null, b: null).should.beFalse();
-      attributeValuesClash(a: null, b: 'SN-1').should.beFalse();
-      attributeValuesClash(a: 'SN-1', b: null).should.beFalse();
+      serialNumber.valuesMatch(a: null, b: null).should.beFalse();
+      serialNumber.valuesMatch(a: null, b: 'SN-1').should.beFalse();
+      serialNumber.valuesMatch(a: 'SN-1', b: null).should.beFalse();
     });
   });
 

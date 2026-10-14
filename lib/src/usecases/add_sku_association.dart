@@ -1,7 +1,5 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'id_generator.dart';
-import 'new_meta.dart';
 
 /// Adds a labeled relationship edge from [sourceSkuId] to [targetSkuId]
 /// in the role [kind]. Refuses when either SKU does not exist or [kind] is

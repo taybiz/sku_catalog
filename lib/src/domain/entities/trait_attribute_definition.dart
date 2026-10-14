@@ -110,4 +110,35 @@ class TraitAttributeDefinition extends Equatable {
     isUnique,
     defaultValue,
   ];
+
+  /// Whether [a] and [b] are the same value for this attribute.
+  ///
+  /// The attribute decides, because the value's meaning is the attribute's: a
+  /// serial number is the same serial number whether it was typed with capitals
+  /// or spaces around it. The comparison is the one this package makes for the
+  /// other identities it keeps:
+  ///
+  /// - **strings** are trimmed and lower-cased, so `'SN-1'`, `'sn-1'` and
+  ///   `' SN-1 '` are one value (`namesClash` makes the same call for names);
+  /// - **numbers** are compared by value, so `20` and `20.0` are one number;
+  /// - **different runtime types are different values**: `20` and `'20'` do not
+  ///   match. [dataType] says what a value should be, and a value of the wrong
+  ///   type is a data error rather than the same value spelled differently;
+  /// - **null matches nothing**: an attribute nobody set is not a value, so two
+  ///   instances that leave it unset cannot collide over it.
+  bool valuesMatch({required Object? a, required Object? b}) {
+    final left = _comparable(value: a);
+    final right = _comparable(value: b);
+    if (left == null || right == null) return false;
+    return left == right;
+  }
+
+  /// The comparable form of [value], or null when it is not a value at all.
+  static String? _comparable({required Object? value}) {
+    if (value == null) return null;
+    if (value is String) return 'string:${value.trim().toLowerCase()}';
+    if (value is num) return 'number:${value.toDouble()}';
+    if (value is bool) return 'boolean:$value';
+    return '${value.runtimeType}:$value';
+  }
 }

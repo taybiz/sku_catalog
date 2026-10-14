@@ -28,11 +28,17 @@ void main() {
     String typeId = 'free',
   }) => Instance(meta: meta(id), skuId: typeId, locateId: locateId, name: name);
 
+  ResolveInstanceSchema schemaResolver() => ResolveInstanceSchema(
+    skuRepository: skus,
+    resolveSchema: ResolveSchema(
+      traitRepository: traits,
+      attributeRepository: attributes,
+    ),
+  );
+
   AssertUniqueAttributeValues uniqueness() => AssertUniqueAttributeValues(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
-    attributeRepository: attributes,
+    resolveInstanceSchema: schemaResolver(),
   );
 
   CreateInstance createInstance() => CreateInstance(
@@ -44,6 +50,7 @@ void main() {
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
+    assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
     slotBoundTraitNames: const {'slotted'},
   );
@@ -52,7 +59,7 @@ void main() {
     instanceRepository: instances,
     skuRepository: skus,
     traitRepository: traits,
-    assertUniqueAttributeValues: uniqueness(),
+    resolveInstanceSchema: schemaResolver(),
     slotBoundTraitNames: const {'slotted'},
   );
 

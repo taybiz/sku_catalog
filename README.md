@@ -81,9 +81,13 @@ final createInstance = CreateInstance(
   instanceRepository: myInstanceRepository,
   assertUniqueAttributeValues: AssertUniqueAttributeValues(
     instanceRepository: myInstanceRepository,
-    skuRepository: mySkuRepository,
-    traitRepository: myTraitRepository,
-    attributeRepository: myAttributeRepository,
+    resolveInstanceSchema: ResolveInstanceSchema(
+      skuRepository: mySkuRepository,
+      resolveSchema: ResolveSchema(
+        traitRepository: myTraitRepository,
+        attributeRepository: myAttributeRepository,
+      ),
+    ),
   ),
 );
 

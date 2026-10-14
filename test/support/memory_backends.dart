@@ -6,6 +6,7 @@
 /// their own backend against the contracts in `package:sku_catalog`.
 library;
 
+export 'instance_rules.dart';
 export 'memory_instance_repository.dart';
 export 'memory_sku_repository.dart';
 export 'memory_image_repository.dart';

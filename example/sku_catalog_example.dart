@@ -165,9 +165,13 @@ Future<void> main() async {
     instanceRepository: instanceRepository,
     assertUniqueAttributeValues: AssertUniqueAttributeValues(
       instanceRepository: instanceRepository,
-      skuRepository: skuRepository,
-      traitRepository: traitRepository,
-      attributeRepository: attributeRepository,
+      resolveInstanceSchema: ResolveInstanceSchema(
+        skuRepository: skuRepository,
+        resolveSchema: ResolveSchema(
+          traitRepository: traitRepository,
+          attributeRepository: attributeRepository,
+        ),
+      ),
     ),
   );
   final panelInstance = Instance(

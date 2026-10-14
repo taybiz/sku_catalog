@@ -1,4 +1,6 @@
-import '../domain/domain.dart';
+import 'entities/instance.dart';
+import 'entities/sku.dart';
+import 'entities/trait.dart';
 
 /// Default instance name template (settings fallback).
 const defaultNameTemplate = '{trait}_{locate}_{sku}_{n}';
