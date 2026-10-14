@@ -37,6 +37,10 @@ doc/api/
 # never tracked, never published.
 .hermes/
 
+# Hermes kanban worker worktrees (`.worktrees/<task-id>`) land here. Transient
+# per-task checkouts — never tracked, never published.
+.worktrees/
+
 # Logs and temp files
 *.log
 
