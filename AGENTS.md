@@ -62,10 +62,15 @@ library can never start depending on them.
 
 ## Done means shipped
 
-The line for "ready to report done" and "ready to merge" is the **same line**.
-If the work clears the gate — formatted, analyzed, tested, covered, CI'd
-(green, all clear) — and is good enough to tell the human it's done, then it is
-good enough to commit, **push to `main`**, and **delete the branch**. No extra
-review gate, no waiting, no "should I push?" — velocity wins.
-We will move to PRs later; for now, direct-to-main. When the repo does land
-changes via PRs, opening the PR is the default end of a task instead.
+**This package is in production: changes land through a pull request.** `main`
+takes no direct pushes — not from a human, not from an agent, not from a
+dispatched worker. The delivery path is: branch off `main`, commit, push the
+branch, open the PR.
+
+The line for "ready to report done" and "ready to open the PR" is the **same
+line** — the gate: formatted, analyzed, tested, covered, `publish-dry` at 0
+warnings, CI green. If the work clears it and is good enough to tell the human
+it's done, it is good enough to push and open the PR. No extra review gate, no
+waiting, no "should I open a PR?" — velocity wins; the PR body carries what was
+verified and what was left. Merge is the human's call; the branch is deleted once
+the PR lands.
