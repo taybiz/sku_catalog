@@ -18,10 +18,6 @@
   (stable ids, referential integrity, idempotent re-import). Currently
   product-side in Circuit Planner.
 
-- [ ] Instance composition: a `parentId` on `Instance` so an instance can be an
-  assembly of instances (a trough is a coil plus switches; a flipper is a
-  mechanism plus a button).
-
 ## Deviations from the Bible (flagged for review — do NOT auto-fix)
 
 A deviation is a place the code and the bible disagree; it is recorded for a

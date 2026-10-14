@@ -30,6 +30,18 @@ expected to build their own backend against the contracts. `test/boundary_test.d
 asserts that nothing under `lib/` reaches for those doubles, so the published
 library can never start depending on them.
 
+## Not doing: instance composition
+
+An `Instance` is one article of a SKU at one place; it owns no parts, and there is
+no `parentId` on it — do not add instance-level parentage. Composition already has
+two homes and a third would duplicate both: a SKU containing SKUs (`SkuComponent`,
+folded into a bill of materials) and a place inside a place (`Locate`). An article
+that lives inside a host is the consumer's own convention, and it needs nothing
+from the catalog to express it: leave the article's `locate` unset and the host
+holds the place. The catalog does not force that on a trait name — an article with
+no place of its own simply has no place, and only the consumer knows which those
+are.
+
 ## Local wiring
 
 - Melos workspace of one (bible §3.3 "Topology C"): the package *is* the
@@ -62,10 +74,19 @@ library can never start depending on them.
 
 ## Done means shipped
 
-The line for "ready to report done" and "ready to merge" is the **same line**.
-If the work clears the gate — formatted, analyzed, tested, covered, CI'd
-(green, all clear) — and is good enough to tell the human it's done, then it is
-good enough to commit, **push to `main`**, and **delete the branch**. No extra
-review gate, no waiting, no "should I push?" — velocity wins.
-We will move to PRs later; for now, direct-to-main. When the repo does land
-changes via PRs, opening the PR is the default end of a task instead.
+**This package is in production: changes land through a pull request.** `main`
+takes no direct pushes — not from a human, not from an agent, not from a
+dispatched worker. The delivery path is: branch off `main`, commit, push the
+branch, open the PR.
+
+The line for "ready to report done" and "ready to open the PR" is the **same
+line** — the gate: formatted, analyzed, tested, covered, `publish-dry` at 0
+warnings, CI green. If the work clears it and is good enough to tell the human
+it's done, it is good enough to push and open the PR. No extra review gate, no
+waiting, no "should I open a PR?" — velocity wins; the PR body carries what was
+verified and what was left. Merge is the human's call; the branch is deleted once
+the PR lands.
+
+While a release is being assembled, the commits accumulate on one branch and land
+as a single PR — a stack of interleaved PRs is a merge-order trap, and nobody
+should have to sort one out by hand.
