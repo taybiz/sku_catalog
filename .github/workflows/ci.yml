@@ -1,8 +1,12 @@
 name: CI
 
 on:
+  # A release is assembled on `release/x.y.z` and lands as one PR, so that branch
+  # is gated on every push rather than only at the end: GitHub reads this file
+  # from the pushed ref, so adding the pattern here is what turns the gate on for
+  # the branch that carries it.
   push:
-    branches: [main]
+    branches: [main, 'release/**']
   pull_request:
 
 jobs:
