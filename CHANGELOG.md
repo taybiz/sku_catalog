@@ -14,6 +14,13 @@
   `instanceRepository` constructor argument. Breaking for callers that built the
   two use cases positionally. Gate green: `analyze` clean, `test` 9 new cases
   passing.
+- Fix: **the uniqueness check compares scalar values only.** The helper matched
+  values with Dart `==`, so two instances holding structurally equal `List`/`Map`
+  values for a `isUnique` attribute passed the check (collections compare by
+  identity). `DataType` declares only scalars, so a non-scalar value is now
+  refused with `InvalidInputFailure` instead of being silently compared; `5` and
+  `5.0` still collide as equal `num`s, `"5"` and `5` stay distinct, and both
+  rules are stated in the helper's dartdoc.
 
 ## 1.2.0
 

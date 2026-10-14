@@ -173,6 +173,107 @@ void main() {
   });
 
   test(
+    'a value collides across the int and double spellings of one number',
+    () async {
+      await CreateInstance(instances)(
+        instance: instance('i1', skuId: 'sku-a', values: const {'weight': 5}),
+      ).run();
+      await CreateInstance(instances)(
+        instance: instance('i2', skuId: 'sku-b', values: const {'weight': 5.0}),
+      ).run();
+
+      final result = await create()(attribute: definition('weight')).run();
+
+      result.isLeft().should.beTrue();
+      result
+          .fold((f) => f, (_) => fail('expected Left'))
+          .should
+          .beAssignableTo<AlreadyExistsFailure>();
+    },
+  );
+
+  test('a string value and a numeric value are distinct', () async {
+    await CreateInstance(instances)(
+      instance: instance('i1', values: const {'weight': '5'}),
+    ).run();
+    await CreateInstance(instances)(
+      instance: instance('i2', values: const {'weight': 5}),
+    ).run();
+
+    final result = await create()(attribute: definition('weight')).run();
+
+    result.isRight().should.beTrue();
+  });
+
+  test(
+    'a non-scalar value is refused as invalid input instead of being compared',
+    () async {
+      await CreateInstance(instances)(
+        instance: instance(
+          'i1',
+          values: const {
+            'weight': [1, 2],
+          },
+        ),
+      ).run();
+
+      final result = await create()(attribute: definition('weight')).run();
+
+      result.isLeft().should.beTrue();
+      final failure = result.fold((f) => f, (_) => fail('expected Left'));
+      failure.should.beAssignableTo<InvalidInputFailure>();
+      failure.message.should.contain('weight');
+    },
+  );
+
+  test(
+    'structurally equal collections do not collide — both are refused as invalid input',
+    () async {
+      await CreateInstance(instances)(
+        instance: instance(
+          'i1',
+          values: const {
+            'weight': {'x': 1},
+          },
+        ),
+      ).run();
+      await CreateInstance(instances)(
+        instance: instance(
+          'i2',
+          values: const {
+            'weight': {'x': 1},
+          },
+        ),
+      ).run();
+
+      final result = await create()(attribute: definition('weight')).run();
+
+      result.isLeft().should.beTrue();
+      result
+          .fold((f) => f, (_) => fail('expected Left'))
+          .should
+          .beAssignableTo<InvalidInputFailure>();
+    },
+  );
+
+  test('a non-unique attribute tolerates a non-scalar value', () async {
+    await CreateInstance(instances)(
+      instance: instance(
+        'i1',
+        values: const {
+          'weight': [1, 2],
+        },
+      ),
+    ).run();
+
+    final result = await create()(
+      attribute: definition('weight', unique: false),
+    ).run();
+
+    result.isRight().should.beTrue();
+  });
+
+  test(
     'updating a definition to unique is refused when duplicates already exist',
     () async {
       await create()(attribute: definition('serial', unique: false)).run();
