@@ -48,11 +48,11 @@ the SKU), the *article* carries one particular number (a value on the instance).
   at one place and owns no parts, so there is no `parentId` on it and none is
   coming. Composition already has two homes — a SKU containing SKUs
   (`SkuComponent`, folded into a bill of materials) and a place inside a place
-  (`Locate`) — and instance-level parentage would duplicate both. A product whose
-  articles sit inside a host keeps that as its own convention, which the catalog
-  takes as a parameter (`slotBoundTraitNames`). Written into `AGENTS.md` so the
-  model is not re-litigated, and the BACKLOG item asking for `Instance.parentId` is
-  dropped.
+  (`Locate`) — and instance-level parentage would duplicate both. An article that
+  sits inside a host is the consumer's own convention and needs nothing from the
+  catalog: leave its `locate` unset and the host holds the place. Written into
+  `AGENTS.md` so the model is not re-litigated, and the BACKLOG item asking for
+  `Instance.parentId` is dropped.
 
 ## 1.2.0
 
