@@ -83,6 +83,13 @@ the SKU), the *article* carries one particular number (a value on the instance).
   `uniqueCopyName` (the name a copy gets, which is the only one that satisfies that
   rule). `instance_naming.dart` is now `instance_names.dart`, two rules instead of
   ten functions.
+- **Changed:** `ResolveEffectiveAttributes.forSku` is its own use case now,
+  `ResolveSkuAttributes` — a use case answers through `call()` and nothing else.
+  Both questions (one article; one model inside its assemblies) resolve through
+  `ResolveAttributeValues`, shared and deliberately **not exported**, so the
+  precedence rule still lives in exactly one place and there is no duplicated
+  orchestration. The rule is enforced by `test/usecase_shape_test.dart`: one public
+  class per file, `call()` its only public method, no bare helpers in the ring.
 - **Tests:** `test/attribute_uniqueness_test.dart`, 25 cases: the canonical
   serializable trait, a unique attribute on a trait of the caller's own, on one
   inherited from a parent trait, on a trait the instance carries itself, two

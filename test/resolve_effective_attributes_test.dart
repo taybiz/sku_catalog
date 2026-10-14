@@ -17,6 +17,7 @@ void main() {
   late MemorySkuComponentRepository components;
   late MemoryInstanceRepository instances;
   late ResolveEffectiveAttributes resolve;
+  late ResolveSkuAttributes skuAttributes;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -84,7 +85,7 @@ void main() {
   }
 
   Future<List<ResolvedAttribute>> effectiveForSku(String skuId) async {
-    final result = await resolve.forSku(skuId: skuId).run();
+    final result = await skuAttributes(skuId: skuId).run();
     result.isRight().should.be(true);
     return result.getOrElse((_) => []);
   }
@@ -98,6 +99,14 @@ void main() {
 
     resolve = ResolveEffectiveAttributes(
       instanceRepository: instances,
+      skuRepository: skus,
+      skuComponentRepository: components,
+      resolveSchema: ResolveSchema(
+        traitRepository: traits,
+        attributeRepository: attributes,
+      ),
+    );
+    skuAttributes = ResolveSkuAttributes(
       skuRepository: skus,
       skuComponentRepository: components,
       resolveSchema: ResolveSchema(
@@ -321,7 +330,7 @@ void main() {
 
     group('When a SKU does not exist', () {
       test('Then the definition set is empty rather than an error', () async {
-        final resolved = await resolve.forSku(skuId: 'nope').run();
+        final resolved = await skuAttributes(skuId: 'nope').run();
 
         resolved.isRight().should.be(true);
         resolved.getOrElse((_) => []).should.beEmpty();
