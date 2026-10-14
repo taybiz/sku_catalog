@@ -107,8 +107,6 @@ void main() {
 
         final copy = await DuplicateInstance(
           instanceRepository: instances,
-          skuRepository: skus,
-          traitRepository: traits,
           resolveInstanceSchema: instanceSchemaOn(
             skuRepository: skus,
             traitRepository: traits,

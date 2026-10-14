@@ -1,5 +1,4 @@
 import 'entities/instance.dart';
-import 'entities/sku.dart';
 import 'entities/trait.dart';
 
 /// Default instance name template (settings fallback).
@@ -155,54 +154,3 @@ String resolveAttributeAbbreviation({
   }
   return '';
 }
-
-/// Whether the SKU [typeId] carries any of [traitNames], inherited or direct.
-///
-/// This is how a caller expresses its own structural conventions — "a Slottable
-/// SKU lives inside another instance, so it carries no locate of its own" — without
-/// the catalog having to know the word.
-bool isSlotBound({
-  required String typeId,
-  required List<Sku> skus,
-  required List<Trait> traits,
-  required Set<String> traitNames,
-}) {
-  if (traitNames.isEmpty) return false;
-  final names = traitNamesForType(typeId: typeId, skus: skus, traits: traits);
-  return traitNames.any((n) => names.contains(n.toLowerCase()));
-}
-
-/// Every trait name reachable from [typeId]'s trait ids, walking parent
-/// chains (lower-cased, deduped).
-Set<String> traitNamesForType({
-  required String typeId,
-  required List<Sku> skus,
-  required List<Trait> traits,
-}) {
-  final names = <String>{};
-  final dts = skus.where((d) => d.meta.id == typeId).toList();
-  if (dts.isEmpty) return names;
-  final byId = {for (final t in traits) t.meta.id: t};
-  for (final tid in dts.first.traitIds) {
-    final guard = <String>{};
-    Trait? cur = byId[tid];
-    while (cur != null && !guard.contains(cur.meta.id)) {
-      guard.add(cur.meta.id);
-      names.add(cur.name.toLowerCase());
-      cur = cur.parentTraitId != null ? byId[cur.parentTraitId] : null;
-    }
-  }
-  return names;
-}
-
-/// Whether [instance]'s SKU carries [traitName] (inherited or direct).
-bool instanceHasTrait({
-  required Instance instance,
-  required List<Sku> skus,
-  required List<Trait> traits,
-  required String traitName,
-}) => traitNamesForType(
-  typeId: instance.skuId,
-  skus: skus,
-  traits: traits,
-).contains(traitName.toLowerCase());

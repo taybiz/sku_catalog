@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 /// An instance is one article of a SKU at one place, and the rules that matter are
 /// about *where* it is: names are unique per place, a copy is not fitted
-/// anywhere, and a SKU that lives inside a host carries no place of its own.
+/// anywhere on its own, and the catalog stores the place it is handed.
 void main() {
   late MemoryInstanceRepository instances;
   late MemorySkuRepository skus;
@@ -49,19 +49,13 @@ void main() {
 
   UpdateInstance updateInstance() => UpdateInstance(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
-    slotBoundTraitNames: const {'slotted'},
   );
 
   DuplicateInstance duplicator() => DuplicateInstance(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
     resolveInstanceSchema: schemaResolver(),
-    slotBoundTraitNames: const {'slotted'},
   );
 
   setUp(() async {
@@ -72,24 +66,8 @@ void main() {
     images = MemoryImageRepository();
     locates = MemoryLocateRepository();
 
-    // Two SKUs: one free-standing, one that lives inside a host.
     await CreateSku(skus)(
       sku: Sku(meta: meta('free'), manufacturerId: 'm', modelNumber: 'FREE'),
-    ).run();
-    await CreateTrait(traits)(
-      trait: Trait(
-        meta: meta('slot'),
-        name: 'Slotted',
-        scope: const [TraitScope.sku],
-      ),
-    ).run();
-    await CreateSku(skus)(
-      sku: Sku(
-        meta: meta('slotted'),
-        manufacturerId: 'm',
-        modelNumber: 'SLOT',
-        traitIds: const ['slot'],
-      ),
     ).run();
     await CreateLocate(locates)(
       locate: Locate(meta: meta('rack-1'), name: 'Rack 1'),
@@ -173,35 +151,6 @@ void main() {
     elsewhere.isRight().should.beTrue();
   });
 
-  test('a slot-bound SKU is never given a place of its own', () async {
-    await createInstance()(
-      instance: instance('d1', 'Card 1', typeId: 'slotted'),
-    ).run();
-
-    final saved = await updateInstance()(
-      instance: instance('d1', 'Card 1', typeId: 'slotted'),
-    ).run();
-
-    saved.getOrElse((_) => fail('expected Right')).locateId.should.beNull();
-  });
-
-  test(
-    'an instance whose SKU names no slot-bound trait keeps its place',
-    () async {
-      await createInstance()(instance: instance('d1', 'Sensor 1')).run();
-
-      final saved = await updateInstance()(
-        instance: instance('d1', 'Sensor 1'),
-      ).run();
-
-      saved
-          .getOrElse((_) => fail('expected Right'))
-          .locateId
-          .should
-          .be('rack-1');
-    },
-  );
-
   test('a copy gets a unique name and the original keeps its place', () async {
     await createInstance()(instance: instance('d1', 'Sensor 1')).run();
 
@@ -220,14 +169,12 @@ void main() {
         .be('Sensor 1 copy 2');
   });
 
-  test('a copy of a slot-bound instance is not fitted anywhere', () async {
-    await createInstance()(
-      instance: instance('d1', 'Card 1', typeId: 'slotted'),
-    ).run();
+  test('a copy takes the original place, and the caller can move it', () async {
+    await createInstance()(instance: instance('d1', 'Card 1')).run();
 
     final copy = await duplicator()(id: 'd1').run();
 
-    copy.getOrElse((_) => fail('expected Right')).locateId.should.beNull();
+    copy.getOrElse((_) => fail('expected Right')).locateId.should.be('rack-1');
   });
 
   test('deleting an instance takes its images with it', () async {

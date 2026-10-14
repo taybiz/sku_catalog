@@ -58,6 +58,20 @@ the SKU), the *article* carries one particular number (a value on the instance).
   that hole. A create that would clash at its locate fails with
   `AlreadyExistsFailure` (nothing is written); the same name at another locate is
   still accepted.
+- **Removed:** `slotBoundTraitNames` — the trait-name convention that forced an
+  instance's locate to null. It implemented the *caller's* structural rule inside
+  `UpdateInstance` and `DuplicateInstance`, which made both depend on the SKU and
+  trait repositories purely to compute it, and it sat against this package's own
+  scope: a structural convention is the consumer's, and a consumer that wants an
+  article with no place of its own leaves the locate unset. The catalog stores the
+  place it is handed. With it go `isSlotBound`, `traitNamesForType` and
+  `instanceHasTrait`, which existed only for it — `UpdateInstance` drops from five
+  constructor dependencies to three, `DuplicateInstance` from four to two.
+- **Removed:** the twelve aggregation barrels inside `lib/src/usecases/`
+  (`sku_use_cases`, `trait_use_cases`, … `tree_use_cases`). Each re-exported files
+  the area barrel already exported, except `sku_association_use_cases.dart`, whose
+  three files the area barrel now exports directly — the public surface is
+  unchanged, and `usecases.dart` is one alphabetical list.
 - **Tests:** `test/attribute_uniqueness_test.dart`, 25 cases: the canonical
   serializable trait, a unique attribute on a trait of the caller's own, on one
   inherited from a parent trait, on a trait the instance carries itself, two

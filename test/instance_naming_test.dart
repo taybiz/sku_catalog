@@ -100,50 +100,6 @@ void main() {
     });
   });
 
-  group('isSlotBound', () {
-    test('is false when the caller names no slot-bound traits', () {
-      isSlotBound(
-        typeId: 'sku',
-        skus: const [],
-        traits: const [],
-        traitNames: const {},
-      ).should.beFalse();
-    });
-
-    test('matches an inherited trait name case-insensitively', () {
-      final traits = <Trait>[
-        Trait(meta: meta('root'), name: 'Housed'),
-        Trait(meta: meta('leaf'), name: 'Slotted', parentTraitId: 'root'),
-      ];
-      final skus = <Sku>[
-        Sku(
-          meta: meta('sku'),
-          manufacturerId: 'm',
-          modelNumber: 'X',
-          traitIds: const ['leaf'],
-        ),
-      ];
-      isSlotBound(
-        typeId: 'sku',
-        skus: skus,
-        traits: traits,
-        traitNames: const {'slotted'},
-      ).should.beTrue();
-      isSlotBound(
-        typeId: 'sku',
-        skus: skus,
-        traits: traits,
-        traitNames: const {'Housed'},
-      ).should.beTrue();
-      isSlotBound(
-        typeId: 'sku',
-        skus: skus,
-        traits: traits,
-        traitNames: const {'Floating'},
-      ).should.beFalse();
-    });
-  });
-
   group('resolveAttributeAbbreviation', () {
     test('reads the code from the named trait and attribute', () {
       final traits = <Trait>[Trait(meta: meta('coded'), name: 'Coded')];
