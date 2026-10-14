@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import '../domain/domain.dart';
+import 'entities/meta.dart';
 import 'id_generator.dart';
 
 /// Builds a fresh [Meta] with a random id and the current UTC timestamp.

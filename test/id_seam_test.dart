@@ -88,7 +88,7 @@ void main() {
         ).run();
         await CreateInstance(
               instanceRepository: instances,
-              assertUniqueAttributeValues: AssertUniqueAttributeValues(
+              assertUniqueAttributeValues: uniqueValuesOn(
                 instanceRepository: instances,
                 skuRepository: skus,
                 traitRepository: traits,
@@ -108,8 +108,7 @@ void main() {
           instanceRepository: instances,
           skuRepository: skus,
           traitRepository: traits,
-          assertUniqueAttributeValues: AssertUniqueAttributeValues(
-            instanceRepository: instances,
+          resolveInstanceSchema: instanceSchemaOn(
             skuRepository: skus,
             traitRepository: traits,
             attributeRepository: MemoryTraitAttributeDefinitionRepository(),

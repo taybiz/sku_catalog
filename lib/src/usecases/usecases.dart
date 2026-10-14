@@ -1,8 +1,11 @@
 /// Operations on the catalog model — CRUD, trait and schema resolution, assembly
 /// edges with a cycle guard, and the instance and place rules.
 ///
-/// Everything is typed against the repository contracts in `../domain`; this
-/// library ships no persistence.
+/// One use case per file, each a class taking its contracts through its
+/// constructor and answering through a single `call()`. Everything is typed
+/// against the repository contracts in `../domain`; this library ships no
+/// persistence. Pure rules and helpers that are true of the model live in
+/// `../domain`, not here.
 ///
 /// Presents FP-style tuples: every repository method and use case call returns a
 /// fpdart `TaskEither<DomainFailure, T>`; call `.run()` for a
@@ -14,7 +17,6 @@ export 'aggregate_bill_of_materials.dart';
 export 'assembly_use_cases.dart';
 export 'assert_unique_attribute_values.dart';
 export 'assert_unique_instance_name.dart';
-export 'attribute_uniqueness.dart';
 export 'create_instance.dart';
 export 'create_sku.dart';
 export 'create_image_record.dart';
@@ -32,7 +34,6 @@ export 'delete_sku_component.dart';
 export 'delete_trait.dart';
 export 'delete_trait_attribute_definition.dart';
 export 'descendant_locate_ids.dart';
-export 'instance_naming.dart';
 export 'sku_use_cases.dart';
 export 'duplicate_instance.dart';
 export 'duplicate_sku.dart';
@@ -54,18 +55,16 @@ export 'fetch_meta.dart';
 export 'fetch_components_by_sku.dart';
 export 'fetch_trait_attribute_definition_by_id.dart';
 export 'fetch_trait_by_id.dart';
-export 'id_generator.dart';
 export 'image_record_use_cases.dart';
 export 'locate_use_cases.dart';
 export 'manufacturer_use_cases.dart';
 export 'meta_use_cases.dart';
-export 'new_meta.dart';
 export 'resolve_effective_attributes.dart';
+export 'resolve_instance_schema.dart';
 export 'resolve_locate_path.dart';
 export 'resolve_schema.dart';
 export 'resolve_trait_chain.dart';
 export 'schema_resolver_use_cases.dart';
-export 'sequence.dart';
 export 'sku_association_use_cases.dart';
 export 'sku_component_use_cases.dart';
 export 'trait_attribute_definition_use_cases.dart';

@@ -1,8 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../domain/domain.dart';
 
-import 'sequence.dart';
-
 /// Deletes an instance and the images attached to it.
 ///
 /// Two writes — the images, then the instance — so pass a [unitOfWork] when your

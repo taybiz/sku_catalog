@@ -115,7 +115,7 @@ void main() {
   test('deleting a SKU that an instance instantiates is refused', () async {
     await CreateInstance(
           instanceRepository: instances,
-          assertUniqueAttributeValues: AssertUniqueAttributeValues(
+          assertUniqueAttributeValues: uniqueValuesOn(
             instanceRepository: instances,
             skuRepository: skus,
             traitRepository: MemoryTraitRepository(),

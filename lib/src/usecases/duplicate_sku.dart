@@ -1,9 +1,6 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'id_generator.dart';
-import 'new_meta.dart';
-
 /// Duplicates a SKU: fresh meta and a "(copy)" model number.
 class DuplicateSku {
   /// Creates a [DuplicateSku] use case.

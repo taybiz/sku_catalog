@@ -1,9 +1,6 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'id_generator.dart';
-import 'new_meta.dart';
-
 /// Updates a SKU component's quantity.
 ///
 /// The SKU-component contract has no update path, so the existing record is

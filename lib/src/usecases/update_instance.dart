@@ -3,7 +3,6 @@ import 'package:fpdart/fpdart.dart';
 import '../domain/domain.dart';
 import 'assert_unique_attribute_values.dart';
 import 'assert_unique_instance_name.dart';
-import 'instance_naming.dart';
 
 /// Updates an existing instance: names stay unique within their locate, unique
 /// attribute values stay unique across the catalog, and a SKU bound to a slot
@@ -20,16 +19,19 @@ class UpdateInstance {
     required IInstanceRepository instanceRepository,
     required ISkuRepository skuRepository,
     required ITraitRepository traitRepository,
+    required AssertUniqueInstanceName assertUniqueInstanceName,
     required AssertUniqueAttributeValues assertUniqueAttributeValues,
     this.slotBoundTraitNames = const <String>{},
   }) : _instanceRepository = instanceRepository,
        _skuRepository = skuRepository,
        _traitRepository = traitRepository,
+       _assertUniqueInstanceName = assertUniqueInstanceName,
        _assertUniqueAttributeValues = assertUniqueAttributeValues;
 
   final IInstanceRepository _instanceRepository;
   final ISkuRepository _skuRepository;
   final ITraitRepository _traitRepository;
+  final AssertUniqueInstanceName _assertUniqueInstanceName;
   final AssertUniqueAttributeValues _assertUniqueAttributeValues;
 
   /// Trait names (matched case-insensitively) whose instances carry no locate.
@@ -53,8 +55,7 @@ class UpdateInstance {
                 final effective = bound
                     ? instance.copyWith(locateId: null)
                     : instance;
-                return assertUniqueInstanceName(
-                      repository: _instanceRepository,
+                return _assertUniqueInstanceName(
                       name: effective.name,
                       locateId: effective.locateId,
                       excludeId: effective.meta.id,
