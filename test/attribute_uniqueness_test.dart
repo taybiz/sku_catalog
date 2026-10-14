@@ -46,6 +46,7 @@ void main() {
 
   CreateInstance createInstance() => CreateInstance(
     instanceRepository: instances,
+    assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 

@@ -163,6 +163,7 @@ Future<void> main() async {
   //    unique the write path refuses a second article claiming the same one.
   final createInstance = CreateInstance(
     instanceRepository: instanceRepository,
+    assertUniqueInstanceName: AssertUniqueInstanceName(instanceRepository),
     assertUniqueAttributeValues: AssertUniqueAttributeValues(
       instanceRepository: instanceRepository,
       resolveInstanceSchema: ResolveInstanceSchema(

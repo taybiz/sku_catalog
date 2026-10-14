@@ -21,12 +21,6 @@
   articles. If a unique attribute on a place or a maker is wanted, the same
   `AssertUniqueAttributeValues` shape extends to those write paths.
 
-- [ ] **A create can still mint a duplicate instance name.** The per-locate unique
-  name rule (`assertUniqueInstanceName`) is asserted by `UpdateInstance` alone, so
-  `CreateInstance` writes a name clash into the store while now refusing a
-  duplicate unique attribute value. Either wire the name rule into the create path
-  or record why creates are trusted.
-
 - [ ] **One repository adapter, doctrine wants at least two plus a shared
   contract suite** run against all of them. The in-memory test doubles are one
   (test-only) implementation; the first real adapter will be Circuit Planner's,
