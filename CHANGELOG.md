@@ -108,6 +108,17 @@ the SKU), the *article* carries one particular number (a value on the instance).
   `AGENTS.md` so the model is not re-litigated, and the BACKLOG item asking for
   `Instance.parentId` is dropped.
 
+- **Decided:** **the adapter rules do not bind this package.** `sku_catalog` is a
+  pure domain package — entities, value objects, failures, repository *contracts*
+  and the operations over them — with no outer rings: it ships no adapter, no
+  datasource, no UI. So `docs/01`'s "at least two repository adapters" rule and
+  `docs/05`'s shared contract suite run against every adapter have nothing here to
+  bind to; the in-memory implementations under `test/support/` are test doubles,
+  deliberately unpublished, and the adapters belong to whoever consumes the
+  contracts. Recorded here rather than as a BACKLOG deviation, because it is not a
+  defect to fix and not a rule this repo is failing — it is a category the rule was
+  never about.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`
