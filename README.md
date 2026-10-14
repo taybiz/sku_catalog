@@ -24,13 +24,13 @@ Why this seam is a tuple rather than a `Future` is recorded in
 | Concept | What it is |
 |---|---|
 | `Sku` | A **SKU** (product model) made by a manufacturer (`QO120`, `ESP32-S3 IO node rev B`). |
-| `Trait` | A **classification attached to a SKU, an instance, a place or a manufacturer**. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
+| `Trait` | A **classification attached to a SKU, a place or a manufacturer** — never to an instance: an article holds the *values* of the traits in scope for it. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
 | `TraitAttributeDefinition` | A **typed field** a trait contributes: `rated_amps` (number, `A`, required), `gfci` (boolean), `load_type` (enum). |
 | `SkuComponent` | An **assembly edge**: this SKU contains *n* of that SKU. |
 | `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). |
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
-| `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, with its own traits and attribute values. |
+| `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, holding the attribute values of the traits in scope for it. |
 | `ImageRecord` | A photo attached to a SKU, an instance or a place. |
 
 Two ideas do most of the work:
@@ -71,9 +71,9 @@ final serializable = SerializableTrait.define(
 special. It means *at most one instance in the catalog may hold a value for this
 attribute*, and the catalog enforces that on the instance write path: a
 `CreateInstance`, `UpdateInstance` or `DuplicateInstance` you build is guarded by
-an `AssertUniqueAttributeValues`, which resolves the schema in scope (the instance's
-own traits plus the traits of the SKU it instantiates, walked up their parent
-chains) and refuses a value another instance already holds with a
+an `AssertUniqueAttributeValues`, which resolves the schema in scope (the traits
+the instance carries plus the traits of the SKU it instantiates, walked up their
+parent chains) and refuses a value another instance already holds with a
 `DuplicateAttributeValueFailure`:
 
 ```dart

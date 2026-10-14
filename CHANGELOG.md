@@ -126,6 +126,14 @@ the SKU), the *article* carries one particular number (a value on the instance).
   where it belongs; what the package owes it is the contracts, which is exactly
   what it ships.
 
+- **Decided:** **an `Instance` is not a trait scope.** `TraitScope` names the three
+  things a trait can classify — a SKU, a place, a manufacturer — and it always did;
+  what disagreed were the docs: the README's model table listed an instance as a
+  trait carrier and `Instance.traitIds` called itself "instance-level
+  classification". An article is the *realization* of a SKU, so it holds the
+  *values* of the traits in scope for it and carries trait ids only so a value has
+  its definition. The enum's doc, the README row and the field now say that.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`
