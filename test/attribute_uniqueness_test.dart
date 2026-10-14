@@ -52,16 +52,12 @@ void main() {
 
   UpdateInstance updateInstance() => UpdateInstance(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
   DuplicateInstance duplicator() => DuplicateInstance(
     instanceRepository: instances,
-    skuRepository: skus,
-    traitRepository: traits,
     resolveInstanceSchema: schemaResolver(),
   );
 

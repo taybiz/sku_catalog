@@ -2,17 +2,14 @@
 
 ## Open
 
-- [ ] **Twelve aggregation barrels inside `lib/src/usecases/`** (`sku_use_cases`,
-  `trait_use_cases`, `locate_use_cases`, …, each re-exporting its neighbours) are
-  redundant with the area barrel, which already exports those files individually —
-  every one is imported by `usecases.dart` alone. Delete them and their export
-  lines, or state what the grouping buys now that the area barrel covers it.
-
-- [ ] **Two use cases carry a second public method** beside `call()`:
-  `AggregateBillOfMaterials.explode` and `ResolveEffectiveAttributes.forSku`. Each
-  is a distinct operation with its own inputs, so each wants its own use case class
-  with one `call()`; the shared resolution they sit on is what needs splitting
-  first, not the method.
+- [ ] **`ResolveEffectiveAttributes` carries a second public method** beside
+  `call()`: `forSku(skuId)` answers "what does this part owe its assembly". It is a
+  real second question, but splitting it needs either a third class holding the
+  shared assembly-chain resolution or a duplicated orchestration step — more
+  surface than the method costs. Left deliberately; revisit if the shared
+  resolution ever becomes its own use case. (`AggregateBillOfMaterials.explode` is
+  *not* the same thing: it is a member of the private `_AssemblyFold`, so it never
+  reaches the public API.)
 
 - [ ] **`isUnique` is enforced on the instance layer only.** `CreateInstance`,
   `UpdateInstance` and `DuplicateInstance` assert it against instances; a value
