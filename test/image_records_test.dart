@@ -1,12 +1,12 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// Images hang off three kinds of owner, and the owner kind is part of the
 /// query — asking for a SKU's images must not return the instance's.
 void main() {
-  late MemoryImageRepository repository;
+  late InMemoryImageRepository repository;
 
   ImageRecord record(
     String id, {
@@ -22,7 +22,7 @@ void main() {
   );
 
   setUp(() {
-    repository = MemoryImageRepository();
+    repository = InMemoryImageRepository();
   });
 
   test('an image record round-trips through create', () async {

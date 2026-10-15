@@ -3,7 +3,7 @@ import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
 import 'package:test/test.dart';
 
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 
 /// A unique attribute is the one rule a *value* carries about itself: at most one
 /// article in the catalog may hold it. A serial number is the case that makes the
@@ -17,12 +17,12 @@ import 'support/memory_backends.dart';
 /// trait the instance carries itself — and that it stays out of the way of every
 /// attribute nobody marked unique.
 void main() {
-  late MemoryTraitRepository traits;
-  late MemoryTraitAttributeDefinitionRepository attributes;
-  late MemorySkuRepository skus;
-  late MemoryInstanceRepository instances;
-  late MemorySkuComponentRepository components;
-  late MemoryImageRepository images;
+  late InMemoryTraitRepository traits;
+  late InMemoryTraitAttributeDefinitionRepository attributes;
+  late InMemorySkuRepository skus;
+  late InMemoryInstanceRepository instances;
+  late InMemorySkuComponentRepository components;
+  late InMemoryImageRepository images;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -83,12 +83,12 @@ void main() {
       );
 
   setUp(() async {
-    traits = MemoryTraitRepository();
-    attributes = MemoryTraitAttributeDefinitionRepository();
-    skus = MemorySkuRepository();
-    instances = MemoryInstanceRepository();
-    components = MemorySkuComponentRepository();
-    images = MemoryImageRepository();
+    traits = InMemoryTraitRepository();
+    attributes = InMemoryTraitAttributeDefinitionRepository();
+    skus = InMemorySkuRepository();
+    instances = InMemoryInstanceRepository();
+    components = InMemorySkuComponentRepository();
+    images = InMemoryImageRepository();
 
     // The canonical one: a serializable model, its serial number unique.
     final serializable = SerializableTrait.define(

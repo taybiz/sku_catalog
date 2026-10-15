@@ -1,6 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// Pins how a trait chain's attributes merge.
@@ -11,8 +11,8 @@ import 'package:test/test.dart';
 /// the specific ones. A lazy-TaskEither bug once made the schema come back empty
 /// for every entity; these tests are the guard for that whole class.
 void main() {
-  late MemoryTraitRepository traits;
-  late MemoryTraitAttributeDefinitionRepository attrs;
+  late InMemoryTraitRepository traits;
+  late InMemoryTraitAttributeDefinitionRepository attrs;
   late ResolveSchema resolve;
 
   Meta meta(String id) => Meta(
@@ -39,8 +39,8 @@ void main() {
   );
 
   setUp(() async {
-    traits = MemoryTraitRepository();
-    attrs = MemoryTraitAttributeDefinitionRepository();
+    traits = InMemoryTraitRepository();
+    attrs = InMemoryTraitAttributeDefinitionRepository();
 
     final part = Trait(
       meta: meta('part'),

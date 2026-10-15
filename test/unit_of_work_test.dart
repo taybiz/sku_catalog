@@ -1,15 +1,16 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// A use case that writes twice is only safe when the caller supplies a store
 /// that can roll back. These tests pin both halves of that: with a unit of work
 /// the partial write is undone, and without one it is not.
 void main() {
-  late MemorySkuRepository skus;
-  late MemorySkuComponentRepository components;
-  late MemoryInstanceRepository instances;
+  late InMemoryCatalog catalog;
+  late InMemorySkuRepository skus;
+  late InMemorySkuComponentRepository components;
+  late InMemoryInstanceRepository instances;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -19,9 +20,10 @@ void main() {
   );
 
   setUp(() async {
-    skus = MemorySkuRepository();
-    components = MemorySkuComponentRepository();
-    instances = MemoryInstanceRepository();
+    catalog = InMemoryCatalog();
+    skus = catalog.skus;
+    components = catalog.assemblies;
+    instances = catalog.instances;
     await CreateSku(skus)(
       sku: Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
     ).run();
@@ -46,7 +48,7 @@ void main() {
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
-      unitOfWork: MemoryUnitOfWork([skus, components]),
+      unitOfWork: InMemoryUnitOfWork([skus, components]),
     )(id: 'card').run();
 
     result.isLeft().should.beTrue();
@@ -69,16 +71,11 @@ void main() {
   test(
     'an instance delete takes its images and the instance in one unit',
     () async {
-      final images = MemoryImageRepository();
+      final images = InMemoryImageRepository();
       await CreateInstance(
             instanceRepository: instances,
             assertUniqueInstanceName: AssertUniqueInstanceName(instances),
-            assertUniqueAttributeValues: uniqueValuesOn(
-              instanceRepository: instances,
-              skuRepository: skus,
-              traitRepository: MemoryTraitRepository(),
-              attributeRepository: MemoryTraitAttributeDefinitionRepository(),
-            ),
+            assertUniqueAttributeValues: catalog.uniqueValues,
           )(
             instance: Instance(
               meta: meta('d1'),
@@ -102,7 +99,7 @@ void main() {
       final result = await DeleteInstance(
         instanceRepository: instances,
         imageRepository: images,
-        unitOfWork: MemoryUnitOfWork([instances, images]),
+        unitOfWork: InMemoryUnitOfWork([instances, images]),
       )(id: 'd1').run();
 
       result.isRight().should.beTrue();

@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// Pins who wins when several layers claim the same attribute.
@@ -11,11 +11,11 @@ import 'package:test/test.dart';
 /// overrides the part it is built from, a farther ancestor beating a nearer one,
 /// or a default that gets invented where none was declared.
 void main() {
-  late MemoryTraitRepository traits;
-  late MemoryTraitAttributeDefinitionRepository attributes;
-  late MemorySkuRepository skus;
-  late MemorySkuComponentRepository components;
-  late MemoryInstanceRepository instances;
+  late InMemoryTraitRepository traits;
+  late InMemoryTraitAttributeDefinitionRepository attributes;
+  late InMemorySkuRepository skus;
+  late InMemorySkuComponentRepository components;
+  late InMemoryInstanceRepository instances;
   late ResolveEffectiveAttributes resolve;
   late ResolveSkuAttributes skuAttributes;
 
@@ -91,11 +91,11 @@ void main() {
   }
 
   setUp(() async {
-    traits = MemoryTraitRepository();
-    attributes = MemoryTraitAttributeDefinitionRepository();
-    skus = MemorySkuRepository();
-    components = MemorySkuComponentRepository();
-    instances = MemoryInstanceRepository();
+    traits = InMemoryTraitRepository();
+    attributes = InMemoryTraitAttributeDefinitionRepository();
+    skus = InMemorySkuRepository();
+    components = InMemorySkuComponentRepository();
+    instances = InMemoryInstanceRepository();
 
     resolve = ResolveEffectiveAttributes(
       instanceRepository: instances,

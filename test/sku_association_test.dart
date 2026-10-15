@@ -1,6 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// A SkuAssociation is a labeled, directed relationship edge: [sourceSkuId]
@@ -19,12 +19,12 @@ void main() {
   Sku sku(String id) =>
       Sku(meta: meta(id), manufacturerId: 'm', modelNumber: id.toUpperCase());
 
-  late MemorySkuRepository skus;
-  late MemorySkuAssociationRepository associations;
+  late InMemorySkuRepository skus;
+  late InMemorySkuAssociationRepository associations;
 
   setUp(() async {
-    skus = MemorySkuRepository();
-    associations = MemorySkuAssociationRepository();
+    skus = InMemorySkuRepository();
+    associations = InMemorySkuAssociationRepository();
   });
 
   test(
