@@ -137,7 +137,7 @@ void main() {
   test('definitions come back, not values', () async {
     for (final a in await schemaOf(['coated'])) {
       (a.value as Object?).should.beNull();
-      a.source.should.be('trait');
+      a.source.should.be(AttributeValueSource.trait);
     }
   });
 }

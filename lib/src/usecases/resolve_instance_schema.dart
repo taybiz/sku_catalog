@@ -33,8 +33,8 @@ class ResolveInstanceSchema {
 
   /// Executes the use case: the schema for [instance], definitions only.
   ///
-  /// `ResolvedAttribute.source` is `'trait'` and `value` is null for every entry,
-  /// exactly as [ResolveSchema] reports a schema on its own.
+  /// `ResolvedAttribute.source` is [AttributeValueSource.trait] and `value` is
+  /// null for every entry, exactly as [ResolveSchema] reports a schema on its own.
   TaskEither<DomainFailure, List<ResolvedAttribute>> call({
     required Instance instance,
   }) => _skuRepository.fetchAll().flatMap((skus) {

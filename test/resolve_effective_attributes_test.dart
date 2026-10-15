@@ -207,7 +207,7 @@ void main() {
       test('Then the instance wins and says so', () async {
         final travel = attribute(await effective('d-instance'), 'travel');
 
-        travel.source.should.be('instance');
+        travel.source.should.be(AttributeValueSource.instance);
         (travel.value as int).should.be(42);
         travel.unit.should.be('mm');
         travel.inheritedFrom.should.beNull();
@@ -218,7 +218,7 @@ void main() {
       test('Then the SKU supplies the value', () async {
         final travel = attribute(await effective('d-plain'), 'travel');
 
-        travel.source.should.be('sku');
+        travel.source.should.be(AttributeValueSource.sku);
         (travel.value as int).should.be(40);
         travel.inheritedFrom.should.beNull();
       });
@@ -231,7 +231,7 @@ void main() {
           'travel',
         );
 
-        travel.source.should.be('sku');
+        travel.source.should.be(AttributeValueSource.sku);
         (travel.value as int).should.be(55);
         travel.inheritedFrom.should.be('assembly');
       });
@@ -241,7 +241,7 @@ void main() {
       test('Then an unclaimed attribute reports the default', () async {
         final label = attribute(await effective('d-plain'), 'label');
 
-        label.source.should.be('default');
+        label.source.should.be(AttributeValueSource.fallback);
         (label.value as String).should.be('part');
       });
     });
@@ -252,7 +252,7 @@ void main() {
         () async {
           final ohms = attribute(await effective('d-plain'), 'coil_ohms');
 
-          ohms.source.should.be('trait');
+          ohms.source.should.be(AttributeValueSource.trait);
           (ohms.value as Object?).should.beNull();
         },
       );
