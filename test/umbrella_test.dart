@@ -1,4 +1,5 @@
 import 'package:shouldly/shouldly.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:sku_catalog/sku_catalog.dart';
 import 'support/memory_backends.dart';
 import 'package:test/test.dart';
@@ -120,6 +121,30 @@ void main() {
         ];
 
         operations.length.should.be(10);
+      });
+    });
+
+    group('When the reference backend is reached through its own door', () {
+      test('Then a catalog runs an operation end to end', () async {
+        // The in-memory backend has a door of its own, so a consumer who builds
+        // their own storage never has to carry it.
+        final InMemoryCatalog catalog = InMemoryCatalog();
+        final created = await catalog.skus
+            .create(
+              sku: Sku(
+                meta: newMeta(),
+                manufacturerId: 'acme',
+                modelNumber: 'NUT-1',
+              ),
+            )
+            .run();
+
+        created.isRight().should.be(true);
+        (await catalog.skus.fetchAll().run())
+            .getOrElse((_) => [])
+            .length
+            .should
+            .be(1);
       });
     });
   });
