@@ -57,7 +57,6 @@ class InMemorySkuAssociationRepository
   @override
   TaskEither<DomainFailure, SkuAssociation> create({
     required SkuAssociation association,
-    IUnitOfWork? uow,
   }) {
     if (table.has(association.meta.id)) {
       return TaskEither<DomainFailure, SkuAssociation>.left(
@@ -71,21 +70,12 @@ class InMemorySkuAssociationRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('SkuAssociation "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

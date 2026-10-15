@@ -50,7 +50,6 @@ class InMemoryTraitAttributeDefinitionRepository
   @override
   TaskEither<DomainFailure, TraitAttributeDefinition> create({
     required TraitAttributeDefinition attribute,
-    IUnitOfWork? uow,
   }) {
     if (table.has(attribute.meta.id)) {
       return TaskEither<DomainFailure, TraitAttributeDefinition>.left(
@@ -66,7 +65,6 @@ class InMemoryTraitAttributeDefinitionRepository
   @override
   TaskEither<DomainFailure, TraitAttributeDefinition> update({
     required TraitAttributeDefinition attribute,
-    IUnitOfWork? uow,
   }) {
     if (!table.has(attribute.meta.id)) {
       return TaskEither<DomainFailure, TraitAttributeDefinition>.left(
@@ -80,21 +78,12 @@ class InMemoryTraitAttributeDefinitionRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('TraitAttributeDefinition "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

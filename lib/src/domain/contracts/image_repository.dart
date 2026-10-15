@@ -3,7 +3,6 @@ import 'package:fpdart/fpdart.dart';
 import '../entities/image_record.dart';
 import '../enums/image_owner.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for image record persistence (instance/locate/SKU images).
 ///
@@ -23,17 +22,8 @@ abstract interface class IImageRepository {
   TaskEither<DomainFailure, ImageRecord> fetchById({required String id});
 
   /// Create a new image record.
-  TaskEither<DomainFailure, ImageRecord> create({
-    required ImageRecord image,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, ImageRecord> create({required ImageRecord image});
 
   /// Delete an image record by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }

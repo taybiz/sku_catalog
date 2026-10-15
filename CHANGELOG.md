@@ -159,8 +159,21 @@ the SKU), the *article* carries one particular number (a value on the instance).
   (each contract's behaviour plus `InMemoryTable`'s own semantics, including that a
   snapshot is a copy), `test/in_memory_unit_of_work_test.dart` (rollback, commit and
   the unregistered-table boundary) and `test/in_memory_catalog_test.dart` (end to
-  end through the composition root: the unique-value rule wired, the transaction
-  wired, the stores exposed as contracts).
+  end to end through the composition root: the unique-value rule wired, the
+  transaction wired, the stores exposed as contracts).
+- **Breaking: the repository contracts carry no transaction parameter and no
+  factory reset.** Every write signature used to take `IUnitOfWork? uow`, and every
+  store exposed `clearAll()`. Neither was ever called: a use case that writes more
+  than once takes the unit of work itself (`DeleteSku`, `DeleteInstance`) and wraps
+  its writes, so a store never had to enroll anything, and clearing a store is not
+  a word the model has. An implementer now writes five plain methods per aggregate
+  — `create`, `update`, `delete`, `fetchById`, `fetchAll` (plus the one extra fetch
+  a store's contract declares) — and nothing else. Downstream code that threaded a
+  `uow` through a repository, or called `clearAll`, is a 1.x consumer.
+- **Breaking: `create` refuses an id that is already stored.** The reference stores
+  used to overwrite silently on `create`; they now return `AlreadyExistsFailure` and
+  leave the stored record alone, which is what an adapter over a store with a
+  primary key has to do anyway.
 
 ## 1.2.0
 

@@ -48,7 +48,6 @@ class InMemorySkuComponentRepository
   @override
   TaskEither<DomainFailure, SkuComponent> create({
     required SkuComponent component,
-    IUnitOfWork? uow,
   }) {
     if (table.has(component.meta.id)) {
       return TaskEither<DomainFailure, SkuComponent>.left(
@@ -62,21 +61,12 @@ class InMemorySkuComponentRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('SkuComponent "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/locate.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for locate persistence.
 abstract interface class ILocateRepository {
@@ -13,23 +12,11 @@ abstract interface class ILocateRepository {
   TaskEither<DomainFailure, Locate> fetchById({required String id});
 
   /// Create a new locate.
-  TaskEither<DomainFailure, Locate> create({
-    required Locate locate,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Locate> create({required Locate locate});
 
   /// Update an existing locate.
-  TaskEither<DomainFailure, Locate> update({
-    required Locate locate,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Locate> update({required Locate locate});
 
   /// Delete a locate by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }

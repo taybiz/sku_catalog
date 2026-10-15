@@ -41,7 +41,6 @@ class InMemoryManufacturerRepository
   @override
   TaskEither<DomainFailure, Manufacturer> create({
     required Manufacturer manufacturer,
-    IUnitOfWork? uow,
   }) {
     if (table.has(manufacturer.meta.id)) {
       return TaskEither<DomainFailure, Manufacturer>.left(
@@ -57,7 +56,6 @@ class InMemoryManufacturerRepository
   @override
   TaskEither<DomainFailure, Manufacturer> update({
     required Manufacturer manufacturer,
-    IUnitOfWork? uow,
   }) {
     if (!table.has(manufacturer.meta.id)) {
       return TaskEither<DomainFailure, Manufacturer>.left(
@@ -69,21 +67,12 @@ class InMemoryManufacturerRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Manufacturer "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

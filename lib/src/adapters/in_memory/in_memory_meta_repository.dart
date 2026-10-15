@@ -45,17 +45,8 @@ class InMemoryMetaRepository implements IMetaRepository, InMemoryRowSource {
       TaskEither.of(_record == null ? _empty : Meta.fromJson(_record!));
 
   @override
-  TaskEither<DomainFailure, Meta> update({
-    required Meta meta,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Meta> update({required Meta meta}) {
     _record = meta.toJson();
     return TaskEither.of(meta);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    _record = null;
-    return TaskEither.of(null);
   }
 }

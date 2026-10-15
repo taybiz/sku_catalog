@@ -51,10 +51,7 @@ class InMemoryImageRepository
   }
 
   @override
-  TaskEither<DomainFailure, ImageRecord> create({
-    required ImageRecord image,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, ImageRecord> create({required ImageRecord image}) {
     if (table.has(image.id)) {
       return TaskEither<DomainFailure, ImageRecord>.left(
         AlreadyExistsFailure('ImageRecord "${image.id}" already exists'),
@@ -65,21 +62,12 @@ class InMemoryImageRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('ImageRecord "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

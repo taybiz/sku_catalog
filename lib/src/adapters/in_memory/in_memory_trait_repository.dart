@@ -39,10 +39,7 @@ class InMemoryTraitRepository
   }
 
   @override
-  TaskEither<DomainFailure, Trait> create({
-    required Trait trait,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Trait> create({required Trait trait}) {
     if (table.has(trait.meta.id)) {
       return TaskEither<DomainFailure, Trait>.left(
         AlreadyExistsFailure('Trait "${trait.meta.id}" already exists'),
@@ -53,10 +50,7 @@ class InMemoryTraitRepository
   }
 
   @override
-  TaskEither<DomainFailure, Trait> update({
-    required Trait trait,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Trait> update({required Trait trait}) {
     if (!table.has(trait.meta.id)) {
       return TaskEither<DomainFailure, Trait>.left(
         NotFoundFailure('Trait "${trait.meta.id}" not found'),
@@ -67,21 +61,12 @@ class InMemoryTraitRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Trait "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

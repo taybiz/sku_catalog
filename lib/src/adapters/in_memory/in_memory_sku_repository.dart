@@ -38,7 +38,7 @@ class InMemorySkuRepository
   }
 
   @override
-  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Sku> create({required Sku sku}) {
     if (table.has(sku.meta.id)) {
       return TaskEither<DomainFailure, Sku>.left(
         AlreadyExistsFailure('Sku "${sku.meta.id}" already exists'),
@@ -49,7 +49,7 @@ class InMemorySkuRepository
   }
 
   @override
-  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow}) {
+  TaskEither<DomainFailure, Sku> update({required Sku sku}) {
     if (!table.has(sku.meta.id)) {
       return TaskEither<DomainFailure, Sku>.left(
         NotFoundFailure('Sku "${sku.meta.id}" not found'),
@@ -60,21 +60,12 @@ class InMemorySkuRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Sku "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

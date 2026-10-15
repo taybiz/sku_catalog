@@ -46,10 +46,7 @@ class InMemoryInstanceRepository
   }
 
   @override
-  TaskEither<DomainFailure, Instance> create({
-    required Instance instance,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Instance> create({required Instance instance}) {
     if (table.has(instance.meta.id)) {
       return TaskEither<DomainFailure, Instance>.left(
         AlreadyExistsFailure('Instance "${instance.meta.id}" already exists'),
@@ -60,10 +57,7 @@ class InMemoryInstanceRepository
   }
 
   @override
-  TaskEither<DomainFailure, Instance> update({
-    required Instance instance,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Instance> update({required Instance instance}) {
     if (!table.has(instance.meta.id)) {
       return TaskEither<DomainFailure, Instance>.left(
         NotFoundFailure('Instance "${instance.meta.id}" not found'),
@@ -74,21 +68,12 @@ class InMemoryInstanceRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Instance "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }

@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/trait.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for trait persistence.
 abstract interface class ITraitRepository {
@@ -13,23 +12,11 @@ abstract interface class ITraitRepository {
   TaskEither<DomainFailure, Trait> fetchById({required String id});
 
   /// Create a new trait.
-  TaskEither<DomainFailure, Trait> create({
-    required Trait trait,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Trait> create({required Trait trait});
 
   /// Update an existing trait.
-  TaskEither<DomainFailure, Trait> update({
-    required Trait trait,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Trait> update({required Trait trait});
 
   /// Delete a trait by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }
