@@ -39,6 +39,11 @@ class InMemorySkuRepository
 
   @override
   TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow}) {
+    if (table.has(sku.meta.id)) {
+      return TaskEither<DomainFailure, Sku>.left(
+        AlreadyExistsFailure('Sku "${sku.meta.id}" already exists'),
+      );
+    }
     table.put(sku);
     return TaskEither.of(sku);
   }

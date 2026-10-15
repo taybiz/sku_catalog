@@ -43,6 +43,13 @@ class InMemoryManufacturerRepository
     required Manufacturer manufacturer,
     IUnitOfWork? uow,
   }) {
+    if (table.has(manufacturer.meta.id)) {
+      return TaskEither<DomainFailure, Manufacturer>.left(
+        AlreadyExistsFailure(
+          'Manufacturer "${manufacturer.meta.id}" already exists',
+        ),
+      );
+    }
     table.put(manufacturer);
     return TaskEither.of(manufacturer);
   }

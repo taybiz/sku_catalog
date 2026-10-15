@@ -50,6 +50,11 @@ class InMemoryInstanceRepository
     required Instance instance,
     IUnitOfWork? uow,
   }) {
+    if (table.has(instance.meta.id)) {
+      return TaskEither<DomainFailure, Instance>.left(
+        AlreadyExistsFailure('Instance "${instance.meta.id}" already exists'),
+      );
+    }
     table.put(instance);
     return TaskEither.of(instance);
   }

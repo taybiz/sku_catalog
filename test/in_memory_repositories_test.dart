@@ -52,6 +52,24 @@ void main() {
         .be('QO120-2');
   });
 
+  test('create refuses an id that is already stored', () async {
+    final repo = InMemorySkuRepository();
+    final sku = Sku(
+      meta: meta('qo120'),
+      manufacturerId: 'square-d',
+      modelNumber: 'QO120',
+    );
+    await repo.create(sku: sku).run();
+
+    final again = await repo.create(sku: sku).run();
+
+    again
+        .fold((failure) => failure, (_) => fail('expected Left'))
+        .should
+        .beAssignableTo<AlreadyExistsFailure>();
+    (await repo.fetchAll().run()).getOrElse((_) => []).should.haveCount(1);
+  });
+
   test('an update of a record that is not there fails', () async {
     final repo = InMemorySkuRepository();
     final result = await repo

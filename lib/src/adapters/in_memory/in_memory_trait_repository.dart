@@ -43,6 +43,11 @@ class InMemoryTraitRepository
     required Trait trait,
     IUnitOfWork? uow,
   }) {
+    if (table.has(trait.meta.id)) {
+      return TaskEither<DomainFailure, Trait>.left(
+        AlreadyExistsFailure('Trait "${trait.meta.id}" already exists'),
+      );
+    }
     table.put(trait);
     return TaskEither.of(trait);
   }
