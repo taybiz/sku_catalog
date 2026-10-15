@@ -52,6 +52,13 @@ class InMemoryTraitAttributeDefinitionRepository
     required TraitAttributeDefinition attribute,
     IUnitOfWork? uow,
   }) {
+    if (table.has(attribute.meta.id)) {
+      return TaskEither<DomainFailure, TraitAttributeDefinition>.left(
+        AlreadyExistsFailure(
+          'TraitAttributeDefinition "${attribute.meta.id}" already exists',
+        ),
+      );
+    }
     table.put(attribute);
     return TaskEither.of(attribute);
   }

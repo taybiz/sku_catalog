@@ -55,6 +55,11 @@ class InMemoryImageRepository
     required ImageRecord image,
     IUnitOfWork? uow,
   }) {
+    if (table.has(image.id)) {
+      return TaskEither<DomainFailure, ImageRecord>.left(
+        AlreadyExistsFailure('ImageRecord "${image.id}" already exists'),
+      );
+    }
     table.put(image);
     return TaskEither.of(image);
   }

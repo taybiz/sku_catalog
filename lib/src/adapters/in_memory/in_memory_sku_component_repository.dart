@@ -50,6 +50,13 @@ class InMemorySkuComponentRepository
     required SkuComponent component,
     IUnitOfWork? uow,
   }) {
+    if (table.has(component.meta.id)) {
+      return TaskEither<DomainFailure, SkuComponent>.left(
+        AlreadyExistsFailure(
+          'SkuComponent "${component.meta.id}" already exists',
+        ),
+      );
+    }
     table.put(component);
     return TaskEither.of(component);
   }

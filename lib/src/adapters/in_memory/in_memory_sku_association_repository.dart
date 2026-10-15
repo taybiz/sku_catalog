@@ -59,6 +59,13 @@ class InMemorySkuAssociationRepository
     required SkuAssociation association,
     IUnitOfWork? uow,
   }) {
+    if (table.has(association.meta.id)) {
+      return TaskEither<DomainFailure, SkuAssociation>.left(
+        AlreadyExistsFailure(
+          'SkuAssociation "${association.meta.id}" already exists',
+        ),
+      );
+    }
     table.put(association);
     return TaskEither.of(association);
   }

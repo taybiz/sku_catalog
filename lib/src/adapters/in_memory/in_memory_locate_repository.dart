@@ -43,6 +43,11 @@ class InMemoryLocateRepository
     required Locate locate,
     IUnitOfWork? uow,
   }) {
+    if (table.has(locate.meta.id)) {
+      return TaskEither<DomainFailure, Locate>.left(
+        AlreadyExistsFailure('Locate "${locate.meta.id}" already exists'),
+      );
+    }
     table.put(locate);
     return TaskEither.of(locate);
   }
