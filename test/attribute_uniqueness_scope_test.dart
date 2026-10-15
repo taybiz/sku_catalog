@@ -211,4 +211,28 @@ void main() {
         .should
         .beTrue();
   });
+
+  test('the rule is reachable on its own, with the record typed', () async {
+    await seedSerializable();
+    await catalog
+        .createInstance(instance: article('a1', {'serial_number': 'SN-0001'}))
+        .run();
+
+    // A place that was never stored still cannot take a serial an article holds:
+    // the subject is an `AttributeHolder`, so how the caller reaches the rule
+    // cannot change what it compares.
+    final refusal = await catalog
+        .uniqueValues(
+          holder: PlaceHolder(place('rack-1', {'serial_number': 'SN-0001'})),
+        )
+        .run();
+
+    refusal
+        .fold<DomainFailure>(
+          (failure) => failure,
+          (_) => fail('expected the rule to refuse'),
+        )
+        .should
+        .beAssignableTo<DuplicateAttributeValueFailure>();
+  });
 }

@@ -184,11 +184,15 @@ the SKU), the *article* carries one particular number (a value on the instance).
   a constructor that takes it), and `InMemoryCatalog` wires and exposes all four
   (`catalog.createLocate(...)`). A model is still not a holder: a value on a SKU
   describes the class, and nothing on a SKU is unique in this sense.
-- **Breaking: `AssertUniqueAttributeValues` takes the other two contracts.** Its
-  `call` is `call({Instance? article, Locate? place, Manufacturer? maker})` — the one
-  record being written — rather than `call({required Instance instance})`, because
-  one rule now serves three write paths. The `usecase_shape_test` rule (one public
-  `call`) is why it is one entry point and not three.
+- **Breaking: `AssertUniqueAttributeValues` takes the other two contracts, and its
+  subject as a holder.** `call` now takes `holder:` — an `ArticleHolder`,
+  `PlaceHolder` or `MakerHolder`, the sealed family in
+  `lib/src/domain/value_objects/attribute_holder.dart` — rather than
+  `call({required Instance instance})`, because one rule now serves three write
+  paths. A sealed family rather than three nullable parameters (a union no caller
+  can be trusted to fill in correctly, guarded by a runtime check) and rather than
+  three use cases (which the shape rule would allow, but which triplicates the
+  scan): the `switch` over it is exhaustive, so a fourth kind is a compile error.
 
 ## 1.2.0
 

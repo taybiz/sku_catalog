@@ -20,7 +20,7 @@ class UpdateLocate {
 
   /// Executes the use case.
   TaskEither<DomainFailure, Locate> call({required Locate locate}) =>
-      _assertUniqueAttributeValues(place: locate).flatMap(
+      _assertUniqueAttributeValues(holder: PlaceHolder(locate)).flatMap(
         (_) => _repository.fetchById(id: locate.meta.id).flatMap((original) {
           final parentChanged =
               locate.parentLocateId != original.parentLocateId;

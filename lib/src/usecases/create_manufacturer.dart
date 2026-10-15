@@ -24,6 +24,6 @@ class CreateManufacturer {
   TaskEither<DomainFailure, Manufacturer> call({
     required Manufacturer manufacturer,
   }) => _assertUniqueAttributeValues(
-    maker: manufacturer,
+    holder: MakerHolder(manufacturer),
   ).flatMap((_) => _repository.create(manufacturer: manufacturer));
 }
