@@ -22,8 +22,9 @@ class ResolveSchema {
   /// specific claim. A key keeps the position where it was first seen, so the
   /// general attributes read before the specific ones and the order is stable.
   ///
-  /// Definitions only: values are not resolved here. `ResolvedAttribute.source`
-  /// is `'trait'` and `value` is null for every entry.
+  /// Definitions only: values are not resolved here.
+  /// `ResolvedAttribute.source` is [AttributeValueSource.trait] and `value` is
+  /// null for every entry.
   TaskEither<DomainFailure, List<ResolvedAttribute>> call({
     required List<String> traitIds,
   }) {
@@ -57,7 +58,7 @@ class ResolveSchema {
                 name: attr.displayLabel,
                 value: null,
                 unit: attr.unit,
-                source: 'trait',
+                source: AttributeValueSource.trait,
                 def: attr,
               );
               final existing = indexByKey[attr.key];

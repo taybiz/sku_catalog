@@ -18,14 +18,15 @@ import 'resolve_schema.dart';
 ///
 /// Precedence, nearest claim wins:
 ///
-/// 1. the instance layer, when there is one — `source: 'instance'`;
-/// 2. the SKU itself — `source: 'sku'`;
+/// 1. the instance layer, when there is one — [AttributeValueSource.instance];
+/// 2. the SKU itself — [AttributeValueSource.sku];
 /// 3. every SKU above it in an assembly, nearest first, so a component can inherit
-///    a value the assembly sets — `source: 'sku'`, with `inheritedFrom` naming the
-///    ancestor's model number;
-/// 4. the attribute definition's own default — `source: 'default'`;
+///    a value the assembly sets — [AttributeValueSource.sku], with `inheritedFrom`
+///    naming the ancestor's model number;
+/// 4. the attribute definition's own default — [AttributeValueSource.fallback];
 /// 5. nothing supplies a value: the entry keeps `value: null` and
-///    `source: 'trait'`, which is exactly what [ResolveSchema] alone reports.
+///    [AttributeValueSource.trait], which is exactly what [ResolveSchema] alone
+///    reports.
 ///
 /// Values whose key no trait in scope defines are not returned. A trait is what
 /// makes an attribute mean something, so a value with no definition behind it is a
@@ -110,13 +111,21 @@ class ResolveAttributeValues {
     for (final sku in chain.reversed) {
       final inheritedFrom = sku.meta.id == nearestId ? null : sku.modelNumber;
       for (final entry in sku.attributeValues.entries) {
-        winners[entry.key] = _Value(entry.value, 'sku', inheritedFrom);
+        winners[entry.key] = _Value(
+          entry.value,
+          AttributeValueSource.sku,
+          inheritedFrom,
+        );
       }
     }
 
     if (instance != null) {
       for (final entry in instance.attributeValues.entries) {
-        winners[entry.key] = _Value(entry.value, 'instance', null);
+        winners[entry.key] = _Value(
+          entry.value,
+          AttributeValueSource.instance,
+          null,
+        );
       }
     }
     return winners;
@@ -143,7 +152,7 @@ class ResolveAttributeValues {
         name: definition.displayLabel,
         value: definition.defaultValue,
         unit: definition.unit,
-        source: 'default',
+        source: AttributeValueSource.fallback,
         def: definition,
       );
     }
@@ -152,7 +161,7 @@ class ResolveAttributeValues {
       name: definition.displayLabel,
       value: null,
       unit: definition.unit,
-      source: 'trait',
+      source: AttributeValueSource.trait,
       def: definition,
     );
   }
@@ -163,6 +172,6 @@ class _Value {
   const _Value(this.value, this.source, this.inheritedFrom);
 
   final dynamic value;
-  final String source;
+  final AttributeValueSource source;
   final String? inheritedFrom;
 }
