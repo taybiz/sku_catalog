@@ -23,6 +23,6 @@ class CreateLocate {
   /// Executes the use case.
   TaskEither<DomainFailure, Locate> call({required Locate locate}) =>
       _assertUniqueAttributeValues(
-        place: locate,
+        holder: PlaceHolder(locate),
       ).flatMap((_) => _repository.create(locate: locate));
 }

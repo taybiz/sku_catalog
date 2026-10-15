@@ -21,6 +21,6 @@ class UpdateManufacturer {
   TaskEither<DomainFailure, Manufacturer> call({
     required Manufacturer manufacturer,
   }) => _assertUniqueAttributeValues(
-    maker: manufacturer,
+    holder: MakerHolder(manufacturer),
   ).flatMap((_) => _repository.update(manufacturer: manufacturer));
 }

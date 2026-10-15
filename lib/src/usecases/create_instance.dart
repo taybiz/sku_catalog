@@ -38,6 +38,9 @@ class CreateInstance {
             name: instance.name,
             locateId: instance.locateId,
           )
-          .flatMap((_) => _assertUniqueAttributeValues(article: instance))
+          .flatMap(
+            (_) =>
+                _assertUniqueAttributeValues(holder: ArticleHolder(instance)),
+          )
           .flatMap((_) => _repository.create(instance: instance));
 }

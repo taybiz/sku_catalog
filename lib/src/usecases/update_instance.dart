@@ -26,18 +26,23 @@ class UpdateInstance {
   final AssertUniqueAttributeValues _assertUniqueAttributeValues;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, Instance> call({
-    required Instance instance,
-  }) => _instanceRepository
-      .fetchById(id: instance.meta.id)
-      .flatMap(
-        (_) =>
-            _assertUniqueInstanceName(
-                  name: instance.name,
-                  locateId: instance.locateId,
-                  excludeId: instance.meta.id,
-                )
-                .flatMap((_) => _assertUniqueAttributeValues(article: instance))
-                .flatMap((_) => _instanceRepository.update(instance: instance)),
-      );
+  TaskEither<DomainFailure, Instance> call({required Instance instance}) =>
+      _instanceRepository
+          .fetchById(id: instance.meta.id)
+          .flatMap(
+            (_) =>
+                _assertUniqueInstanceName(
+                      name: instance.name,
+                      locateId: instance.locateId,
+                      excludeId: instance.meta.id,
+                    )
+                    .flatMap(
+                      (_) => _assertUniqueAttributeValues(
+                        holder: ArticleHolder(instance),
+                      ),
+                    )
+                    .flatMap(
+                      (_) => _instanceRepository.update(instance: instance),
+                    ),
+          );
 }

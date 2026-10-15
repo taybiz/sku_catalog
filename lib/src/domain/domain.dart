@@ -29,6 +29,7 @@ export 'enums/data_type.dart';
 export 'enums/image_owner.dart';
 export 'enums/trait_scope.dart';
 export 'failures/catalog_failures.dart';
+export 'value_objects/attribute_holder.dart';
 export 'value_objects/bill_of_materials.dart';
 export 'value_objects/bom_line.dart';
 export 'value_objects/report_property.dart';
