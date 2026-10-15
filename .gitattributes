@@ -1,0 +1,13 @@
+# Line endings: LF in the repository, always.
+#
+# GitHub renders and diffs LF; a clone that re-derives CRLF working copies
+# (core.autocrlf=true on Windows) shows every file as modified for no reason.
+# `text=auto` lets git detect binaries and leave them alone; `eol=lf` fixes the
+# checkout form so a Windows clone matches the index byte for byte.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF: cmd.exe and PowerShell handle LF poorly in
+# some paths, and nothing else reads these files.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
