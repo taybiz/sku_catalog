@@ -68,46 +68,56 @@ final serializable = SerializableTrait.define(
 ```
 
 `isUnique` is a flag **any** trait's attribute can carry — `serializable` is not
-special. It means *at most one instance in the catalog may hold a value for this
-attribute*, and the catalog enforces that on the instance write path: a
-`CreateInstance`, `UpdateInstance` or `DuplicateInstance` you build is guarded by
-an `AssertUniqueAttributeValues`, which resolves the schema in scope (the traits
-the instance carries plus the traits of the SKU it instantiates, walked up their
-parent chains) and refuses a value another instance already holds with a
-`DuplicateAttributeValueFailure`:
+special. It means *at most one **holder** in the catalog may hold a value for this
+attribute*, and three kinds of record hold values: an **article** (an `Instance`),
+the **place** it sits at (a `Locate`) and the **maker** of its model (a
+`Manufacturer`). A unique value is unique across all three at once, so a serial
+number one article holds cannot be minted by a place or a maker either:
 
 ```dart
+final rule = AssertUniqueAttributeValues(
+  instanceRepository: myInstanceRepository,
+  locateRepository: myLocateRepository,
+  manufacturerRepository: myManufacturerRepository,
+  // An article's schema is its own traits plus its model's, walked up their
+  // parent chains; a place's or a maker's is the traits it carries itself.
+  resolveInstanceSchema: ResolveInstanceSchema(
+    skuRepository: mySkuRepository,
+    resolveSchema: myResolveSchema,
+  ),
+  resolveSchema: myResolveSchema,
+);
+
 final createInstance = CreateInstance(
   instanceRepository: myInstanceRepository,
-  assertUniqueAttributeValues: AssertUniqueAttributeValues(
-    instanceRepository: myInstanceRepository,
-    resolveInstanceSchema: ResolveInstanceSchema(
-      skuRepository: mySkuRepository,
-      resolveSchema: ResolveSchema(
-        traitRepository: myTraitRepository,
-        attributeRepository: myAttributeRepository,
-      ),
-    ),
-  ),
+  assertUniqueInstanceName: AssertUniqueInstanceName(myInstanceRepository),
+  assertUniqueAttributeValues: rule,
 );
 
 // The first article takes SN-0001...
 await createInstance(instance: panelWithSerial('SN-0001')).run();
-// ...so a second one claiming it is refused with a
-// DuplicateAttributeValueFailure rather than stored.
+// ...so anything else claiming it is refused with a
+// DuplicateAttributeValueFailure rather than stored — a second article, a place,
+// or a maker. `CreateLocate`, `UpdateLocate`, `CreateManufacturer` and
+// `UpdateManufacturer` are guarded by the same rule, and the reference backend
+// hands all of them to you wired (`catalog.createLocate(...)`).
 ```
+
+A **model** is not a holder: the values on a SKU describe the class, not one
+article, so nothing on a SKU is unique in this sense. Nothing else is out of
+scope — a place or a maker that carries the trait is checked like an article.
 
 Values compare the way this package's other identity rules compare them: strings
 trimmed and case-insensitively, numbers by value, different types as different
 values, and a value nobody set never clashes with anything. A copy is a new
 article, so `DuplicateInstance` carries the classification and the non-unique
 values over and starts with the unique ones unset — the same shape as the locate a
-copy does not inherit. Deleting the article frees its serial number.
+copy does not inherit. Deleting the holder frees its value.
 
-Nothing new to implement in a backend: the check reads through
-`IInstanceRepository.fetchAll()`, so the contracts you already implement are
-enough, and the rule stays a use case rather than a storage feature. An adapter
-that wants it cheap can index the unique keys on its own side.
+Nothing new to implement in a backend: the check reads through `fetchAll()` on the
+three contracts, so the contracts you already implement are enough, and the rule
+stays a use case rather than a storage feature. An adapter that wants it cheap can
+index the unique keys on its own side.
 
 ## One package
 

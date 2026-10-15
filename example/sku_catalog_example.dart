@@ -18,7 +18,6 @@ Future<void> main() async {
   final attributes = catalog.attributes;
   final skus = catalog.skus;
   final assemblies = catalog.assemblies;
-  final locates = catalog.locates;
   final instances = catalog.instances;
 
   // 1. Classify. Traits form a tree: Breaker is a Switch with more to say.
@@ -129,8 +128,8 @@ Future<void> main() async {
     name: 'Panel Position',
     parentLocateId: garage.meta.id,
   );
-  await CreateLocate(locates)(locate: garage).run();
-  await CreateLocate(locates)(locate: panelPlace).run();
+  await catalog.createLocate(locate: garage).run();
+  await catalog.createLocate(locate: panelPlace).run();
 
   // 6. Instantiate: an instance is one article of a SKU, at one place. Its
   //    serial number is an attribute value, and because the trait marks it
