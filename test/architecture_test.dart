@@ -29,12 +29,19 @@ import 'dart:io';
 import 'package:dart_arch_test/dart_arch_test.dart';
 import 'package:test/test.dart';
 
-/// The public entry point — the one door into the package (§2.6).
-const _barrel = 'package:sku_catalog/sku_catalog.dart';
+/// The public entry points — the doors into the package (§2.6).
+///
+/// There are two on purpose: the model and the operations ship together through
+/// `sku_catalog.dart`, and the reference in-memory backend has its own door so a
+/// consumer who writes their own storage never carries it.
+const _publicDoors = <String>{
+  'package:sku_catalog/sku_catalog.dart',
+  'package:sku_catalog/in_memory.dart',
+};
 
-/// The only two areas of `lib/src/`, each with the packages its files may
-/// depend on. An import that crosses an area, or reaches a package that is not
-/// listed, is a violation. Extending the graph means extending this table.
+/// The areas of `lib/src/`, each with the packages its files may depend on. An
+/// import that crosses an area, or reaches a package that is not listed, is a
+/// violation. Extending the graph means extending this table.
 const _allowedEdges = <String, Set<String>>{
   // The model: itself, plus the sanctioned value-type packages (STACK).
   'domain': <String>{
@@ -46,6 +53,16 @@ const _allowedEdges = <String, Set<String>>{
   'usecases': <String>{
     'package:sku_catalog/src/usecases/',
     'package:sku_catalog/src/domain/',
+    'package:fpdart/',
+    'package:equatable/',
+  },
+  // The reference backend — the outermost ring. It may use the model and the
+  // operations; neither of them may use it (their own allow-lists above say so,
+  // which is what keeps an adapter out of the domain).
+  'adapters': <String>{
+    'package:sku_catalog/src/adapters/',
+    'package:sku_catalog/src/domain/',
+    'package:sku_catalog/src/usecases/',
     'package:fpdart/',
     'package:equatable/',
   },
@@ -71,7 +88,7 @@ void main() {
       () {
         // Guards every rule below against passing vacuously on an empty graph.
         expect(graph, isNotEmpty);
-        expect(Collector.allLibraries(graph), contains(_barrel));
+        expect(Collector.allLibraries(graph), containsAll(_publicDoors));
         expect(
           Collector.allLibraries(graph),
           contains('package:sku_catalog/src/domain/domain.dart'),
@@ -101,8 +118,11 @@ void main() {
       final violations = <String>[];
       for (final library in Collector.allLibraries(graph)) {
         if (!library.startsWith('package:sku_catalog/src/')) continue;
-        if (Collector.dependenciesOf(graph, library).contains(_barrel)) {
-          violations.add('$library -> $_barrel');
+        if (Collector.dependenciesOf(
+          graph,
+          library,
+        ).any(_publicDoors.contains)) {
+          violations.add('$library -> a public door');
         }
       }
       if (violations.isNotEmpty) {
@@ -116,7 +136,7 @@ void main() {
         for (final dep in Collector.dependenciesOf(graph, library)) {
           if (!dep.startsWith('package:sku_catalog/src/')) continue;
           final callerInSrc = library.startsWith('package:sku_catalog/src/');
-          if (!callerInSrc && library != _barrel) {
+          if (!callerInSrc && !_publicDoors.contains(library)) {
             violations.add('$library -> $dep');
           }
         }

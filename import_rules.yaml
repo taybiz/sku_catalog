@@ -20,6 +20,22 @@ rules:
       public entry point from the inside. If the model needs something only the
       operations know, the edge is pointing the wrong way.
 
+  # The adapter is the outermost ring: it may use the model and the operations,
+  # and neither may use it.
+  - target: lib/src/adapters/**
+    disallow: "**"
+    exclude_disallow:
+      - lib/src/adapters/**
+      - lib/src/domain/**
+      - lib/src/usecases/**
+      - package:equatable/**
+      - package:fpdart/**
+      - dart:**
+    reason: |
+      The reference backend implements the contracts and wires the operations over
+      itself. That edge points one way: the model does not know how it is stored,
+      so nothing under lib/src/domain or lib/src/usecases may reach this area.
+
   # Internal files use the internal barrels.
   - target: lib/src/**
     disallow: package:sku_catalog/sku_catalog.dart
@@ -27,3 +43,11 @@ rules:
       Import `../domain/domain.dart` or `../usecases/usecases.dart`. The public
       entry point is for consumers; reaching it from inside lib/src is a cycle
       through the front door.
+
+  # The adapter has its own door; internal files use the area barrels instead.
+  - target: lib/src/**
+    disallow: package:sku_catalog/in_memory.dart
+    reason: |
+      The in-memory backend's entry point is for consumers. Inside lib/src, the
+      model and the operations never reach for an adapter at all — and the adapter
+      reaches its own files relatively.

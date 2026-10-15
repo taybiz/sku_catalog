@@ -13,11 +13,10 @@
 AGENTS.md
 BACKLOG.md
 
-# The whole test tree, not just the doubles it needs. The in-memory backend is
-# TEST-ONLY: it exists for this repo's own tests and consumers build their own
-# against the contracts. Shipping the tests without the doubles they import
-# would leave broken imports in the archive for pub.dev to analyse, so the two
-# leave together. Both are readable on GitHub at
+# The whole test tree, not just what it imports. The reference backend is
+# PUBLISHED (lib/in_memory.dart, lib/src/adapters/); what stays behind is the
+# suite that tests it, which is repo-only — consumers are expected to build their
+# own backend against the contracts. Readable on GitHub at
 # github.com/taybiz/sku_catalog/tree/main/test.
 test/
 
