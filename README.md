@@ -69,10 +69,12 @@ final serializable = SerializableTrait.define(
 
 `isUnique` is a flag **any** trait's attribute can carry — `serializable` is not
 special. It means *at most one **holder** in the catalog may hold a value for this
-attribute*, and three kinds of record hold values: an **article** (an `Instance`),
+attribute*, and three kinds of record are holders: an **article** (an `Instance`),
 the **place** it sits at (a `Locate`) and the **maker** of its model (a
-`Manufacturer`). A unique value is unique across all three at once, so a serial
-number one article holds cannot be minted by a place or a maker either:
+`Manufacturer`). All four records — a SKU too — carry an `attributeValues` map;
+being a holder is about the rule, not about the field. A unique value is unique
+across all three at once, so a serial number one article holds cannot be minted by
+a place or a maker either:
 
 ```dart
 final rule = AssertUniqueAttributeValues(
@@ -103,9 +105,17 @@ await createInstance(instance: panelWithSerial('SN-0001')).run();
 // hands all of them to you wired (`catalog.createLocate(...)`).
 ```
 
-A **model** is not a holder: the values on a SKU describe the class, not one
-article, so nothing on a SKU is unique in this sense. Nothing else is out of
-scope — a place or a maker that carries the trait is checked like an article.
+A **model** is not a holder: a value on a SKU describes the class, not one article,
+so nothing on a SKU is unique in this sense — a model *declares* that serial numbers
+exist (that is the trait), and holding one is an article's, a place's or a maker's
+act. A place or a maker that carries the trait is checked like an article.
+
+**`Trait.scope` is not consulted here.** A trait records which carrier it is for
+(`sku`, `locate`, `manufacturer`) as data; the package stores that and does not gate
+on it, so this rule does not either. What makes a clash a clash is a **value under a
+key**, not a declared carrier: a place holding a stray value under a key whose
+definition is not in its own scope still blocks that value — the number is taken,
+and refusing the write is the answer that needs no interpretation.
 
 Values compare the way this package's other identity rules compare them: strings
 trimmed and case-insensitively, numbers by value, different types as different

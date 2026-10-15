@@ -20,8 +20,14 @@ import 'resolve_schema.dart';
 /// maker carries itself — so a unique attribute declared on a parent trait holds
 /// for every trait below it.
 ///
-/// Three boundaries are deliberate:
+/// Four boundaries are deliberate:
 ///
+/// - **A value under the key, whatever that holder's own scope declares.**
+///   `Trait.scope` (`sku`, `locate`, `manufacturer`) is data this package stores
+///   and does not gate on, so the comparison is by key and value: a place holding a
+///   stray value under a key no trait in its scope declares still blocks that
+///   value, because the value is taken. Making `scope` normative is its own
+///   decision, not a tweak to this rule;
 /// - **The holder's own values only**, not the ones it would resolve by
 ///   inheritance from the SKUs above it: what is written is what is claimed;
 /// - **The claimer's definition decides equality.** Two holders compare their
