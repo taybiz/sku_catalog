@@ -1,48 +1,25 @@
-// A runnable tour of the package: classify, value, assemble, place,
-// instantiate, fold.
+// A runnable tour of the package: classify, value, assemble, place, instantiate,
+// fold.
 //
-// It ships with a tiny in-memory backend so you can see the whole shape at
-// once. Copy it as a starting point, or implement the same contracts over your
-// own store — the use cases cannot tell the difference.
+// The storage is the package's own reference backend — `InMemoryCatalog` — so this
+// file is about the model and nothing else. A real consumer writes their own store
+// classes against the same contracts; `package:sku_catalog/in_memory.dart` is the
+// shape to copy, and swapping it in is a one-line change here.
 //
 //   dart run example/sku_catalog_example.dart
-import 'package:fpdart/fpdart.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:sku_catalog/sku_catalog.dart';
 
 Future<void> main() async {
-  final traits = _Table<Trait>(
-    Trait.fromJson,
-    (t) => t.meta.id,
-    (t) => t.toJson(),
-  );
-  final attributes = _Table<TraitAttributeDefinition>(
-    TraitAttributeDefinition.fromJson,
-    (a) => a.meta.id,
-    (a) => a.toJson(),
-  );
-  final skus = _Table<Sku>(Sku.fromJson, (s) => s.meta.id, (s) => s.toJson());
-  final assemblies = _Table<SkuComponent>(
-    SkuComponent.fromJson,
-    (c) => c.meta.id,
-    (c) => c.toJson(),
-  );
-  final locates = _Table<Locate>(
-    Locate.fromJson,
-    (l) => l.meta.id,
-    (l) => l.toJson(),
-  );
-  final instances = _Table<Instance>(
-    Instance.fromJson,
-    (d) => d.meta.id,
-    (d) => d.toJson(),
-  );
-
-  final traitRepository = _Traits(traits);
-  final attributeRepository = _Attributes(attributes);
-  final skuRepository = _Skus(skus);
-  final assemblyRepository = _Components(assemblies);
-  final locateRepository = _Locates(locates);
-  final instanceRepository = _Instances(instances);
+  // One object holds every store, a transaction over all of them, and the
+  // operations that need more than one store wired together.
+  final catalog = InMemoryCatalog();
+  final traits = catalog.traits;
+  final attributes = catalog.attributes;
+  final skus = catalog.skus;
+  final assemblies = catalog.assemblies;
+  final locates = catalog.locates;
+  final instances = catalog.instances;
 
   // 1. Classify. Traits form a tree: Breaker is a Switch with more to say.
   final switchTrait = Trait(
@@ -56,8 +33,8 @@ Future<void> main() async {
     parentTraitId: switchTrait.meta.id,
     scope: const [TraitScope.sku],
   );
-  await CreateTrait(traitRepository)(trait: switchTrait).run();
-  await CreateTrait(traitRepository)(trait: breakerTrait).run();
+  await CreateTrait(traits)(trait: switchTrait).run();
+  await CreateTrait(traits)(trait: breakerTrait).run();
 
   // 2. Value: each trait contributes typed fields, and a child overrides them.
   //
@@ -69,12 +46,12 @@ Future<void> main() async {
     traitMeta: _meta('serializable'),
     attributeMeta: _meta('serializable-serial_number'),
   );
-  await CreateTrait(traitRepository)(trait: serializable.trait).run();
-  await CreateTraitAttributeDefinition(attributeRepository)(
+  await CreateTrait(traits)(trait: serializable.trait).run();
+  await CreateTraitAttributeDefinition(attributes)(
     attribute: serializable.serialNumber,
   ).run();
 
-  await CreateTraitAttributeDefinition(attributeRepository)(
+  await CreateTraitAttributeDefinition(attributes)(
     attribute: TraitAttributeDefinition(
       meta: _meta('switch-rated_amps'),
       traitId: switchTrait.meta.id,
@@ -85,7 +62,7 @@ Future<void> main() async {
       isRequired: true,
     ),
   ).run();
-  await CreateTraitAttributeDefinition(attributeRepository)(
+  await CreateTraitAttributeDefinition(attributes)(
     attribute: TraitAttributeDefinition(
       meta: _meta('breaker-trip_amperage'),
       traitId: breakerTrait.meta.id,
@@ -110,23 +87,20 @@ Future<void> main() async {
     modelNumber: 'QO-16',
     traitIds: [serializable.trait.meta.id],
   );
-  await CreateSku(skuRepository)(sku: breakerModel).run();
-  await CreateSku(skuRepository)(sku: panelModel).run();
+  await CreateSku(skus)(sku: breakerModel).run();
+  await CreateSku(skus)(sku: panelModel).run();
   final subPanelModel = Sku(
     meta: _meta('qo-4'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-4',
   );
-  await CreateSku(skuRepository)(sku: subPanelModel).run();
+  await CreateSku(skus)(sku: subPanelModel).run();
 
   // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
   //    sub-panel holds four breakers — so a build consumes the breaker two
   //    ways. On purpose the edge is then tried the other way round, to show the
   //    cycle guard refuse it.
-  final addComponent = AddSkuComponent(
-    repository: assemblyRepository,
-    skuRepository: skuRepository,
-  );
+  final addComponent = catalog.addSkuComponent;
   await addComponent(
     parentSkuId: panelModel.meta.id,
     childSkuId: breakerModel.meta.id,
@@ -155,26 +129,13 @@ Future<void> main() async {
     name: 'Panel Position',
     parentLocateId: garage.meta.id,
   );
-  await CreateLocate(locateRepository)(locate: garage).run();
-  await CreateLocate(locateRepository)(locate: panelPlace).run();
+  await CreateLocate(locates)(locate: garage).run();
+  await CreateLocate(locates)(locate: panelPlace).run();
 
   // 6. Instantiate: an instance is one article of a SKU, at one place. Its
   //    serial number is an attribute value, and because the trait marks it
   //    unique the write path refuses a second article claiming the same one.
-  final createInstance = CreateInstance(
-    instanceRepository: instanceRepository,
-    assertUniqueInstanceName: AssertUniqueInstanceName(instanceRepository),
-    assertUniqueAttributeValues: AssertUniqueAttributeValues(
-      instanceRepository: instanceRepository,
-      resolveInstanceSchema: ResolveInstanceSchema(
-        skuRepository: skuRepository,
-        resolveSchema: ResolveSchema(
-          traitRepository: traitRepository,
-          attributeRepository: attributeRepository,
-        ),
-      ),
-    ),
-  );
+  final createInstance = catalog.createInstance;
   final panelInstance = Instance(
     meta: _meta('pnl-1'),
     skuId: panelModel.meta.id,
@@ -192,10 +153,7 @@ Future<void> main() async {
 
   // 7. Ask the model what it knows. Traits inherit, so the breaker's schema
   //    carries Switch's attributes too.
-  final schema = await ResolveSchema(
-    traitRepository: traitRepository,
-    attributeRepository: attributeRepository,
-  )(traitIds: breakerModel.traitIds).run();
+  final schema = await catalog.schema(traitIds: breakerModel.traitIds).run();
 
   final schemaLine = schema.fold(
     (failure) => 'failed: ${failure.message}',
@@ -203,7 +161,7 @@ Future<void> main() async {
         .map((a) => '${a.name}${a.def.unit == null ? '' : ' (${a.def.unit})'}')
         .join(', '),
   );
-  final partsCount = await FetchComponentsBySku(assemblyRepository)(
+  final partsCount = await FetchComponentsBySku(assemblies)(
     skuId: panelModel.meta.id,
   ).run();
   final breakersDirect = partsCount.fold(
@@ -216,7 +174,7 @@ Future<void> main() async {
     (rows) =>
         '${rows.firstWhere((c) => c.childSkuId == subPanelModel.meta.id).quantity}',
   );
-  final instancesAtPlace = await FetchInstancesByLocate(instanceRepository)(
+  final instancesAtPlace = await FetchInstancesByLocate(instances)(
     locateId: panelPlace.meta.id,
   ).run();
 
@@ -243,10 +201,9 @@ Future<void> main() async {
   //    that merges the layers describing one thing. This folds the tree that
   //    builds one thing: quantities multiply down the levels, and the breaker,
   //    reached directly and through a sub-panel, is one line with the total.
-  final bom = await AggregateBillOfMaterials(
-    skuRepository: skuRepository,
-    skuComponentRepository: assemblyRepository,
-  )(skuId: panelModel.meta.id, units: 2).run();
+  final bom = await catalog
+      .billOfMaterials(skuId: panelModel.meta.id, units: 2)
+      .run();
 
   final bomLine = bom.fold(
     (failure) => 'failed: ${failure.message}',
@@ -277,315 +234,3 @@ Meta _meta(String id) => Meta(
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 );
-
-/// A trivial map-backed store, enough to demonstrate the contracts.
-class _Table<T> {
-  _Table(this.decode, this.idOf, this.encode);
-
-  final T Function(Map<String, dynamic>) decode;
-  final String Function(T) idOf;
-  final Map<String, dynamic> Function(T) encode;
-  final Map<String, Map<String, dynamic>> rows = {};
-
-  Iterable<Map<String, dynamic>> all() => rows.values;
-  void put(T entity) => rows[idOf(entity)] = encode(entity);
-  bool remove(String id) => rows.remove(id) != null;
-  T get(String id) => decode(rows[id]!);
-  bool has(String id) => rows.containsKey(id);
-}
-
-class _Traits implements ITraitRepository {
-  _Traits(this.table);
-  final _Table<Trait> table;
-
-  @override
-  TaskEither<DomainFailure, List<Trait>> fetchAll() =>
-      TaskEither.of(table.all().map(Trait.fromJson).toList());
-
-  @override
-  TaskEither<DomainFailure, Trait> fetchById({required String id}) =>
-      table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<Trait>('Trait', id);
-
-  @override
-  TaskEither<DomainFailure, Trait> create({
-    required Trait trait,
-    IUnitOfWork? uow,
-  }) {
-    table.put(trait);
-    return TaskEither.of(trait);
-  }
-
-  @override
-  TaskEither<DomainFailure, Trait> update({
-    required Trait trait,
-    IUnitOfWork? uow,
-  }) => create(trait: trait);
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-class _Attributes implements ITraitAttributeDefinitionRepository {
-  _Attributes(this.table);
-  final _Table<TraitAttributeDefinition> table;
-
-  @override
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchAll() =>
-      TaskEither.of(
-        table.all().map(TraitAttributeDefinition.fromJson).toList(),
-      );
-
-  @override
-  TaskEither<DomainFailure, List<TraitAttributeDefinition>> fetchByTrait({
-    required String traitId,
-  }) => TaskEither.of(
-    table
-        .all()
-        .map(TraitAttributeDefinition.fromJson)
-        .where((a) => a.traitId == traitId)
-        .toList(),
-  );
-
-  @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> fetchById({
-    required String id,
-  }) => table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<TraitAttributeDefinition>('Attribute', id);
-
-  @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> create({
-    required TraitAttributeDefinition attribute,
-    IUnitOfWork? uow,
-  }) {
-    table.put(attribute);
-    return TaskEither.of(attribute);
-  }
-
-  @override
-  TaskEither<DomainFailure, TraitAttributeDefinition> update({
-    required TraitAttributeDefinition attribute,
-    IUnitOfWork? uow,
-  }) => create(attribute: attribute);
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-class _Skus implements ISkuRepository {
-  _Skus(this.table);
-  final _Table<Sku> table;
-
-  @override
-  TaskEither<DomainFailure, List<Sku>> fetchAll() =>
-      TaskEither.of(table.all().map(Sku.fromJson).toList());
-
-  @override
-  TaskEither<DomainFailure, Sku> fetchById({required String id}) =>
-      table.has(id) ? TaskEither.of(table.get(id)) : _missing<Sku>('SKU', id);
-
-  @override
-  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow}) {
-    table.put(sku);
-    return TaskEither.of(sku);
-  }
-
-  @override
-  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow}) =>
-      create(sku: sku);
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-class _Components implements ISkuComponentRepository {
-  _Components(this.table);
-  final _Table<SkuComponent> table;
-
-  @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchAll() =>
-      TaskEither.of(table.all().map(SkuComponent.fromJson).toList());
-
-  @override
-  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku({
-    required String skuId,
-  }) => TaskEither.of(
-    table
-        .all()
-        .map(SkuComponent.fromJson)
-        .where((c) => c.parentSkuId == skuId)
-        .toList(),
-  );
-
-  @override
-  TaskEither<DomainFailure, SkuComponent> fetchById({required String id}) =>
-      table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<SkuComponent>('Assembly edge', id);
-
-  @override
-  TaskEither<DomainFailure, SkuComponent> create({
-    required SkuComponent component,
-    IUnitOfWork? uow,
-  }) {
-    table.put(component);
-    return TaskEither.of(component);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-class _Locates implements ILocateRepository {
-  _Locates(this.table);
-  final _Table<Locate> table;
-
-  @override
-  TaskEither<DomainFailure, List<Locate>> fetchAll() =>
-      TaskEither.of(table.all().map(Locate.fromJson).toList());
-
-  @override
-  TaskEither<DomainFailure, Locate> fetchById({required String id}) =>
-      table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<Locate>('Locate', id);
-
-  @override
-  TaskEither<DomainFailure, Locate> create({
-    required Locate locate,
-    IUnitOfWork? uow,
-  }) {
-    table.put(locate);
-    return TaskEither.of(locate);
-  }
-
-  @override
-  TaskEither<DomainFailure, Locate> update({
-    required Locate locate,
-    IUnitOfWork? uow,
-  }) => create(locate: locate);
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-class _Instances implements IInstanceRepository {
-  _Instances(this.table);
-  final _Table<Instance> table;
-
-  @override
-  TaskEither<DomainFailure, List<Instance>> fetchAll() =>
-      TaskEither.of(table.all().map(Instance.fromJson).toList());
-
-  @override
-  TaskEither<DomainFailure, List<Instance>> fetchByLocate({
-    required String locateId,
-  }) => TaskEither.of(
-    table
-        .all()
-        .map(Instance.fromJson)
-        .where((d) => d.locateId == locateId)
-        .toList(),
-  );
-
-  @override
-  TaskEither<DomainFailure, Instance> fetchById({required String id}) =>
-      table.has(id)
-      ? TaskEither.of(table.get(id))
-      : _missing<Instance>('Instance', id);
-
-  @override
-  TaskEither<DomainFailure, Instance> create({
-    required Instance instance,
-    IUnitOfWork? uow,
-  }) {
-    table.put(instance);
-    return TaskEither.of(instance);
-  }
-
-  @override
-  TaskEither<DomainFailure, Instance> update({
-    required Instance instance,
-    IUnitOfWork? uow,
-  }) => create(instance: instance);
-
-  @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
-    table.remove(id);
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.rows.clear();
-    return TaskEither.of(null);
-  }
-}
-
-TaskEither<DomainFailure, T> _missing<T>(String what, String id) =>
-    TaskEither<DomainFailure, T>.left(NotFoundFailure('$what "$id" not found'));
