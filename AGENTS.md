@@ -22,13 +22,17 @@ operations with it.** Do not re-split this into sibling packages: a published
 package may not depend on a `path:`, so siblings would have to be published too —
 in dependency order, with version lockstep.
 
-The backend in this repo is a **test double and is deliberately not published**.
-`test/support/` holds in-memory implementations of every repository contract;
-`.pubignore` keeps the whole `test/` tree out of the archive (shipping the tests
-without the doubles they import would publish broken imports). A consumer is
-expected to build their own backend against the contracts. `test/boundary_test.dart`
-asserts that nothing under `lib/` reaches for those doubles, so the published
-library can never start depending on them.
+The backend in this repo is a **shipped reference adapter**:
+`lib/src/adapters/in_memory/`, reachable at `package:sku_catalog/in_memory.dart`,
+published like the rest of the package and tested by its own suite
+(`test/in_memory_*_test.dart`). It is an example rather than a promise — no
+durability, no indexes, no concurrency — and it is **outside the model**: nothing
+under `lib/src/domain/` or `lib/src/usecases/` may import it, which
+`test/boundary_test.dart` fails the build over, while the one-way `adapters` row in
+`test/architecture_test.dart`'s edge table keeps the dependency pointing in. Its
+tests live under `test/`, which `.pubignore` keeps out of the archive. A consumer is
+still expected to build their own backend against the contracts; this one exists so
+the contracts and the operations can be read as a running system.
 
 ## Not doing: instance composition
 
@@ -55,7 +59,9 @@ are.
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is gated three ways, deliberately. The **gate** is
   `test/architecture_test.dart`: a `dart_arch_test` test over the *resolved* import
-  graph (bible §2.9), run by plain `dart test`, so CI already runs it.
+  graph (bible §2.9), run by plain `dart test`, so CI already runs it. Its edge table
+  carries three areas — `domain`, `usecases` and `adapters` (the reference backend) —
+  with `adapters -> usecases -> domain` and never the reverse.
   `import_rules.yaml` (wired via `plugins:` in `analysis_options.yaml`, no pubspec
   dependency) is the as-you-type nicety, failing analyze — CI runs `--fatal-infos` —
   on a wrong-way edge (`usecases -> domain`, never the reverse) or an internal file

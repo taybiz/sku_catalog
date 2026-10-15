@@ -134,6 +134,34 @@ the SKU), the *article* carries one particular number (a value on the instance).
   *values* of the traits in scope for it and carries trait ids only so a value has
   its definition. The enum's doc, the README row and the field now say that.
 
+- **Ships:** a **reference in-memory backend**, `package:sku_catalog/in_memory.dart` — a
+  second entry point beside the front door. Ten stores implementing the repository
+  contracts over one `InMemoryTable<T>` each (a row *is* the JSON the model
+  round-trips, so a record written before a field existed still parses), an
+  `InMemoryUnitOfWork` that rolls back by snapshot, and `InMemoryCatalog`, a
+  composition root holding the stores, the transaction and the model's rules and
+  operations wired over them (`catalog.createInstance(...)` is a write with the
+  rules in place; `catalog.deleteSku(...)` is two writes in one transaction). It is
+  an example rather than a storage story — no durability, no indexes, no
+  concurrency — and it is **not** part of the model: `test/boundary_test.dart` now
+  fails the build if anything under `lib/src/domain/` or `lib/src/usecases/` names
+  it, and `test/architecture_test.dart`'s edge table carries a one-way `adapters`
+  row. The suite and the example both run on it, so the unpublished doubles in
+  `test/support/` (12 files, 886 lines) and the example's own hand-rolled backend
+  (~310 lines) are gone — one in-memory backend in the repository instead of three.
+- **Reversal:** the decision recorded earlier in this entry — *"the adapter rules do
+  not bind this package … it ships no adapter, no datasource, no UI"* — no longer
+  holds. The package has one outer ring now and the bible's adapter rules apply to
+  it. The front door's promise is unchanged: the model and the operations still ship
+  together in one import, and a consumer who writes their own backend never carries
+  the adapter.
+- **Tests:** the adapter has its own proof — `test/in_memory_repositories_test.dart`
+  (each contract's behaviour plus `InMemoryTable`'s own semantics, including that a
+  snapshot is a copy), `test/in_memory_unit_of_work_test.dart` (rollback, commit and
+  the unregistered-table boundary) and `test/in_memory_catalog_test.dart` (end to
+  end through the composition root: the unique-value rule wired, the transaction
+  wired, the stores exposed as contracts).
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`
