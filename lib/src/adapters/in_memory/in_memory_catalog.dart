@@ -31,7 +31,10 @@ import 'in_memory_unit_of_work.dart';
 ///
 /// Deliberately *not* wrapped: the single-store use cases. `FetchAllSkus(skus)` or
 /// `CreateTrait(traits)` is already one line with the store in hand, and wrapping
-/// all of them would be a second copy of the operations ring.
+/// all of them would be a second copy of the operations ring. A single-store
+/// *write* that carries a rule is wrapped, because the rule is the point —
+/// `createLocate` and `createManufacturer` are here for the same reason
+/// `createInstance` is.
 class InMemoryCatalog {
   /// Creates an empty in-memory catalog.
   InMemoryCatalog();
@@ -96,11 +99,16 @@ class InMemoryCatalog {
     resolveSchema: schema,
   );
 
-  /// The unique-value rule.
+  /// The unique-value rule. It reads every holder — articles, places, makers —
+  /// so a value marked unique is held once in the catalog, whatever kind holds
+  /// it.
   late final AssertUniqueAttributeValues uniqueValues =
       AssertUniqueAttributeValues(
         instanceRepository: instances,
+        locateRepository: locates,
+        manufacturerRepository: manufacturers,
         resolveInstanceSchema: instanceSchema,
+        resolveSchema: schema,
       );
 
   /// The per-place unique name rule.
@@ -126,6 +134,31 @@ class InMemoryCatalog {
   late final DuplicateInstance duplicateInstance = DuplicateInstance(
     instanceRepository: instances,
     resolveInstanceSchema: instanceSchema,
+  );
+
+  /// Creates a place, guarded by the unique-value rule — a place holds values
+  /// like an article does.
+  late final CreateLocate createLocate = CreateLocate(
+    locateRepository: locates,
+    assertUniqueAttributeValues: uniqueValues,
+  );
+
+  /// Updates a place, guarded by the tree rule and the unique-value rule.
+  late final UpdateLocate updateLocate = UpdateLocate(
+    locateRepository: locates,
+    assertUniqueAttributeValues: uniqueValues,
+  );
+
+  /// Creates a maker, guarded by the unique-value rule.
+  late final CreateManufacturer createManufacturer = CreateManufacturer(
+    manufacturerRepository: manufacturers,
+    assertUniqueAttributeValues: uniqueValues,
+  );
+
+  /// Updates a maker, guarded by the unique-value rule.
+  late final UpdateManufacturer updateManufacturer = UpdateManufacturer(
+    manufacturerRepository: manufacturers,
+    assertUniqueAttributeValues: uniqueValues,
   );
 
   /// Deletes an instance and its images in one transaction.

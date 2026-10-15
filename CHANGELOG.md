@@ -175,6 +175,21 @@ the SKU), the *article* carries one particular number (a value on the instance).
   leave the stored record alone, which is what an adapter over a store with a
   primary key has to do anyway.
 
+- **Breaking: the unique-value rule spans every holder, not just articles.** An
+  `AssertUniqueAttributeValues` used to read `IInstanceRepository` alone, so a
+  `Locate` or a `Manufacturer` carrying the same `isUnique` attribute value as an
+  article was stored without complaint. It now reads all three stores and refuses
+  the second claimer of a value, whatever kind it is — `CreateLocate`,
+  `UpdateLocate`, `CreateManufacturer` and `UpdateManufacturer` gained the rule (and
+  a constructor that takes it), and `InMemoryCatalog` wires and exposes all four
+  (`catalog.createLocate(...)`). A model is still not a holder: a value on a SKU
+  describes the class, and nothing on a SKU is unique in this sense.
+- **Breaking: `AssertUniqueAttributeValues` takes the other two contracts.** Its
+  `call` is `call({Instance? article, Locate? place, Manufacturer? maker})` — the one
+  record being written — rather than `call({required Instance instance})`, because
+  one rule now serves three write paths. The `usecase_shape_test` rule (one public
+  `call`) is why it is one entry point and not three.
+
 ## 1.2.0
 
 - Additive: a **labeled, directed relationship edge** — `SkuAssociation`

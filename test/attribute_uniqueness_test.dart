@@ -23,6 +23,8 @@ void main() {
   late InMemoryInstanceRepository instances;
   late InMemorySkuComponentRepository components;
   late InMemoryImageRepository images;
+  late InMemoryLocateRepository locates;
+  late InMemoryManufacturerRepository manufacturers;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -41,7 +43,13 @@ void main() {
 
   AssertUniqueAttributeValues uniqueness() => AssertUniqueAttributeValues(
     instanceRepository: instances,
+    locateRepository: locates,
+    manufacturerRepository: manufacturers,
     resolveInstanceSchema: schemaResolver(),
+    resolveSchema: ResolveSchema(
+      traitRepository: traits,
+      attributeRepository: attributes,
+    ),
   );
 
   CreateInstance createInstance() => CreateInstance(
@@ -89,6 +97,8 @@ void main() {
     instances = InMemoryInstanceRepository();
     components = InMemorySkuComponentRepository();
     images = InMemoryImageRepository();
+    locates = InMemoryLocateRepository();
+    manufacturers = InMemoryManufacturerRepository();
 
     // The canonical one: a serializable model, its serial number unique.
     final serializable = SerializableTrait.define(

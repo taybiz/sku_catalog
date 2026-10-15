@@ -14,7 +14,8 @@ import '../enums/trait_scope.dart';
 /// (a trait on the SKU, which is why the trait is `sku`-scoped) and **the
 /// article** carries one particular number (a value on the instance). Only the
 /// second half is unique, so `serial_number` is defined `isUnique` and every
-/// instance write is checked against it — see `AssertUniqueAttributeValues`.
+/// write that could claim it — an article, a place, a maker — is checked against
+/// it: see `AssertUniqueAttributeValues`.
 ///
 /// This is the one trait the package names, and it names it because the pair is
 /// an invariant rather than a convention: a consumer that stores this definition

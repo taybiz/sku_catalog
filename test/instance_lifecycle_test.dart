@@ -13,6 +13,7 @@ void main() {
   late InMemoryTraitAttributeDefinitionRepository attributes;
   late InMemoryImageRepository images;
   late InMemoryLocateRepository locates;
+  late InMemoryManufacturerRepository manufacturers;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -38,7 +39,13 @@ void main() {
 
   AssertUniqueAttributeValues uniqueness() => AssertUniqueAttributeValues(
     instanceRepository: instances,
+    locateRepository: locates,
+    manufacturerRepository: manufacturers,
     resolveInstanceSchema: schemaResolver(),
+    resolveSchema: ResolveSchema(
+      traitRepository: traits,
+      attributeRepository: attributes,
+    ),
   );
 
   CreateInstance createInstance() => CreateInstance(
@@ -65,14 +72,19 @@ void main() {
     attributes = InMemoryTraitAttributeDefinitionRepository();
     images = InMemoryImageRepository();
     locates = InMemoryLocateRepository();
+    manufacturers = InMemoryManufacturerRepository();
 
+    final createLocate = CreateLocate(
+      locateRepository: locates,
+      assertUniqueAttributeValues: uniqueness(),
+    );
     await CreateSku(skus)(
       sku: Sku(meta: meta('free'), manufacturerId: 'm', modelNumber: 'FREE'),
     ).run();
-    await CreateLocate(locates)(
+    await createLocate(
       locate: Locate(meta: meta('rack-1'), name: 'Rack 1'),
     ).run();
-    await CreateLocate(locates)(
+    await createLocate(
       locate: Locate(meta: meta('rack-2'), name: 'Rack 2'),
     ).run();
   });

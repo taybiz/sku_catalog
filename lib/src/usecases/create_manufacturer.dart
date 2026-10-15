@@ -1,15 +1,29 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// Create a new manufacturer.
+import 'assert_unique_attribute_values.dart';
+
+/// Create a new manufacturer (a maker).
+///
+/// The model's rules apply here as they do to an article's write: a value for an
+/// attribute the schema marks unique is refused when any other holder — an
+/// article, a place, another maker — already holds it. A maker is a holder in
+/// its own right.
 class CreateManufacturer {
   /// Creates a [CreateManufacturer] use case.
-  const CreateManufacturer(this._repository);
+  const CreateManufacturer({
+    required IManufacturerRepository manufacturerRepository,
+    required AssertUniqueAttributeValues assertUniqueAttributeValues,
+  }) : _repository = manufacturerRepository,
+       _assertUniqueAttributeValues = assertUniqueAttributeValues;
 
   final IManufacturerRepository _repository;
+  final AssertUniqueAttributeValues _assertUniqueAttributeValues;
 
   /// Executes the use case.
   TaskEither<DomainFailure, Manufacturer> call({
     required Manufacturer manufacturer,
-  }) => _repository.create(manufacturer: manufacturer);
+  }) => _assertUniqueAttributeValues(
+    maker: manufacturer,
+  ).flatMap((_) => _repository.create(manufacturer: manufacturer));
 }
