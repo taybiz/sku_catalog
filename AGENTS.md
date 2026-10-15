@@ -50,11 +50,14 @@ are.
 
 - Melos workspace of one (bible §3.3 "Topology C"): the package *is* the
   workspace root — `melos: useRootAsPackage: true` in `pubspec.yaml`, no
-  `melos.yaml`, no pub `workspace:`. The gate is four scripts, and CI calls them
+  `melos.yaml`, no pub `workspace:`. The gate is five scripts, and CI calls them
   by name so a script that rots fails the build: `dart run melos run format`,
-  `analyze`, `test`, `publish-dry` (after `dart pub get`; `dart run melos
+  `analyze`, `test`, `coverage`, `publish-dry` (after `dart pub get`; `dart run melos
   bootstrap` once per clone, which writes `melos_<pkg>.iml` and `.idea/` — kept
   out of git and the archive by `*.iml` / `.idea/` in `.gitignore` and `.pubignore`).
+  `coverage` runs `coverage:test_with_coverage --fail-under=97`, so the number is
+  enforced rather than asserted. It is a ratchet: raise the floor as the suite
+  grows, never lower it to turn a red build green.
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is gated three ways, deliberately. The **gate** is
@@ -85,8 +88,9 @@ dispatched worker. The delivery path is: branch off `main`, commit, push the
 branch, open the PR.
 
 The line for "ready to report done" and "ready to open the PR" is the **same
-line** — the gate: formatted, analyzed, tested, covered, `publish-dry` at 0
-warnings, CI green. If the work clears it and is good enough to tell the human
+line** — the gate: formatted, analyzed, tested, covered to the floor `dart run
+melos run coverage` enforces (97% of `lib/`), `publish-dry` at 0 warnings, CI
+green. If the work clears it and is good enough to tell the human
 it's done, it is good enough to push and open the PR. No extra review gate, no
 waiting, no "should I open a PR?" — velocity wins; the PR body carries what was
 verified and what was left. Merge is the human's call; the branch is deleted once
