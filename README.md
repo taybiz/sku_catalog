@@ -213,16 +213,16 @@ final bom = await AggregateBillOfMaterials(
 //   sum of both; a loop is a failure, not a number.
 ```
 
-A runnable end-to-end version — with a small in-memory backend you can copy —
-is in [`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
+A runnable end-to-end version — on the package's own reference backend — is in
+[`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
 
 ## Bringing your own storage
 
 Every aggregate has a repository contract under `lib/src/domain/contracts/`,
 re-exported by the front door, and the use cases are typed against those
-contracts only — this package ships **no** persistence. Implement the contracts
-over whatever you have (a map, a file, SQLite, an HTTP service, an object store)
-and pass them in.
+contracts only — this package ships **no database**. Implement the contracts over
+whatever you have (a map, a file, SQLite, an HTTP service, an object store) and
+pass them in; the next section is a working one to copy.
 
 ```dart
 abstract interface class ISkuRepository {
@@ -235,13 +235,10 @@ abstract interface class ISkuRepository {
 }
 ```
 
-**The backend is yours.** The in-memory implementation in this repo exists for
-this package's own tests: it is a test double under `test/support/`, and it is
-deliberately excluded from the published package (see `.pubignore`). It is
-readable in the repository at
-[`test/support/`](https://github.com/taybiz/sku_catalog/tree/main/test/support)
-if you want a reference for writing your own — consumers are expected to build
-their own backend against these contracts.
+**The backend is yours.** The package ships one so the contracts can be read as a
+running system — the reference in-memory adapter in the next section — but a
+consumer is expected to build their own against these contracts. It is an
+example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
@@ -251,6 +248,52 @@ body that returns `Either`; a `Left` is the rollback signal and is handed back
 unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
 writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
 for a store that cannot roll back.
+
+## A reference backend
+
+The package also ships a working in-memory backend — **the thing to copy** — so
+the contracts and the operations can be read as a running system instead of
+imagined:
+
+```yaml
+dependencies:
+  sku_catalog: ^2.0.0
+```
+
+```dart
+import 'package:sku_catalog/in_memory.dart';
+import 'package:sku_catalog/sku_catalog.dart';
+
+final catalog = InMemoryCatalog();
+
+// Every store is a contract, so it goes anywhere one is expected.
+final ISkuRepository skus = catalog.skus;
+
+// Rules and operations come wired, over those stores.
+await catalog.createInstance(instance: panel).run();   // the model's rules apply
+await catalog.deleteSku(id: 'qo-16').run();            // two writes, one transaction
+```
+
+Three things it is worth reading:
+
+- **One `InMemoryTable<T>` per aggregate**, holding `id → toJson()` and decoding
+  with `fromJson()` on every read. That is what an adapter should persist: the
+  wire form the model round-trips, so a record written before a field existed
+  still parses.
+- **`InMemoryUnitOfWork`** takes the stores and rolls them back by snapshot when a
+  body returns a `Left`; `catalog.unitOfWork` is one built over *every* table the
+  catalog holds, which is how a multi-write operation stops depending on someone
+  remembering to register a store.
+- **`InMemoryCatalog` is a composition root**: it holds the stores, the
+  transaction, the schema resolvers and the operations that need more than one
+  store, so `catalog.createInstance(...)` is a write with the model's rules
+  already in place. The single-store use cases are not wrapped —
+  `FetchAllSkus(catalog.skus)` is already one line.
+
+It is an example, not a promise: nothing there is durable, indexed or
+isolate-safe, and the unique-value rule *scans* five stores per write because it
+reads through `fetchAll()`. A real adapter that wants that cheap indexes the
+unique keys on its own side; the rule stays a use case.
 
 ## Identity
 
@@ -286,20 +329,27 @@ domain: electrical concepts (panels, breakers, slot layouts, ampacity),
 topology graphs, reports, import/export bundles, and any naming convention. If
 you need one of those, compose it around this package rather than inside it.
 
+The one backend in the repository is the **reference** one
+(`package:sku_catalog/in_memory.dart`): it exists to be read and copied, and it is
+not a supported storage layer — no durability, no indexes, no concurrency.
+
 ## Layout
 
 ```
-lib/sku_catalog.dart        the front door: re-exports the model and the operations
+lib/sku_catalog.dart        the front door: the model and the operations
+lib/in_memory.dart          the other door: the reference in-memory backend
 lib/src/domain/             entities, enums, value objects, failures, contracts
 lib/src/usecases/           one file per operation
-example/                    a runnable tour, with a copyable in-memory backend
-test/                       the suite
-test/support/memory_*.dart  the in-memory test doubles — NOT published
+lib/src/adapters/in_memory/ the reference backend: stores, transaction, catalogue
+example/                    a runnable tour, on the reference backend
+test/                       the suite (repo-only — not published)
 ```
 
-`lib/src/` is internal — import the package barrel,
-`package:sku_catalog/sku_catalog.dart`. There is exactly one public entry point,
-so there is no question of which half to depend on.
+`lib/src/` is internal — import one of the two barrels,
+`package:sku_catalog/sku_catalog.dart` for the model and its operations or
+`package:sku_catalog/in_memory.dart` for the reference backend. The model and the
+operations are one dependency and cannot be split; the adapter is a separate door
+so a consumer who writes their own storage never carries it.
 
 ## Working on it
 
@@ -336,11 +386,12 @@ the build rather than waiting for review:
 - **nothing in `lib/` may import or name anything product-specific** — if a
   consumer's word shows up in this API, the boundary has moved without anyone
   deciding it should;
-- **nothing in `lib/` may reach for the test doubles** — the published library
-  cannot start depending on the in-memory backend;
+- **the model and the operations may never reach for the adapter** — the reference
+  backend ships inside this package, so the model cannot start depending on it;
 - **the areas of `lib/src/` may only depend in the allowed direction** — the
-  dependency table lives in that test (`usecases -> domain`, nothing else), and
-  an import that crosses an area, or reaches the public entry point from inside
+  dependency table lives in that test (`domain`, `usecases`, `adapters`, each with
+  the packages it may use; `adapters -> usecases -> domain` and never back), and an
+  import that crosses an area, or reaches either public entry point from inside
   `lib/src/`, fails. That is the guarantee package separation used to give for
   free; with one package, the suite says it out loud.
 
