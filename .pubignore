@@ -41,3 +41,7 @@ doc/api/
 # (pub already drops dot-directories, but say it outright.)
 *.iml
 .idea/
+
+# Written by `melos run coverage`. pub reads this file, not .gitignore, so a
+# local coverage run would otherwise be published (pub tars untracked files).
+coverage/

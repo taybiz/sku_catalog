@@ -20,6 +20,7 @@ dependencies:
   fpdart: ^1.2.0
 
 dev_dependencies:
+  coverage: ^1.16.0
   dart_arch_test: ^0.3.1
   lints: ^6.1.0
   melos: ^8.8.0
@@ -35,6 +36,11 @@ melos:
     format: dart format --output=none --set-exit-if-changed .
     analyze: dart analyze --fatal-infos --fatal-warnings
     test: dart test
+    # Line coverage over lib/, with a floor. The number is a ratchet: raise it as
+    # the suite grows, and never lower it to turn a red build green — a floor
+    # that follows the code down enforces nothing. `--fail-under` is the tool's
+    # own check, so the exit code is the gate.
+    coverage: dart run coverage:test_with_coverage --fail-under=97
     publish-dry: dart pub publish --dry-run
     # Standard clean: melos-native clean removes generated pub/IDE droppings
     # (.packages, .flutter-plugins*, .dart_tool links) for this workspace.

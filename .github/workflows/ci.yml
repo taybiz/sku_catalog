@@ -24,5 +24,10 @@ jobs:
         run: dart run melos run analyze
       - name: Test
         run: dart run melos run test
+      # The coverage step re-runs the suite, because the tool collects as it runs.
+      # That second pass is the price of the number being enforced rather than
+      # claimed — and of a rule that cannot rot quietly.
+      - name: Coverage
+        run: dart run melos run coverage
       - name: What pub.dev would see
         run: dart run melos run publish-dry
