@@ -4,10 +4,13 @@ import '../entities/manufacturer.dart';
 
 /// One record that holds trait values, as a uniqueness rule sees it.
 ///
-/// Three kinds of record hold values — an *article* ([Instance]), the *place* it
-/// sits at ([Locate]) and the *maker* of its model ([Manufacturer]) — and those
-/// three are the population a unique attribute is unique across. A value marked
-/// `isUnique` may be held by exactly one of them, whatever kind it is.
+/// Three kinds of record are holders: an *article* ([Instance]), the *place* it
+/// sits at ([Locate]) and the *maker* of its model ([Manufacturer]). Those three
+/// are the population a value marked `isUnique` is unique across — it may be held
+/// by exactly one of them, whatever kind it is.
+///
+/// A SKU carries an `attributeValues` map like those three do, and is deliberately
+/// not a holder: a value on a model describes the class, so it claims nothing.
 ///
 /// Sealed on purpose: a rule that compares holders cannot forget a kind, because
 /// a `switch` over this type must handle every one, and adding a fourth is a

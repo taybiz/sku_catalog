@@ -193,6 +193,14 @@ the SKU), the *article* carries one particular number (a value on the instance).
   can be trusted to fill in correctly, guarded by a runtime check) and rather than
   three use cases (which the shape rule would allow, but which triplicates the
   scan): the `switch` over it is exhaustive, so a fourth kind is a compile error.
+- **Recorded decisions on that rule** (stated so a later reader does not "fix" them
+  back): **(a)** the comparison is by **key and value across holders**, not by
+  declared carrier — a place holding a value under a key its own scope never
+  declares still blocks that value. `Trait.scope` is data the package stores and
+  deliberately does not gate on; making it normative is its own decision, not a
+  tweak to this comparison. **(b)** a **SKU is not a holder**, though it carries an
+  `attributeValues` map exactly as the three that are: a value on a model describes
+  the class, and holding a unique value is an article's, a place's or a maker's act.
 
 ## 1.2.0
 
