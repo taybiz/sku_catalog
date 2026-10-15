@@ -228,10 +228,9 @@ pass them in; the next section is a working one to copy.
 abstract interface class ISkuRepository {
   TaskEither<DomainFailure, List<Sku>> fetchAll();
   TaskEither<DomainFailure, Sku> fetchById({required String id});
-  TaskEither<DomainFailure, Sku> create({required Sku sku, IUnitOfWork? uow});
-  TaskEither<DomainFailure, Sku> update({required Sku sku, IUnitOfWork? uow});
-  TaskEither<DomainFailure, void> delete({required String id, IUnitOfWork? uow});
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, Sku> create({required Sku sku});
+  TaskEither<DomainFailure, Sku> update({required Sku sku});
+  TaskEither<DomainFailure, void> delete({required String id});
 }
 ```
 
@@ -243,7 +242,9 @@ example: no durability, no indexes, no concurrency.
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
 it to the use cases that write more than once (`DeleteSku`,
-`DeleteInstance`) and a failure half-way through rolls back. `runEither` takes a
+`DeleteInstance`) and a failure half-way through rolls back. Repositories do not
+take it: the use case that wraps the writes is the one that enrolls them, and a
+store just writes. `runEither` takes a
 body that returns `Either`; a `Left` is the rollback signal and is handed back
 unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
 writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation

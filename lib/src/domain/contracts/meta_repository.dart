@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/meta.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for meta (bundle metadata) persistence.
 abstract interface class IMetaRepository {
@@ -10,11 +9,7 @@ abstract interface class IMetaRepository {
   TaskEither<DomainFailure, Meta> fetch();
 
   /// Update meta.
-  TaskEither<DomainFailure, Meta> update({
-    required Meta meta,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Meta> update({required Meta meta});
 
   /// Remove the current meta (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
 }

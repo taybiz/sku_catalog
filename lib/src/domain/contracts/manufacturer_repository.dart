@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/manufacturer.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for manufacturer persistence.
 abstract interface class IManufacturerRepository {
@@ -15,21 +14,13 @@ abstract interface class IManufacturerRepository {
   /// Create a new manufacturer.
   TaskEither<DomainFailure, Manufacturer> create({
     required Manufacturer manufacturer,
-    IUnitOfWork? uow,
   });
 
   /// Update an existing manufacturer.
   TaskEither<DomainFailure, Manufacturer> update({
     required Manufacturer manufacturer,
-    IUnitOfWork? uow,
   });
 
   /// Delete a manufacturer by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }

@@ -108,15 +108,24 @@ void main() {
     (await repo.delete(id: 'rack-1').run()).isLeft().should.beTrue();
   });
 
-  test('clearAll empties the store', () async {
+  test('a trait round-trips through create, fetch and delete', () async {
     final repo = InMemoryTraitRepository();
-    await repo
-        .create(
-          trait: Trait(meta: meta('t'), name: 'T'),
-        )
-        .run();
 
-    (await repo.clearAll().run()).isRight().should.beTrue();
+    (await repo
+            .create(
+              trait: Trait(meta: meta('t'), name: 'T'),
+            )
+            .run())
+        .isRight()
+        .should
+        .beTrue();
+    (await repo.fetchById(id: 't').run())
+        .getOrElse((_) => fail('expected Right'))
+        .name
+        .should
+        .be('T');
+
+    (await repo.delete(id: 't').run()).isRight().should.beTrue();
     (await repo.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
   });
 

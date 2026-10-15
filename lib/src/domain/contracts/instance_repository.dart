@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/instance.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for instance persistence.
 abstract interface class IInstanceRepository {
@@ -18,23 +17,11 @@ abstract interface class IInstanceRepository {
   TaskEither<DomainFailure, Instance> fetchById({required String id});
 
   /// Create a new instance.
-  TaskEither<DomainFailure, Instance> create({
-    required Instance instance,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Instance> create({required Instance instance});
 
   /// Update an existing instance.
-  TaskEither<DomainFailure, Instance> update({
-    required Instance instance,
-    IUnitOfWork? uow,
-  });
+  TaskEither<DomainFailure, Instance> update({required Instance instance});
 
   /// Delete an instance by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }

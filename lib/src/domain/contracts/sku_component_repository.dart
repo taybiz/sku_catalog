@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import '../entities/sku_component.dart';
 import '../failures/catalog_failures.dart';
-import 'unit_of_work.dart';
 
 /// Contract for SKU component persistence.
 abstract interface class ISkuComponentRepository {
@@ -20,15 +19,8 @@ abstract interface class ISkuComponentRepository {
   /// Create a new SKU component.
   TaskEither<DomainFailure, SkuComponent> create({
     required SkuComponent component,
-    IUnitOfWork? uow,
   });
 
   /// Delete a SKU component by id.
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  });
-
-  /// Remove every record (factory reset support).
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow});
+  TaskEither<DomainFailure, void> delete({required String id});
 }

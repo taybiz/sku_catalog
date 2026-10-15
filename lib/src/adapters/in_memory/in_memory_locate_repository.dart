@@ -39,10 +39,7 @@ class InMemoryLocateRepository
   }
 
   @override
-  TaskEither<DomainFailure, Locate> create({
-    required Locate locate,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Locate> create({required Locate locate}) {
     if (table.has(locate.meta.id)) {
       return TaskEither<DomainFailure, Locate>.left(
         AlreadyExistsFailure('Locate "${locate.meta.id}" already exists'),
@@ -53,10 +50,7 @@ class InMemoryLocateRepository
   }
 
   @override
-  TaskEither<DomainFailure, Locate> update({
-    required Locate locate,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, Locate> update({required Locate locate}) {
     if (!table.has(locate.meta.id)) {
       return TaskEither<DomainFailure, Locate>.left(
         NotFoundFailure('Locate "${locate.meta.id}" not found'),
@@ -67,21 +61,12 @@ class InMemoryLocateRepository
   }
 
   @override
-  TaskEither<DomainFailure, void> delete({
-    required String id,
-    IUnitOfWork? uow,
-  }) {
+  TaskEither<DomainFailure, void> delete({required String id}) {
     if (!table.remove(id)) {
       return TaskEither<DomainFailure, void>.left(
         NotFoundFailure('Locate "$id" not found'),
       );
     }
-    return TaskEither.of(null);
-  }
-
-  @override
-  TaskEither<DomainFailure, void> clearAll({IUnitOfWork? uow}) {
-    table.replaceAll(const {});
     return TaskEither.of(null);
   }
 }
