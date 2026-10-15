@@ -1,7 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/in_memory.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
 import 'package:test/test.dart';
 
 /// The umbrella package exists so one dependency gets you everything. This
@@ -67,7 +66,7 @@ void main() {
         () async {
           // The contract-typed local is the check: it only compiles if the
           // umbrella re-exports both the interface and the memory adapter.
-          final ISkuRepository repository = MemorySkuRepository();
+          final ISkuRepository repository = InMemorySkuRepository();
           final created = await CreateSku(repository)(
             sku: Sku(
               meta: newMeta(),
@@ -83,40 +82,40 @@ void main() {
       );
 
       test('Then every operation name resolves', () {
-        final ISkuRepository repository = MemorySkuRepository();
+        final ISkuRepository repository = InMemorySkuRepository();
         final operations = <Object>[
           CreateSku(repository),
-          CreateTrait(MemoryTraitRepository()),
+          CreateTrait(InMemoryTraitRepository()),
           CreateTraitAttributeDefinition(
-            MemoryTraitAttributeDefinitionRepository(),
+            InMemoryTraitAttributeDefinitionRepository(),
           ),
-          ResolveTraitChain(MemoryTraitRepository()),
+          ResolveTraitChain(InMemoryTraitRepository()),
           ResolveSchema(
-            traitRepository: MemoryTraitRepository(),
-            attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+            traitRepository: InMemoryTraitRepository(),
+            attributeRepository: InMemoryTraitAttributeDefinitionRepository(),
           ),
           ResolveEffectiveAttributes(
-            instanceRepository: MemoryInstanceRepository(),
+            instanceRepository: InMemoryInstanceRepository(),
             skuRepository: repository,
-            skuComponentRepository: MemorySkuComponentRepository(),
+            skuComponentRepository: InMemorySkuComponentRepository(),
             resolveSchema: ResolveSchema(
-              traitRepository: MemoryTraitRepository(),
-              attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+              traitRepository: InMemoryTraitRepository(),
+              attributeRepository: InMemoryTraitAttributeDefinitionRepository(),
             ),
           ),
           AddSkuComponent(
-            repository: MemorySkuComponentRepository(),
+            repository: InMemorySkuComponentRepository(),
             skuRepository: repository,
           ),
           AggregateBillOfMaterials(
             skuRepository: repository,
-            skuComponentRepository: MemorySkuComponentRepository(),
+            skuComponentRepository: InMemorySkuComponentRepository(),
           ),
-          WouldCreateAssemblyCycle(MemorySkuComponentRepository()),
+          WouldCreateAssemblyCycle(InMemorySkuComponentRepository()),
           DeleteSku(
             skuRepository: repository,
-            instanceRepository: MemoryInstanceRepository(),
-            skuComponentRepository: MemorySkuComponentRepository(),
+            instanceRepository: InMemoryInstanceRepository(),
+            skuComponentRepository: InMemorySkuComponentRepository(),
           ),
         ];
 

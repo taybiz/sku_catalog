@@ -1,18 +1,18 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// An instance is one article of a SKU at one place, and the rules that matter are
 /// about *where* it is: names are unique per place, a copy is not fitted
 /// anywhere on its own, and the catalog stores the place it is handed.
 void main() {
-  late MemoryInstanceRepository instances;
-  late MemorySkuRepository skus;
-  late MemoryTraitRepository traits;
-  late MemoryTraitAttributeDefinitionRepository attributes;
-  late MemoryImageRepository images;
-  late MemoryLocateRepository locates;
+  late InMemoryInstanceRepository instances;
+  late InMemorySkuRepository skus;
+  late InMemoryTraitRepository traits;
+  late InMemoryTraitAttributeDefinitionRepository attributes;
+  late InMemoryImageRepository images;
+  late InMemoryLocateRepository locates;
 
   Meta meta(String id) => Meta(
     id: id,
@@ -59,12 +59,12 @@ void main() {
   );
 
   setUp(() async {
-    instances = MemoryInstanceRepository();
-    skus = MemorySkuRepository();
-    traits = MemoryTraitRepository();
-    attributes = MemoryTraitAttributeDefinitionRepository();
-    images = MemoryImageRepository();
-    locates = MemoryLocateRepository();
+    instances = InMemoryInstanceRepository();
+    skus = InMemorySkuRepository();
+    traits = InMemoryTraitRepository();
+    attributes = InMemoryTraitAttributeDefinitionRepository();
+    images = InMemoryImageRepository();
+    locates = InMemoryLocateRepository();
 
     await CreateSku(skus)(
       sku: Sku(meta: meta('free'), manufacturerId: 'm', modelNumber: 'FREE'),

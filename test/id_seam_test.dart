@@ -1,6 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// Identity is a seam, not a constant: the catalog mints ids through `newMeta`,
@@ -36,7 +36,7 @@ void main() {
 
     group('When a use case mints an id internally', () {
       test('Then DuplicateSku uses the injected generator', () async {
-        final skus = MemorySkuRepository();
+        final skus = InMemorySkuRepository();
         await CreateSku(skus)(
           sku: Sku(
             meta: meta('qo120'),
@@ -58,7 +58,7 @@ void main() {
       });
 
       test('Then DuplicateSku still defaults to a UUID v4', () async {
-        final skus = MemorySkuRepository();
+        final skus = InMemorySkuRepository();
         await CreateSku(skus)(
           sku: Sku(
             meta: meta('qo120'),
@@ -76,10 +76,8 @@ void main() {
       });
 
       test('Then DuplicateInstance uses the injected generator', () async {
-        final instances = MemoryInstanceRepository();
-        final skus = MemorySkuRepository();
-        final traits = MemoryTraitRepository();
-        await CreateSku(skus)(
+        final catalog = InMemoryCatalog();
+        await CreateSku(catalog.skus)(
           sku: Sku(
             meta: meta('free'),
             manufacturerId: 'm',
@@ -87,14 +85,11 @@ void main() {
           ),
         ).run();
         await CreateInstance(
-              instanceRepository: instances,
-              assertUniqueInstanceName: AssertUniqueInstanceName(instances),
-              assertUniqueAttributeValues: uniqueValuesOn(
-                instanceRepository: instances,
-                skuRepository: skus,
-                traitRepository: traits,
-                attributeRepository: MemoryTraitAttributeDefinitionRepository(),
+              instanceRepository: catalog.instances,
+              assertUniqueInstanceName: AssertUniqueInstanceName(
+                catalog.instances,
               ),
+              assertUniqueAttributeValues: catalog.uniqueValues,
             )(
               instance: Instance(
                 meta: meta('d1'),
@@ -106,12 +101,8 @@ void main() {
             .run();
 
         final copy = await DuplicateInstance(
-          instanceRepository: instances,
-          resolveInstanceSchema: instanceSchemaOn(
-            skuRepository: skus,
-            traitRepository: traits,
-            attributeRepository: MemoryTraitAttributeDefinitionRepository(),
-          ),
+          instanceRepository: catalog.instances,
+          resolveInstanceSchema: catalog.instanceSchema,
           idGenerator: () => 'DEV-0008',
         )(id: 'd1').run();
 
@@ -126,8 +117,8 @@ void main() {
       test(
         'Then AddSkuComponent stamps the edge with the injected id',
         () async {
-          final skus = MemorySkuRepository();
-          final components = MemorySkuComponentRepository();
+          final skus = InMemorySkuRepository();
+          final components = InMemorySkuComponentRepository();
           for (final id in ['rack', 'card']) {
             await CreateSku(skus)(
               sku: Sku(
@@ -156,7 +147,7 @@ void main() {
       test(
         'Then UpdateSkuComponent stamps the replacement with the injected id',
         () async {
-          final components = MemorySkuComponentRepository();
+          final components = InMemorySkuComponentRepository();
           await components
               .create(
                 component: SkuComponent(

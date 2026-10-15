@@ -1,14 +1,15 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// SKUs assemble from SKUs. The edge carries a quantity, and the graph must
 /// never close a loop — a machine cannot contain itself.
 void main() {
-  late MemorySkuRepository skus;
-  late MemorySkuComponentRepository components;
-  late MemoryInstanceRepository instances;
+  late InMemoryCatalog catalog;
+  late InMemorySkuRepository skus;
+  late InMemorySkuComponentRepository components;
+  late InMemoryInstanceRepository instances;
   late AddSkuComponent addEdge;
 
   Meta meta(String id) => Meta(
@@ -22,9 +23,10 @@ void main() {
       Sku(meta: meta(id), manufacturerId: 'm', modelNumber: id.toUpperCase());
 
   setUp(() async {
-    skus = MemorySkuRepository();
-    components = MemorySkuComponentRepository();
-    instances = MemoryInstanceRepository();
+    catalog = InMemoryCatalog();
+    skus = catalog.skus;
+    components = catalog.assemblies;
+    instances = catalog.instances;
     addEdge = AddSkuComponent(repository: components, skuRepository: skus);
     for (final id in ['base', 'card', 'rack']) {
       await CreateSku(skus)(sku: sku(id)).run();
@@ -116,12 +118,7 @@ void main() {
     await CreateInstance(
           instanceRepository: instances,
           assertUniqueInstanceName: AssertUniqueInstanceName(instances),
-          assertUniqueAttributeValues: uniqueValuesOn(
-            instanceRepository: instances,
-            skuRepository: skus,
-            traitRepository: MemoryTraitRepository(),
-            attributeRepository: MemoryTraitAttributeDefinitionRepository(),
-          ),
+          assertUniqueAttributeValues: catalog.uniqueValues,
         )(
           instance: Instance(
             meta: meta('d1'),

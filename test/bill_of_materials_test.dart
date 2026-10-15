@@ -1,6 +1,6 @@
 import 'package:shouldly/shouldly.dart';
 import 'package:sku_catalog/sku_catalog.dart';
-import 'support/memory_backends.dart';
+import 'package:sku_catalog/in_memory.dart';
 import 'package:test/test.dart';
 
 /// A bill of materials is a fold, and every way it can be silently wrong is a
@@ -9,8 +9,8 @@ import 'package:test/test.dart';
 /// parts, a loop that reports a finite quantity, or a level that depends on the
 /// order a store handed its rows back.
 void main() {
-  late MemorySkuRepository skus;
-  late MemorySkuComponentRepository components;
+  late InMemorySkuRepository skus;
+  late InMemorySkuComponentRepository components;
   late AggregateBillOfMaterials aggregate;
 
   Meta meta(String id) => Meta(
@@ -55,8 +55,8 @@ void main() {
   );
 
   setUp(() async {
-    skus = MemorySkuRepository();
-    components = MemorySkuComponentRepository();
+    skus = InMemorySkuRepository();
+    components = InMemorySkuComponentRepository();
     aggregate = AggregateBillOfMaterials(
       skuRepository: skus,
       skuComponentRepository: components,
