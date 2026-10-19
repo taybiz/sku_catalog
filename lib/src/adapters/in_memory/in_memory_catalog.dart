@@ -27,8 +27,9 @@ import 'in_memory_unit_of_work.dart';
 /// - **the transaction covers every table** ([unitOfWork]), so a multi-write
 ///   operation cannot half-commit because someone forgot to register a store;
 /// - **the unique-value rule needs nothing from a backend.** It reads `fetchAll()`
-///   and scans, which is correct and slow; a real adapter that wants it cheap
-///   indexes the unique keys on its own side (see [AssertUniqueAttributeValues]).
+///   and scans, which is correct and slow — and because the contracts *are* the
+///   API, the only way to make it cheaper is a narrower contract
+///   (see [AssertUniqueAttributeValues]).
 ///
 /// Deliberately *not* wrapped: the single-store use cases. `FetchAllSkus(skus)` or
 /// `CreateTrait(traits)` is already one line with the store in hand, and wrapping
