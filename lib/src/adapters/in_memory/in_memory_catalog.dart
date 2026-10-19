@@ -35,7 +35,8 @@ import 'in_memory_unit_of_work.dart';
 /// all of them would be a second copy of the operations ring. A single-store
 /// *write* that carries a rule is wrapped, because the rule is the point —
 /// `createLocate` and `createManufacturer` are here for the same reason
-/// `createInstance` is.
+/// `createInstance` is, and `createSku` and `updateSku` joined them when the
+/// model-number rule arrived.
 class InMemoryCatalog {
   /// Creates an empty in-memory catalog.
   InMemoryCatalog();
@@ -122,6 +123,26 @@ class InMemoryCatalog {
   late final AssertUniqueInstanceName uniqueNames = AssertUniqueInstanceName(
     instances,
   );
+
+  /// The per-manufacturer model-number rule.
+  late final AssertUniqueModelNumber modelNumbers = AssertUniqueModelNumber(
+    skus,
+  );
+
+  /// Creates a SKU, guarded by the model-number rule.
+  late final CreateSku createSku = CreateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: modelNumbers,
+  );
+
+  /// Updates a SKU, guarded by the model-number rule.
+  late final UpdateSku updateSku = UpdateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: modelNumbers,
+  );
+
+  /// Copies a SKU: a new model, with the next free model number for its maker.
+  late final DuplicateSku duplicateSku = DuplicateSku(skus);
 
   /// Creates an instance, guarded by the model's rules.
   late final CreateInstance createInstance = CreateInstance(

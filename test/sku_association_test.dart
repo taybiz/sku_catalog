@@ -30,8 +30,14 @@ void main() {
   test(
     'an association can be created and fetched back, direction preserved',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final result = await AddSkuAssociation(
         repository: associations,
@@ -56,9 +62,18 @@ void main() {
   test(
     'edited and contributed_to are distinct associations, both kept',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('jones')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('jones')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
         repository: associations,
@@ -91,8 +106,14 @@ void main() {
   test(
     'an association is returned from either end, and filterable by kind',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
         repository: associations,
@@ -137,8 +158,14 @@ void main() {
   });
 
   test('an empty kind is refused', () async {
-    await CreateSku(skus)(sku: sku('smith')).run();
-    await CreateSku(skus)(sku: sku('anthology-1')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('smith')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('anthology-1')).run();
 
     final result = await AddSkuAssociation(
       repository: associations,
@@ -152,8 +179,14 @@ void main() {
   });
 
   test('an association can be deleted by id', () async {
-    await CreateSku(skus)(sku: sku('smith')).run();
-    await CreateSku(skus)(sku: sku('anthology-1')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('smith')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('anthology-1')).run();
 
     await AddSkuAssociation(
       repository: associations,

@@ -63,7 +63,10 @@ void main() {
     );
 
     for (final id in ['machine', 'rack', 'card', 'shelf', 'bolt']) {
-      await CreateSku(skus)(sku: sku(id)).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku(id)).run();
     }
   });
 

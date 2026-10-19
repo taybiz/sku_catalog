@@ -258,7 +258,6 @@ void main() {
       skuId: 's1',
       locateId: 'rack-3',
       name: 'Panel 1',
-      skuModelNumber: 'QO120',
       imageIds: const ['img-1'],
       traitIds: const ['breaker'],
       attributeValues: const {'serial_number': 'SN-0001'},
@@ -286,21 +285,21 @@ void main() {
       skuId: 's1',
       locateId: 'rack-3',
       name: 'Panel 1',
-      skuModelNumber: 'QO120',
+      icon: 'bolt',
     );
 
     // The sentinel: passing null un-places, passing nothing keeps the place.
     final unplaced = placed.copyWith(locateId: null);
     unplaced.locateId.should.beNull();
     unplaced.isPlaced.should.beFalse();
-    unplaced.skuModelNumber.should.be('QO120');
+    unplaced.icon.should.be('bolt');
     placed.copyWith(name: 'Panel 2').locateId.should.be('rack-3');
 
     // The same for the other nullable pair, and for an identity change.
-    final renamed = placed.copyWith(skuModelNumber: 'QO120-2', skuId: 's2');
-    renamed.skuModelNumber.should.be('QO120-2');
+    final renamed = placed.copyWith(icon: 'sensor', skuId: 's2');
+    renamed.icon.should.be('sensor');
     renamed.skuId.should.be('s2');
-    renamed.copyWith(skuModelNumber: null).skuModelNumber.should.beNull();
+    renamed.copyWith(icon: null).icon.should.beNull();
   });
 
   test('every failure is a value that carries its message', () {

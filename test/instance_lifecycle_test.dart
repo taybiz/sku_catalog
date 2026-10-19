@@ -78,9 +78,17 @@ void main() {
       locateRepository: locates,
       assertUniqueAttributeValues: uniqueness(),
     );
-    await CreateSku(skus)(
-      sku: Sku(meta: meta('free'), manufacturerId: 'm', modelNumber: 'FREE'),
-    ).run();
+    await CreateSku(
+          skuRepository: skus,
+          assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+        )(
+          sku: Sku(
+            meta: meta('free'),
+            manufacturerId: 'm',
+            modelNumber: 'FREE',
+          ),
+        )
+        .run();
     await createLocate(
       locate: Locate(meta: meta('rack-1'), name: 'Rack 1'),
     ).run();

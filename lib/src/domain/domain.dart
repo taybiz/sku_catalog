@@ -13,6 +13,7 @@ library;
 export 'json_coercion.dart';
 export 'id_generator.dart';
 export 'instance_names.dart';
+export 'sku_numbers.dart';
 export 'new_meta.dart';
 export 'sequence.dart';
 export 'entities/instance.dart';

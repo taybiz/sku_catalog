@@ -11,11 +11,14 @@ class Sku extends Equatable {
   /// Id of the owning [Manufacturer].
   final String manufacturerId;
 
-  /// Model number (unique per manufacturer).
+  /// Model number: the maker's production number, unique against
+  /// [manufacturerId].
+  ///
+  /// `AssertUniqueModelNumber` keeps that rule on the SKU write paths. What a maker
+  /// *calls* the thing, when that differs from the production number, is a
+  /// different fact — optional, with no rule to keep — so it is not a field here:
+  /// a consumer declares it as a trait.
   final String modelNumber;
-
-  /// Optional manufacturer-specific model number.
-  final String? manufacturerModelNumber;
 
   /// Ids of traits attached to this SKU.
   final List<String> traitIds;
@@ -34,7 +37,6 @@ class Sku extends Equatable {
     required this.meta,
     required this.manufacturerId,
     required this.modelNumber,
-    this.manufacturerModelNumber,
     this.traitIds = const [],
     this.imageIds = const [],
     this.attributeValues = const {},
@@ -46,8 +48,6 @@ class Sku extends Equatable {
     ...meta.toJson(),
     'manufacturer_id': manufacturerId,
     'model_number': modelNumber,
-    if (manufacturerModelNumber != null)
-      'manufacturer_model_number': manufacturerModelNumber,
     'trait_ids': traitIds,
     'image_ids': imageIds,
     'attribute_values': attributeValues,
@@ -59,7 +59,6 @@ class Sku extends Equatable {
     meta: Meta.fromJson(json),
     manufacturerId: json['manufacturer_id'] as String? ?? '',
     modelNumber: json['model_number'] as String? ?? '',
-    manufacturerModelNumber: json['manufacturer_model_number'] as String?,
     traitIds: stringListFromWire(value: json['trait_ids']),
     imageIds: stringListFromWire(value: json['image_ids']),
     attributeValues: asStringMap(value: json['attribute_values']),
@@ -71,7 +70,6 @@ class Sku extends Equatable {
     Meta? meta,
     String? manufacturerId,
     String? modelNumber,
-    Object? manufacturerModelNumber = _unset,
     List<String>? traitIds,
     List<String>? imageIds,
     Map<String, dynamic>? attributeValues,
@@ -80,9 +78,6 @@ class Sku extends Equatable {
     meta: meta ?? this.meta,
     manufacturerId: manufacturerId ?? this.manufacturerId,
     modelNumber: modelNumber ?? this.modelNumber,
-    manufacturerModelNumber: manufacturerModelNumber == _unset
-        ? this.manufacturerModelNumber
-        : manufacturerModelNumber as String?,
     traitIds: traitIds ?? this.traitIds,
     imageIds: imageIds ?? this.imageIds,
     attributeValues: attributeValues ?? this.attributeValues,
@@ -96,7 +91,6 @@ class Sku extends Equatable {
     meta,
     manufacturerId,
     modelNumber,
-    manufacturerModelNumber,
     traitIds,
     imageIds,
     attributeValues,

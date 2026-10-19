@@ -67,13 +67,20 @@ void main() {
           // The contract-typed local is the check: it only compiles if the
           // umbrella re-exports both the interface and the memory adapter.
           final ISkuRepository repository = InMemorySkuRepository();
-          final created = await CreateSku(repository)(
-            sku: Sku(
-              meta: newMeta(),
-              manufacturerId: 'acme',
-              modelNumber: 'NUT-1',
-            ),
-          ).run();
+          final created =
+              await CreateSku(
+                    skuRepository: repository,
+                    assertUniqueModelNumber: AssertUniqueModelNumber(
+                      repository,
+                    ),
+                  )(
+                    sku: Sku(
+                      meta: newMeta(),
+                      manufacturerId: 'acme',
+                      modelNumber: 'NUT-1',
+                    ),
+                  )
+                  .run();
 
           created.isRight().should.be(true);
           final stored = await repository.fetchAll().run();
@@ -84,7 +91,10 @@ void main() {
       test('Then every operation name resolves', () {
         final ISkuRepository repository = InMemorySkuRepository();
         final operations = <Object>[
-          CreateSku(repository),
+          CreateSku(
+            skuRepository: repository,
+            assertUniqueModelNumber: AssertUniqueModelNumber(repository),
+          ),
           CreateTrait(InMemoryTraitRepository()),
           CreateTraitAttributeDefinition(
             InMemoryTraitAttributeDefinitionRepository(),
@@ -111,6 +121,7 @@ void main() {
             repository: InMemoryInstanceAssociationRepository(),
             instanceRepository: InMemoryInstanceRepository(),
           ),
+          AssertUniqueModelNumber(InMemorySkuRepository()),
           AggregateBillOfMaterials(
             skuRepository: repository,
             skuComponentRepository: InMemorySkuComponentRepository(),
@@ -123,7 +134,7 @@ void main() {
           ),
         ];
 
-        operations.length.should.be(11);
+        operations.length.should.be(12);
       });
     });
 

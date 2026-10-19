@@ -18,6 +18,7 @@ export 'add_sku_component.dart';
 export 'aggregate_bill_of_materials.dart';
 export 'assert_unique_attribute_values.dart';
 export 'assert_unique_instance_name.dart';
+export 'assert_unique_model_number.dart';
 export 'create_image_record.dart';
 export 'create_instance.dart';
 export 'create_locate.dart';

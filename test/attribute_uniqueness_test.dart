@@ -166,14 +166,18 @@ void main() {
     // Models: one serializable, one plain, one of the caller's own trait, one
     // that only inherits it, one batched.
     Future<void> sku(String id, {List<String> traitIds = const []}) =>
-        CreateSku(skus)(
-          sku: Sku(
-            meta: meta(id),
-            manufacturerId: 'm',
-            modelNumber: id.toUpperCase(),
-            traitIds: traitIds,
-          ),
-        ).run();
+        CreateSku(
+              skuRepository: skus,
+              assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+            )(
+              sku: Sku(
+                meta: meta(id),
+                manufacturerId: 'm',
+                modelNumber: id.toUpperCase(),
+                traitIds: traitIds,
+              ),
+            )
+            .run();
     await sku('ser', traitIds: const ['serializable']);
     await sku('plain');
     await sku('tagged', traitIds: const ['asset']);

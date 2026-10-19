@@ -345,16 +345,28 @@ that mint ids *internally* — `DuplicateSku`, `DuplicateInstance`,
 one rule the catalog asks of a generator is **stability**: whatever an adapter
 stores must read back unchanged.
 
+**A model number is the maker's production number, unique against the maker.**
+`AssertUniqueModelNumber` keeps that rule on the SKU write paths, so a second model
+from the same `manufacturerId` cannot take a number another model already holds, and
+an edit that keeps its own number is not a clash with itself. The comparison is
+**exact** — a production number is an identifier, so `QO120` and `qo120` are two
+different numbers, unlike an instance name, which the per-locate rule compares
+case-insensitively because it is prose a person reads. `DuplicateSku` mints the next
+free "(copy)" number rather than being refused. What a maker *calls* a thing, when
+that differs from its production number, is a different fact: optional, with no rule
+to keep, so it is a trait you declare rather than a field here.
+
 Two deliberate consequences worth knowing:
 
 - **Domain vocabulary stays out.** What a short code on an article means, and
   which trait holds it, are *your* words and *your* screen. The package names
   exactly one pair, `serializable` and its `serial_number`, because `isUnique`
   turns it into a catalog-wide rule rather than a convention (see above).
-- **The catalog does not cascade what it cannot see.** `DeleteInstance` removes the
-  instance and its images. If something else references instances — a wiring graph,
-  a harness, a bill of materials — that is yours to cascade, and the use case
-  documents it.
+- **The catalog cascades only what it owns.** `DeleteInstance` removes the article,
+  its images and the `InstanceAssociation` edges that name it — everything the
+  catalog itself stores *about* that article. If something else references instances
+  — a wiring graph, a harness, a bill of materials — that is yours to cascade, and
+  the use case documents it.
 
 ## What is deliberately not here
 

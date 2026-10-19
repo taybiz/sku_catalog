@@ -87,14 +87,23 @@ Future<void> main() async {
     modelNumber: 'QO-16',
     traitIds: [serializable.trait.meta.id],
   );
-  await CreateSku(skus)(sku: breakerModel).run();
-  await CreateSku(skus)(sku: panelModel).run();
+  await CreateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+  )(sku: breakerModel).run();
+  await CreateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+  )(sku: panelModel).run();
   final subPanelModel = Sku(
     meta: _meta('qo-4'),
     manufacturerId: 'square-d',
     modelNumber: 'QO-4',
   );
-  await CreateSku(skus)(sku: subPanelModel).run();
+  await CreateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+  )(sku: subPanelModel).run();
 
   // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
   //    sub-panel holds four breakers — so a build consumes the breaker two

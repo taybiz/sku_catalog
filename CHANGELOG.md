@@ -41,6 +41,39 @@ article of them.
   — was not taken: it changes every existing wire key, and it would erase the
   class/token distinction exactly where the type system is the thing enforcing it.
 
+**A model number is the maker's production number.** The field's doc has always
+claimed "unique per manufacturer" and nothing enforced it; it does now. The field
+beside it, which was doing a *different* job under a name that read as a variant of
+it, is gone.
+
+- **New:** `AssertUniqueModelNumber` — a model number is unique against its
+  `manufacturerId`, compared **exactly** (`QO120` is not `qo120`; case-insensitivity
+  is `namesClash`, for instance names, which are prose). `CreateSku` and `UpdateSku`
+  take it as a required dependency, the update path excluding the model's own id so
+  an edit that keeps its number is not a clash with itself, and `InMemoryCatalog`
+  wires it as `catalog.createSku` / `catalog.updateSku`.
+- **New:** `uniqueCopyModelNumber` — `DuplicateSku` mints the next free "(copy)"
+  number for its maker instead of reusing the original's, the same choice
+  `DuplicateInstance` makes with a unique value: a copy is a new thing and is never
+  refused for inheriting an identity.
+- **Changed (breaking signatures):** `CreateSku` and `UpdateSku` take
+  `skuRepository:` and `assertUniqueModelNumber:` as named parameters; the bare
+  positional `CreateSku(repository)` no longer compiles.
+- **Removed (breaking):** `Sku.manufacturerModelNumber` and its
+  `manufacturer_model_number` wire key. It was never a variant of `modelNumber`: what
+  a maker *calls* a thing, when that differs from its production number, is optional
+  and carries no rule, so it is a trait a consumer declares. The package names a pair
+  (`serializable`, `serial_number`) only when it enforces something on it.
+- **Removed (breaking):** `Instance.skuModelNumber` and its `sku_model_number` wire
+  key — a copy of a SKU field kept for labelling that nothing maintained and that
+  could only disagree with the SKU it came from. The BACKLOG item that asked for a
+  home for it is closed by removing it.
+- **Note for a consumer's data:** the rule fires on write, so stored rows are safe
+  until touched — but placeholder model numbers collide the moment they are written.
+  A book's production number is its ISBN and its publisher is the manufacturer, so
+  per-maker uniqueness is the right rule for a library too, and a `'FREE'`-style
+  placeholder is the thing to replace rather than the rule to relax.
+
 **The reference backend is no longer published.**
 
 - **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
@@ -60,14 +93,19 @@ article of them.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 233 passing; `dart run melos run coverage` reports 97.79% of `lib/`,
+- **Tests:** 241 passing; `dart run melos run coverage` reports 98.03% of `lib/`,
   above the 97% floor. The new edge has its own suite
   (`test/instance_association_test.dart`: direction preserved, two kinds on one
   pair as two rows, either-end fetch with a kind filter, the three refusals,
   delete, and the cascade through `DeleteInstance`), the new store answers the
   shared contract table in `test/in_memory_repository_contract_test.dart`, and
   `test/in_memory_catalog_test.dart` proves the composition root has the edge
-  wired rather than merely available.
+  wired rather than merely available. The model-number rule has its own suite too
+  (`test/model_number_uniqueness_test.dart`: a clash refused and nothing stored, the
+  same number under another maker allowed, case and padding *not* the same number,
+  a rename onto a taken number refused while keeping its own is allowed, a delete
+  freeing the number, the copy path minting "(copy)" then "(copy 2)", and the
+  catalogue's wiring exercised as wiring).
 
 ## 2.0.0
 

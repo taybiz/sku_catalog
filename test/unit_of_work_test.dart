@@ -24,9 +24,17 @@ void main() {
     skus = catalog.skus;
     components = catalog.assemblies;
     instances = catalog.instances;
-    await CreateSku(skus)(
-      sku: Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
-    ).run();
+    await CreateSku(
+          skuRepository: skus,
+          assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+        )(
+          sku: Sku(
+            meta: meta('rack'),
+            manufacturerId: 'm',
+            modelNumber: 'RACK',
+          ),
+        )
+        .run();
     // An edge whose child SKU is deliberately absent from the SKU store, so the
     // SKU delete fails *after* the edge delete has already succeeded.
     await CreateSkuComponent(components)(

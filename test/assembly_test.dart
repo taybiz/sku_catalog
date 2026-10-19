@@ -29,7 +29,10 @@ void main() {
     instances = catalog.instances;
     addEdge = AddSkuComponent(repository: components, skuRepository: skus);
     for (final id in ['base', 'card', 'rack']) {
-      await CreateSku(skus)(sku: sku(id)).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku(id)).run();
     }
   });
 

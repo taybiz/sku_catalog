@@ -57,7 +57,6 @@ class DuplicateInstance {
                         locateId: current.locateId,
                         all: all,
                       ),
-                      skuModelNumber: current.skuModelNumber,
                       traitIds: current.traitIds,
                       attributeValues: {
                         for (final entry in current.attributeValues.entries)

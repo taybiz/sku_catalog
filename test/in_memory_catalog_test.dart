@@ -58,9 +58,10 @@ void main() {
     await CreateTraitAttributeDefinition(catalog.attributes)(
       attribute: serializable.serialNumber,
     ).run();
-    await CreateSku(catalog.skus)(
-      sku: sku('panel', traitIds: const ['serializable']),
-    ).run();
+    await CreateSku(
+      skuRepository: catalog.skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(catalog.skus),
+    )(sku: sku('panel', traitIds: const ['serializable'])).run();
 
     final first = await catalog
         .createInstance(
