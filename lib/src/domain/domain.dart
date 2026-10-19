@@ -34,7 +34,6 @@ export 'failures/catalog_failures.dart';
 export 'value_objects/attribute_holder.dart';
 export 'value_objects/bill_of_materials.dart';
 export 'value_objects/bom_line.dart';
-export 'value_objects/report_property.dart';
 export 'value_objects/resolved_attribute.dart';
 export 'value_objects/serializable_trait.dart';
 export 'contracts/contracts.dart';

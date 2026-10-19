@@ -98,6 +98,13 @@ and association edges, `DeleteSku` takes the model's assembly edges, and both ru
 one transaction. Unlike `DeleteSku` it does **not** refuse while articles use the
 model — a copy must always be deletable, and a shared edition simply survives it.
 
+**`ReportProperty` is gone, and with it the package's only reporting vocabulary.** It
+was a label/value/unit row — the shape of a consumer's device card — with no producer
+here and one consumer outside the package, which no longer needs it. Reports are not
+this package's job (the README's "deliberately not here" list already said so), and it
+was the one file the coverage floor could not reach, since testing it would have
+blessed dead API. With its consumer gone nothing holds it and no port is owed.
+
 **The reference backend is no longer published.**
 
 - **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
@@ -117,7 +124,7 @@ model — a copy must always be deletable, and a shared edition simply survives 
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 247 passing; `dart run melos run coverage` reports 98.04% of `lib/`,
+- **Tests:** 247 passing; `dart run melos run coverage` reports 98.25% of `lib/`,
   above the 97% floor. The new edge has its own suite
   (`test/instance_association_test.dart`: direction preserved, two kinds on one
   pair as two rows, either-end fetch with a kind filter, the three refusals,
