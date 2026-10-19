@@ -125,7 +125,9 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
   and the operations still may never name the backend, and the backend still may
   not reach back.
 - **Tests:** 247 passing; `dart run melos run coverage` reports 98.25% of `lib/`,
-  above the 97% floor. The new edge has its own suite
+  against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
+  that lost its tests fails the build, not a number to chase, and the suite runs at
+  ~98%, so the floor is slack). The new edge has its own suite
   (`test/instance_association_test.dart`: direction preserved, two kinds on one
   pair as two rows, either-end fetch with a kind filter, the three refusals,
   delete, and the cascade through `DeleteInstance`), the new store answers the

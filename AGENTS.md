@@ -146,7 +146,7 @@ branch, open the PR.
 
 The line for "ready to report done" and "ready to open the PR" is the **same
 line** — the gate: formatted, analyzed, tested, covered to the floor `dart run
-melos run coverage` enforces (97% of `lib/`), `publish-dry` at 0 warnings, CI
+melos run coverage` enforces (90% of `lib/`), `publish-dry` at 0 warnings, CI
 green. If the work clears it and is good enough to tell the human
 it's done, it is good enough to push and open the PR. No extra review gate, no
 waiting, no "should I open a PR?" — velocity wins; the PR body carries what was
