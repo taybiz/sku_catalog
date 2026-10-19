@@ -5,6 +5,11 @@ import '../enums/image_owner.dart';
 /// An image file attached to a catalog entity: an [Instance], [Locate], or
 /// [Sku] (SKU).
 ///
+/// **This is the only home for an entity's images.** No entity carries an image
+/// list of its own — [owner] and [ownerId] are what the catalog queries by
+/// (`IImageRepository.fetchByOwner`, and the cascade `DeleteInstance` runs when an
+/// article goes) — so one fact has one copy and the two can never disagree.
+///
 /// Unifies the former InstanceImage/LocateImage pair into one record with an
 /// owner selector; SKU images are a new capability the original app lacked.
 class ImageRecord extends Equatable {

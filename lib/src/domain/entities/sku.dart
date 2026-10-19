@@ -23,9 +23,6 @@ class Sku extends Equatable {
   /// Ids of traits attached to this SKU.
   final List<String> traitIds;
 
-  /// Ids of images attached to this SKU.
-  final List<String> imageIds;
-
   /// Trait attribute values keyed by attribute key.
   final Map<String, dynamic> attributeValues;
 
@@ -38,7 +35,6 @@ class Sku extends Equatable {
     required this.manufacturerId,
     required this.modelNumber,
     this.traitIds = const [],
-    this.imageIds = const [],
     this.attributeValues = const {},
     this.icon,
   });
@@ -49,7 +45,6 @@ class Sku extends Equatable {
     'manufacturer_id': manufacturerId,
     'model_number': modelNumber,
     'trait_ids': traitIds,
-    'image_ids': imageIds,
     'attribute_values': attributeValues,
     'icon': icon,
   };
@@ -60,7 +55,6 @@ class Sku extends Equatable {
     manufacturerId: json['manufacturer_id'] as String? ?? '',
     modelNumber: json['model_number'] as String? ?? '',
     traitIds: stringListFromWire(value: json['trait_ids']),
-    imageIds: stringListFromWire(value: json['image_ids']),
     attributeValues: asStringMap(value: json['attribute_values']),
     icon: json['icon'] as String?,
   );
@@ -71,7 +65,6 @@ class Sku extends Equatable {
     String? manufacturerId,
     String? modelNumber,
     List<String>? traitIds,
-    List<String>? imageIds,
     Map<String, dynamic>? attributeValues,
     Object? icon = _unset,
   }) => Sku(
@@ -79,7 +72,6 @@ class Sku extends Equatable {
     manufacturerId: manufacturerId ?? this.manufacturerId,
     modelNumber: modelNumber ?? this.modelNumber,
     traitIds: traitIds ?? this.traitIds,
-    imageIds: imageIds ?? this.imageIds,
     attributeValues: attributeValues ?? this.attributeValues,
     icon: icon == _unset ? this.icon : icon as String?,
   );
@@ -92,7 +84,6 @@ class Sku extends Equatable {
     manufacturerId,
     modelNumber,
     traitIds,
-    imageIds,
     attributeValues,
     icon,
   ];

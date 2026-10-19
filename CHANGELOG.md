@@ -74,6 +74,19 @@ it, is gone.
   per-maker uniqueness is the right rule for a library too, and a `'FREE'`-style
   placeholder is the thing to replace rather than the rule to relax.
 
+**`imageIds` leaves the entities: `ImageRecord` is the only home.** `Sku`,
+`Instance` and `Locate` each carried a list of image ids while `ImageRecord` already
+named its owner (`owner`, `ownerId`) — and the owner tag is the copy the package
+queries by: `IImageRepository.fetchByOwner`, `FetchImageRecords`, and the cascade
+`DeleteInstance` runs when an article goes. Nothing in `lib/` filled or read the
+list, so the two copies could only disagree; a cover added through
+`CreateImageRecord` never appeared in the field, and an entity loaded from storage
+carried whatever the last writer put there. A consumer that read it for convenience
+(`library_scanner` counts covers with `books.where((b) => b.imageIds.isNotEmpty)`)
+gets a better answer from one `fetchAll()` grouped by `ownerId`, which cannot go
+stale. The `image_ids` wire key goes with the field; a stored record still carrying
+that key parses without it and is not written back.
+
 **The reference backend is no longer published.**
 
 - **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
@@ -93,7 +106,7 @@ it, is gone.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 241 passing; `dart run melos run coverage` reports 98.03% of `lib/`,
+- **Tests:** 242 passing; `dart run melos run coverage` reports 98.02% of `lib/`,
   above the 97% floor. The new edge has its own suite
   (`test/instance_association_test.dart`: direction preserved, two kinds on one
   pair as two rows, either-end fetch with a kind filter, the three refusals,
@@ -105,7 +118,9 @@ it, is gone.
   same number under another maker allowed, case and padding *not* the same number,
   a rename onto a taken number refused while keeping its own is allowed, a delete
   freeing the number, the copy path minting "(copy)" then "(copy 2)", and the
-  catalogue's wiring exercised as wiring).
+  catalogue's wiring exercised as wiring). `test/image_records_test.dart` pins the
+  replacement read `imageIds` was standing in for: one pass over the records answers
+  which owners have images, and it tracks a delete.
 
 ## 2.0.0
 

@@ -32,7 +32,7 @@ Why this seam is a tuple rather than a `Future` is recorded in
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
 | `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, holding the attribute values of the traits in scope for it. |
-| `ImageRecord` | A photo attached to a SKU, an instance or a place. |
+| `ImageRecord` | A photo attached to a SKU, an instance or a place — **the only home for an entity's images**; none of the three carries a list of its own. |
 
 Two ideas do most of the work:
 
