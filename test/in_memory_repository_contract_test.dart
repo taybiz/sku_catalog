@@ -130,6 +130,21 @@ void main() {
         fetchById: () => store.fetchById(id: 'gone').run(),
       );
     },
+    'InstanceAssociation': () {
+      final store = InMemoryInstanceAssociationRepository();
+      InstanceAssociation edge(String id) => InstanceAssociation(
+        meta: meta(id),
+        sourceInstanceId: 'copy-1',
+        targetInstanceId: 'copy-2',
+        kind: 'bound_with',
+      );
+      return _Contract(
+        name: 'InstanceAssociation',
+        create: () => store.create(association: edge('r1')).run(),
+        delete: () => store.delete(id: 'gone').run(),
+        fetchById: () => store.fetchById(id: 'gone').run(),
+      );
+    },
     'Locate': () {
       final store = InMemoryLocateRepository();
       Locate place(String id) => Locate(meta: meta(id), name: id);

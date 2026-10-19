@@ -217,6 +217,48 @@ void main() {
     },
   );
 
+  test(
+    'the article association repository matches either end, and filters by kind',
+    () async {
+      final repo = InMemoryInstanceAssociationRepository();
+      for (final row in [
+        (id: 'a1', source: 'copy-1', target: 'copy-2', kind: 'bound_with'),
+        (id: 'a2', source: 'copy-1', target: 'copy-3', kind: 'signed_by'),
+        (id: 'a3', source: 'copy-4', target: 'copy-2', kind: 'bound_with'),
+      ]) {
+        await repo
+            .create(
+              association: InstanceAssociation(
+                meta: meta(row.id),
+                sourceInstanceId: row.source,
+                targetInstanceId: row.target,
+                kind: row.kind,
+              ),
+            )
+            .run();
+      }
+
+      final onCopy2 = await repo.fetchByInstance(instanceId: 'copy-2').run();
+      onCopy2.getOrElse((_) => fail('expected Right')).should.haveCount(2);
+      // Only the edges that name copy-3, not its neighbours'.
+      final onCopy3 = await repo.fetchByInstance(instanceId: 'copy-3').run();
+      onCopy3.getOrElse((_) => fail('expected Right')).should.haveCount(1);
+
+      final bound = await repo
+          .fetchByInstance(instanceId: 'copy-2', kind: 'bound_with')
+          .run();
+      bound.getOrElse((_) => fail('expected Right')).should.haveCount(2);
+      (await repo
+              .fetchByInstance(instanceId: 'copy-1', kind: 'signed_by')
+              .run())
+          .getOrElse((_) => fail('expected Right'))
+          .single
+          .sourceInstanceId
+          .should
+          .be('copy-1');
+    },
+  );
+
   test('the attribute repository filters by declaring trait', () async {
     final repo = InMemoryTraitAttributeDefinitionRepository();
     await repo

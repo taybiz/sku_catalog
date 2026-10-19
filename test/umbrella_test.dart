@@ -107,6 +107,10 @@ void main() {
             repository: InMemorySkuComponentRepository(),
             skuRepository: repository,
           ),
+          AddInstanceAssociation(
+            repository: InMemoryInstanceAssociationRepository(),
+            instanceRepository: InMemoryInstanceRepository(),
+          ),
           AggregateBillOfMaterials(
             skuRepository: repository,
             skuComponentRepository: InMemorySkuComponentRepository(),
@@ -119,7 +123,7 @@ void main() {
           ),
         ];
 
-        operations.length.should.be(10);
+        operations.length.should.be(11);
       });
     });
 

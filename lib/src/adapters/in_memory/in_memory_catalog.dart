@@ -1,6 +1,7 @@
 import '../../domain/domain.dart';
 import '../../usecases/usecases.dart';
 import 'in_memory_image_repository.dart';
+import 'in_memory_instance_association_repository.dart';
 import 'in_memory_instance_repository.dart';
 import 'in_memory_locate_repository.dart';
 import 'in_memory_manufacturer_repository.dart';
@@ -15,7 +16,7 @@ import 'in_memory_unit_of_work.dart';
 /// An in-memory catalog: every store, one transaction over all of them, and the
 /// model's rules and operations wired the way a composition root would.
 ///
-/// This is the reference an implementer reads. Swap the ten stores for your own
+/// This is the reference an implementer reads. Swap the eleven stores for your own
 /// implementations of the contracts and the operations below are unchanged — they
 /// are typed against the interfaces, not against these classes.
 ///
@@ -57,6 +58,11 @@ class InMemoryCatalog {
   final InMemorySkuAssociationRepository associations =
       InMemorySkuAssociationRepository();
 
+  /// Association edges between articles — a labeled relationship between two
+  /// instances of SKUs.
+  final InMemoryInstanceAssociationRepository instanceAssociations =
+      InMemoryInstanceAssociationRepository();
+
   /// Instances — the articles of a SKU.
   final InMemoryInstanceRepository instances = InMemoryInstanceRepository();
 
@@ -80,6 +86,7 @@ class InMemoryCatalog {
     skus,
     assemblies,
     associations,
+    instanceAssociations,
     instances,
     locates,
     manufacturers,
@@ -161,10 +168,12 @@ class InMemoryCatalog {
     assertUniqueAttributeValues: uniqueValues,
   );
 
-  /// Deletes an instance and its images in one transaction.
+  /// Deletes an instance, its images and its association edges in one
+  /// transaction.
   late final DeleteInstance deleteInstance = DeleteInstance(
     instanceRepository: instances,
     imageRepository: images,
+    instanceAssociationRepository: instanceAssociations,
     unitOfWork: unitOfWork,
   );
 
@@ -182,6 +191,14 @@ class InMemoryCatalog {
     repository: assemblies,
     skuRepository: skus,
   );
+
+  /// Adds a relationship edge between two articles, refusing a self-edge, a
+  /// missing article or a blank kind.
+  late final AddInstanceAssociation addInstanceAssociation =
+      AddInstanceAssociation(
+        repository: instanceAssociations,
+        instanceRepository: instances,
+      );
 
   /// Folds an assembly tree into the parts a build needs.
   late final AggregateBillOfMaterials billOfMaterials =

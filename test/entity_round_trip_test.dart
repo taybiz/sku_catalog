@@ -157,6 +157,28 @@ void main() {
     );
   });
 
+  test('an InstanceAssociation round-trips and compares by every field', () {
+    final original = InstanceAssociation(
+      meta: meta('r1'),
+      sourceInstanceId: 'copy-1',
+      targetInstanceId: 'copy-2',
+      kind: 'bound_with',
+    );
+
+    roundTrips<InstanceAssociation>(
+      original,
+      InstanceAssociation.fromJson(original.toJson()),
+      InstanceAssociation.fromJson(
+        InstanceAssociation(
+          meta: meta('r1'),
+          sourceInstanceId: 'copy-1',
+          targetInstanceId: 'copy-2',
+          kind: 'replaced_by',
+        ).toJson(),
+      ),
+    );
+  });
+
   test('a Locate round-trips and compares by every field', () {
     final original = Locate(
       meta: meta('l1'),

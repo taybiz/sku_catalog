@@ -10,21 +10,6 @@
   remove it in the next major (breaking, which is why it is not done here) or give
   it a producer in `ResolveEffectiveAttributes`.
 
-- [ ] **The edge model has no instance endpoints.**
-  Both edge entities name a SKU on both ends — `SkuComponent(parentSkuId,
-  childSkuId, quantity)` and `SkuAssociation(sourceSkuId, targetSkuId, kind)` —
-  and an `Instance` carries only `skuId` and `locateId`. So one *article* cannot
-  be related to another article, or to a SKU, by anything except instantiating
-  the same model: two copies of one book are indistinguishable here, and a
-  replacement copy, a bound-with pair or a loan has nowhere to live. Composition
-  is decided SKU-only (AGENTS.md, "Not doing: instance composition") and stays
-  that way — an article holds no parts — but **association is the axis an article
-  is missing**. `library_scanner` is the consumer that wants it (one book, several
-  copies, and a relationship between them). Either generalize the edge endpoints
-  into a sealed node reference (`SkuRef` | `InstanceRef`) — a MAJOR, since the wire
-  keys change — or add `InstanceAssociation` with its own contract and store
-  beside `SkuAssociation`.
-
 - [ ] **`imageIds` lives on the three entities `ImageRecord` already owns.**
   `Sku`, `Instance` and `Locate` each carry `imageIds`, while `ImageRecord` names
   its owner (`owner`, `ownerId`) — and that is the copy `lib/` reads:

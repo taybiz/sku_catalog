@@ -205,6 +205,7 @@ void main() {
     final result = await DeleteInstance(
       instanceRepository: instances,
       imageRepository: images,
+      instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
     )(id: 'd1').run();
 
     result.isRight().should.beTrue();
@@ -232,6 +233,7 @@ void main() {
       await DeleteInstance(
         instanceRepository: instances,
         imageRepository: images,
+        instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
       )(id: 'd1').run();
 
       (await images.fetchAll().run()).getOrElse((_) => []).should.haveCount(1);

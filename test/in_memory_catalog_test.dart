@@ -113,6 +113,38 @@ void main() {
   });
 
   test(
+    'the catalog wired the article-level association edge end to end',
+    () async {
+      final catalog = InMemoryCatalog();
+      // Two articles of one model, associated through the composition root.
+      await catalog.skus.create(sku: sku('title')).run();
+      for (final id in ['copy-1', 'copy-2']) {
+        await catalog.instances.create(instance: article(id)).run();
+      }
+
+      final added = await catalog
+          .addInstanceAssociation(
+            sourceInstanceId: 'copy-1',
+            targetInstanceId: 'copy-2',
+            kind: 'bound_with',
+          )
+          .run();
+      added.isRight().should.beTrue();
+
+      // ...and the edge is part of the article: deleting one end takes it with it,
+      // through the catalogue's own transaction.
+      (await catalog.deleteInstance(id: 'copy-1').run())
+          .isRight()
+          .should
+          .beTrue();
+      (await catalog.instanceAssociations.fetchAll().run())
+          .getOrElse((_) => [])
+          .should
+          .beEmpty();
+    },
+  );
+
+  test(
     'the reference backend resolves attributes through its own stores',
     () async {
       final catalog = InMemoryCatalog();

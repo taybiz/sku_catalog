@@ -99,6 +99,7 @@ void main() {
       final result = await DeleteInstance(
         instanceRepository: instances,
         imageRepository: images,
+        instanceAssociationRepository: catalog.instanceAssociations,
         unitOfWork: InMemoryUnitOfWork([instances, images]),
       )(id: 'd1').run();
 

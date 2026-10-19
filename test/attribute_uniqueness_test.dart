@@ -392,6 +392,7 @@ void main() {
       await DeleteInstance(
         instanceRepository: instances,
         imageRepository: images,
+        instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
       )(id: 'i1').run();
 
       final reused = await createInstance()(
