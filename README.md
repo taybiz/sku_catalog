@@ -132,8 +132,7 @@ copy does not inherit. Deleting the holder frees its value.
 
 Nothing new to implement in a backend: the check reads through `fetchAll()` on the
 three contracts, so the contracts you already implement are enough, and the rule
-stays a use case rather than a storage feature. An adapter that wants it cheap can
-index the unique keys on its own side.
+stays a use case rather than a storage feature.
 
 ## One package
 
@@ -326,9 +325,9 @@ which is where the published package stops:
   `FetchAllSkus(catalog.skus)` is already one line.
 
 It is an example, not a promise: nothing there is durable, indexed or
-isolate-safe, and the unique-value rule *scans* five stores per write because it
-reads through `fetchAll()`. A real adapter that wants that cheap indexes the
-unique keys on its own side; the rule stays a use case.
+isolate-safe. Every write-time rule *scans* its store, because the rules call
+`fetchAll()` — a backend that wants them cheap needs a narrower contract, not an
+index of its own.
 
 ## Identity
 
