@@ -26,10 +26,3 @@
   that reaches that consumer; the alternative is a resolver that reads the value
   through `skuId` (as `ResolveInstanceSchema` reads the rest of the model).
 
-## Deviations from the Bible (flagged for review — do NOT auto-fix)
-
-A deviation is a place the code and the bible disagree; it is recorded for a
-human decision, not auto-fixed. Empty at the moment — the last one to sit here
-(the adapter rules, which a package with no adapters never owed) is a decision
-recorded in the CHANGELOG.
-
