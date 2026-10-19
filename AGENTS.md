@@ -22,17 +22,22 @@ operations with it.** Do not re-split this into sibling packages: a published
 package may not depend on a `path:`, so siblings would have to be published too —
 in dependency order, with version lockstep.
 
-The backend in this repo is a **shipped reference adapter**:
-`lib/src/adapters/in_memory/`, reachable at `package:sku_catalog/in_memory.dart`,
-published like the rest of the package and tested by its own suite
-(`test/in_memory_*_test.dart`). It is an example rather than a promise — no
-durability, no indexes, no concurrency — and it is **outside the model**: nothing
-under `lib/src/domain/` or `lib/src/usecases/` may import it, which
+The backend in this repo is a **reference adapter, and it is NOT published**:
+`lib/src/adapters/in_memory/`, reachable in a clone at
+`package:sku_catalog/in_memory.dart`, tested by its own suite
+(`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` —
+together with `lib/in_memory.dart` and `example/`, which runs on it — so the
+published package stays the model and the operations, and no consumer inherits
+someone else's storage story. (2.0.0 published it; 3.0.0 took it back out. Do not
+flip this again without a reason that survives "a domain package that ships one
+storage story makes that story look like its own".) It is an example rather than a
+promise — no durability, no indexes, no concurrency — and it is **outside the
+model**: nothing under `lib/src/domain/` or `lib/src/usecases/` may import it, which
 `test/boundary_test.dart` fails the build over, while the one-way `adapters` row in
-`test/architecture_test.dart`'s edge table keeps the dependency pointing in. Its
-tests live under `test/`, which `.pubignore` keeps out of the archive. A consumer is
-still expected to build their own backend against the contracts; this one exists so
-the contracts and the operations can be read as a running system.
+`test/architecture_test.dart`'s edge table keeps the dependency pointing in. A
+consumer is expected to build their own backend against the contracts; this one
+exists so the contracts and the operations can be read as a running system in a
+clone.
 
 ## Not doing: instance composition
 
@@ -45,6 +50,29 @@ from the catalog to express it: leave the article's `locate` unset and the host
 holds the place. The catalog does not force that on a trait name — an article with
 no place of its own simply has no place, and only the consumer knows which those
 are.
+
+## Association is at both levels, and an edge connects peers
+
+Composition is SKU-only (above); **association is not**. The model carries two edge
+entities on purpose, and which one a fact belongs to is decided by the *predicate*,
+not by taste: `SkuAssociation` for a fact of the models ("an author `edited` a
+work", "compatible with"), `InstanceAssociation` for a fact of two particular
+articles ("this copy is `bound_with` that copy", "this copy was `replaced_by` that
+one"). Stating a model fact on the articles restates it once per article owned and
+lets the copies disagree; stating an article fact on the models claims something
+about articles nobody asked about.
+
+Do not re-litigate that into one polymorphic edge. A sealed node reference
+(`SkuRef | InstanceRef`) changes every existing wire key *and* erases the
+class/token distinction exactly where the type system is the thing enforcing it,
+so the `Add*Association` operations would have to say at runtime what the types say
+now. 3.0.0 considered it and took the second entity instead.
+
+The rule both entities share: **an edge connects peers** — an article never points
+at a SKU (it points at its model through its own `skuId`), and an article is not
+its own peer. `AddInstanceAssociation` refuses a blank kind, a missing article and
+a self-edge; all three are `InvalidInputFailure`, so the sealed `DomainFailure`
+hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
 
 ## Local wiring
 
@@ -75,9 +103,10 @@ are.
 - `.pubignore` replaces this directory's `.gitignore` for pub, **applies to
   subdirectories**, and anchors any pattern containing a slash to this directory
   (`doc/api/` does not reach `sub/doc/api/`). It keeps out `AGENTS.md`,
-  `BACKLOG.md` and the whole `test/` tree; check `dart pub publish --dry-run`'s
-  file list before trusting it — stale untracked directories in a working clone get
-  published too.
+  `BACKLOG.md`, the whole `test/` tree, and the reference backend with its door and
+  its example (`lib/in_memory.dart`, `lib/src/adapters/`, `example/`); check
+  `dart pub publish --dry-run`'s file list before trusting it — stale untracked
+  directories in a working clone get published too.
 - Open items live in `BACKLOG.md`.
 
 ## Done means shipped
