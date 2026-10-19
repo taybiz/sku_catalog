@@ -1,5 +1,74 @@
 # sku_catalog changelog
 
+## 3.0.0
+
+**Breaking.** Two changes, and each is one half of the same idea: the edge model
+gains the level it was missing, and the package stops publishing storage.
+
+**An article can be related to another article.** `SkuComponent` and
+`SkuAssociation` both name a SKU on either end, so every relationship the model
+could state was a relationship of the *models*. A fact true of particular
+articles — this copy is bound with that copy, this copy was replaced by that one —
+had nowhere to live, and stating it on the models made it false for every other
+article of them.
+
+- **New:** `InstanceAssociation` (`meta`, `sourceInstanceId`, `targetInstanceId`,
+  `kind`; `source_instance_id` / `target_instance_id` / `kind` on the wire) — the
+  article-level sibling of `SkuAssociation`, with no quantity, no fold and no
+  cycle guard. The two are **axes, not alternatives**: a fact of the models
+  belongs on the SKUs, a fact of two particular articles belongs here, and neither
+  store sees the other's rows.
+- **New:** `IInstanceAssociationRepository` (`fetchAll`, `fetchByInstance`,
+  `fetchById`, `create`, `delete`) and the use cases `AddInstanceAssociation`,
+  `DeleteInstanceAssociation` and `FetchAssociationsByInstance`.
+  `AddInstanceAssociation` refuses a blank kind, a missing article and a
+  self-edge: **an edge connects peers**, and an article is not its own peer. No
+  new `DomainFailure` leaf was needed — both refusals are `InvalidInputFailure`,
+  the leaf the SKU-level edge already returns for a blank kind — so a consumer's
+  exhaustive switch over the sealed hierarchy still compiles.
+- **Changed (breaking signature):** `DeleteInstance` takes a required
+  `instanceAssociationRepository` and deletes the edges that name the article
+  along with its images, in one transaction. Deleting an article used to leave
+  rows pointing at an id nothing held; the catalog's own data is now consistent
+  with itself. References *outside* the catalog (a wiring graph, a bill of
+  materials) remain the consumer's to cascade, as before.
+- **New (reference backend):** `InMemoryInstanceAssociationRepository`, wired into
+  `InMemoryCatalog` as `instanceAssociations`, registered in its transaction and
+  exposed as `catalog.addInstanceAssociation` — a write that carries rules, so it
+  is wrapped the way `catalog.createInstance` is.
+- **Closed:** the BACKLOG item *"the edge model has no instance endpoints"*. The
+  other route it named — generalizing both endpoints into a sealed node reference
+  — was not taken: it changes every existing wire key, and it would erase the
+  class/token distinction exactly where the type system is the thing enforcing it.
+
+**The reference backend is no longer published.**
+
+- **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
+  `example/`, via `.pubignore`. The published package is the model and the
+  operations; a domain package that ships one storage story makes that story look
+  like its own. An import of `package:sku_catalog/in_memory.dart` against the
+  hosted package stops resolving — a 2.x consumer that used the reference backend
+  copies it into their own project, or keeps a `path:` dependency on a clone,
+  which is the work a consumer writing their own storage was always expected to
+  do. `example/` goes with it because the tour runs on that backend, and a
+  published example importing an unpublished path would not analyze. Everything
+  is unchanged in a clone: the suite and the tour still run on it.
+- **Reversal:** 2.0.0 shipped that backend and reversed the earlier *"the adapter
+  rules do not bind this package"* decision; this entry reverses the reversal on
+  the **publishing** question only. The one-way `adapters` row in
+  `test/architecture_test.dart`, the text tripwire in `test/boundary_test.dart`
+  and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
+  and the operations still may never name the backend, and the backend still may
+  not reach back.
+- **Tests:** 233 passing; `dart run melos run coverage` reports 97.79% of `lib/`,
+  above the 97% floor. The new edge has its own suite
+  (`test/instance_association_test.dart`: direction preserved, two kinds on one
+  pair as two rows, either-end fetch with a kind filter, the three refusals,
+  delete, and the cascade through `DeleteInstance`), the new store answers the
+  shared contract table in `test/in_memory_repository_contract_test.dart`, and
+  `test/in_memory_catalog_test.dart` proves the composition root has the edge
+  wired rather than merely available.
+
 ## 2.0.0
 
 **Breaking.** A serial number is no longer a field on `Instance` — it is a trait

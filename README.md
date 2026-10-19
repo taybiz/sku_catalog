@@ -27,7 +27,8 @@ Why this seam is a tuple rather than a `Future` is recorded in
 | `Trait` | A **classification attached to a SKU, a place or a manufacturer** — never to an instance: an article holds the *values* of the traits in scope for it. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
 | `TraitAttributeDefinition` | A **typed field** a trait contributes: `rated_amps` (number, `A`, required), `gfci` (boolean), `load_type` (enum). |
 | `SkuComponent` | An **assembly edge**: this SKU contains *n* of that SKU. |
-| `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). |
+| `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). A fact of the models. |
+| `InstanceAssociation` | A **labeled relationship edge between two articles**: this article acts *as `kind`* on that one (a copy `bound_with` its neighbour). A fact of particular articles — an edge connects peers. |
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
 | `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, holding the attribute values of the traits in scope for it. |
@@ -46,7 +47,12 @@ Two ideas do most of the work:
   of N of that", folded into a bill of materials with a cycle guard.
   `SkuAssociation` is *relationship* — "this acts as `kind` on that", a labeled,
   directed edge with no quantity and no fold, for facts that are not parts of a
-  build (an author `edited` an anthology).
+  build (an author `edited` an anthology). `InstanceAssociation` is the same
+  relation one level down, between two *articles*, for facts the models cannot
+  state at all: this copy is `bound_with` that copy, this copy was `replaced_by`
+  that one. Both edges are real and neither store sees the other's rows, and both
+  connect peers — an edge names two things of the same level, never a SKU on one
+  end and an article on the other.
 
 ## Serial numbers, and the one trait the package names
 
@@ -233,8 +239,9 @@ final bom = await AggregateBillOfMaterials(
 //   sum of both; a loop is a failure, not a number.
 ```
 
-A runnable end-to-end version — on the package's own reference backend — is in
-[`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
+A runnable end-to-end version — on the repository's own reference backend — is in
+[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart),
+which is repo-only: run it from a clone.
 
 ## Bringing your own storage
 
@@ -254,10 +261,10 @@ abstract interface class ISkuRepository {
 }
 ```
 
-**The backend is yours.** The package ships one so the contracts can be read as a
-running system — the reference in-memory adapter in the next section — but a
-consumer is expected to build their own against these contracts. It is an
-example: no durability, no indexes, no concurrency.
+**The backend is yours.** The package publishes none: a working one lives in this
+repository (the next section) so the contracts can be read as a running system,
+and a consumer is expected to build their own against these contracts. That
+reference is an example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
@@ -270,19 +277,24 @@ unchanged, so **rollback is a value, not a thrown error** — the adapter undoes
 writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
 for a store that cannot roll back.
 
-## A reference backend
+## A reference backend (in the repository)
 
-The package also ships a working in-memory backend — **the thing to copy** — so
-the contracts and the operations can be read as a running system instead of
-imagined:
+The package ships **no storage**. What it carries instead is a working in-memory
+backend in this repository — **the thing to copy** — so the contracts and the
+operations can be read as a running system instead of imagined. It is *not* in
+the published archive: `.pubignore` keeps `lib/in_memory.dart`,
+`lib/src/adapters/` and `example/` out, because a domain package that ships one
+storage story makes that story look like its own.
 
 ```yaml
 dependencies:
-  sku_catalog: ^2.0.0
+  sku_catalog: ^3.0.0        # the model and the operations
 ```
 
+In a clone of this repository, a second barrel reaches the reference backend:
+
 ```dart
-import 'package:sku_catalog/in_memory.dart';
+import 'package:sku_catalog/in_memory.dart';   // in a clone, not from pub.dev
 import 'package:sku_catalog/sku_catalog.dart';
 
 final catalog = InMemoryCatalog();
@@ -295,7 +307,9 @@ await catalog.createInstance(instance: panel).run();   // the model's rules appl
 await catalog.deleteSku(id: 'qo-16').run();            // two writes, one transaction
 ```
 
-Three things it is worth reading:
+Three things it is worth reading — in
+[`lib/src/adapters/in_memory/`](https://github.com/taybiz/sku_catalog/tree/main/lib/src/adapters/in_memory),
+which is where the published package stops:
 
 - **One `InMemoryTable<T>` per aggregate**, holding `id → toJson()` and decoding
   with `fromJson()` on every read. That is what an adapter should persist: the
@@ -351,26 +365,29 @@ topology graphs, reports, import/export bundles, and any naming convention. If
 you need one of those, compose it around this package rather than inside it.
 
 The one backend in the repository is the **reference** one
-(`package:sku_catalog/in_memory.dart`): it exists to be read and copied, and it is
-not a supported storage layer — no durability, no indexes, no concurrency.
+(`lib/in_memory.dart`, repo-only): it exists to be read and copied, and it is not
+a supported storage layer — no durability, no indexes, no concurrency.
 
 ## Layout
 
 ```
 lib/sku_catalog.dart        the front door: the model and the operations
 lib/in_memory.dart          the other door: the reference in-memory backend
+                            (repo-only — not in the published archive)
 lib/src/domain/             entities, enums, value objects, failures, contracts
 lib/src/usecases/           one file per operation
 lib/src/adapters/in_memory/ the reference backend: stores, transaction, catalogue
-example/                    a runnable tour, on the reference backend
+                            (repo-only)
+example/                    a runnable tour, on the reference backend (repo-only)
 test/                       the suite (repo-only — not published)
 ```
 
-`lib/src/` is internal — import one of the two barrels,
-`package:sku_catalog/sku_catalog.dart` for the model and its operations or
-`package:sku_catalog/in_memory.dart` for the reference backend. The model and the
-operations are one dependency and cannot be split; the adapter is a separate door
-so a consumer who writes their own storage never carries it.
+`lib/src/` is internal — import the barrel. `package:sku_catalog/sku_catalog.dart`
+is the published package: the model and its operations, one dependency, and it
+cannot be split. In a clone there is a second barrel,
+`package:sku_catalog/in_memory.dart`, for the reference backend that the suite and
+the tour run on — a consumer writing their own storage never carries it, because
+it is not in the archive.
 
 ## Working on it
 
@@ -398,8 +415,9 @@ dart pub publish
 
 One package, one version, one publish — there is no dependency order to get
 right and no sibling constraint to keep in step. Check the file list the dry run
-prints: `lib/`, `example/`, `README.md`, `CHANGELOG.md`, `LICENSE` and the
-pubspec belong there; `test/support/` does not.
+prints: the pubspec, `lib/` (minus the adapter ring and its door), `README.md`,
+`CHANGELOG.md` and `LICENSE` belong there; `test/`, `example/`,
+`lib/in_memory.dart`, `lib/src/adapters/`, `AGENTS.md` and `BACKLOG.md` do not.
 
 The package holds its structural rules in `test/boundary_test.dart`, and they fail
 the build rather than waiting for review:
@@ -408,7 +426,8 @@ the build rather than waiting for review:
   consumer's word shows up in this API, the boundary has moved without anyone
   deciding it should;
 - **the model and the operations may never reach for the adapter** — the reference
-  backend ships inside this package, so the model cannot start depending on it;
+  backend lives in this repository (outside the published archive), so the model
+  cannot start depending on it;
 - **the areas of `lib/src/` may only depend in the allowed direction** — the
   dependency table lives in that test (`domain`, `usecases`, `adapters`, each with
   the packages it may use; `adapters -> usecases -> domain` and never back), and an

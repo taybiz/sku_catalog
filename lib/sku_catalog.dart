@@ -15,8 +15,8 @@
 ///
 /// There is nothing else to pick: the model and the operations ship together.
 /// Persistence is yours — implement the repository contracts over whatever you
-/// have. (The in-memory backend in this repo is a test double, and is not part
-/// of the published package.)
+/// have. The in-memory backend in this repository is a reference to copy, and is
+/// deliberately not part of the published package.
 library;
 
 export 'src/domain/domain.dart';

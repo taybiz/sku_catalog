@@ -10,9 +10,10 @@ import 'package:test/test.dart';
 /// anyone deciding it should. This test fails the build instead of leaving it
 /// to review.
 ///
-/// The reference in-memory backend lives *inside* this package, so the old
-/// guarantee ("the doubles are unpublished, so nothing can reach them") is gone
-/// and is replaced here: the model and the operations may never name the adapter.
+/// The reference in-memory backend lives in this repository — in `lib/`, though
+/// not in the published archive — so the old guarantee ("the doubles are
+/// unpublished, so nothing can reach them") is gone and is replaced here: the
+/// model and the operations may never name the adapter.
 ///
 /// These are deliberately *text* scans: they cannot fail silently the way a
 /// resolved-graph test can if a tool stops resolving, and they catch a product

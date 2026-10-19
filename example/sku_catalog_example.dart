@@ -1,10 +1,11 @@
 // A runnable tour of the package: classify, value, assemble, place, instantiate,
 // fold.
 //
-// The storage is the package's own reference backend — `InMemoryCatalog` — so this
-// file is about the model and nothing else. A real consumer writes their own store
-// classes against the same contracts; `package:sku_catalog/in_memory.dart` is the
-// shape to copy, and swapping it in is a one-line change here.
+// The storage is this repository's reference backend — `InMemoryCatalog`, which
+// is repo-only and not in the published archive — so this file is about the model
+// and nothing else. A real consumer writes their own store classes against the
+// same contracts; `lib/src/adapters/in_memory/` is the shape to copy, and swapping
+// it in is a one-line change here.
 //
 //   dart run example/sku_catalog_example.dart
 import 'package:sku_catalog/in_memory.dart';
