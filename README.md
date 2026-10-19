@@ -268,10 +268,10 @@ reference is an example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
 domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
-it to the use cases that write more than once (`DeleteSku`,
-`DeleteInstance`) and a failure half-way through rolls back. Repositories do not
-take it: the use case that wraps the writes is the one that enrolls them, and a
-store just writes. `runEither` takes a
+it to the use cases that write more than once (`DeleteSku`, `DeleteInstance`,
+`DeleteInstanceAndUnusedSku`) and a failure half-way through rolls back.
+Repositories do not take it: the use case that wraps the writes is the one that
+enrolls them, and a store just writes. `runEither` takes a
 body that returns `Either`; a `Left` is the rollback signal and is handed back
 unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
 writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
@@ -367,6 +367,11 @@ Two deliberate consequences worth knowing:
   catalog itself stores *about* that article. If something else references instances
   — a wiring graph, a harness, a bill of materials — that is yours to cascade, and
   the use case documents it.
+- **A model that exists only for its articles goes with the last one.**
+  `DeleteInstanceAndUnusedSku` is for a book's *edition*: nobody catalogues it, its
+  copies only instantiate it, and two copies share it — so the model is removed when
+  nothing else names it, not when the first copy leaves. There is no flag for that:
+  choosing the operation is the assertion.
 
 ## What is deliberately not here
 

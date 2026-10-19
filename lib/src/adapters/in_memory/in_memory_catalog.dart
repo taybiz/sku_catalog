@@ -198,6 +198,16 @@ class InMemoryCatalog {
     unitOfWork: unitOfWork,
   );
 
+  /// Deletes an article and, when it was its model's last one, the model too —
+  /// for a model nobody catalogues, which only its articles instantiate.
+  late final DeleteInstanceAndUnusedSku deleteInstanceAndUnusedSku =
+      DeleteInstanceAndUnusedSku(
+        deleteInstance: deleteInstance,
+        deleteSku: deleteSku,
+        instanceRepository: instances,
+        unitOfWork: unitOfWork,
+      );
+
   /// Deletes a SKU and its assembly edges in one transaction, refusing while
   /// instances still use it.
   late final DeleteSku deleteSku = DeleteSku(

@@ -122,6 +122,20 @@ void main() {
             instanceRepository: InMemoryInstanceRepository(),
           ),
           AssertUniqueModelNumber(InMemorySkuRepository()),
+          DeleteInstanceAndUnusedSku(
+            deleteInstance: DeleteInstance(
+              instanceRepository: InMemoryInstanceRepository(),
+              imageRepository: InMemoryImageRepository(),
+              instanceAssociationRepository:
+                  InMemoryInstanceAssociationRepository(),
+            ),
+            deleteSku: DeleteSku(
+              skuRepository: repository,
+              instanceRepository: InMemoryInstanceRepository(),
+              skuComponentRepository: InMemorySkuComponentRepository(),
+            ),
+            instanceRepository: InMemoryInstanceRepository(),
+          ),
           AggregateBillOfMaterials(
             skuRepository: repository,
             skuComponentRepository: InMemorySkuComponentRepository(),
@@ -134,7 +148,7 @@ void main() {
           ),
         ];
 
-        operations.length.should.be(12);
+        operations.length.should.be(13);
       });
     });
 

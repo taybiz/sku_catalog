@@ -87,6 +87,17 @@ gets a better answer from one `fetchAll()` grouped by `ownerId`, which cannot go
 stale. The `image_ids` wire key goes with the field; a stored record still carrying
 that key parses without it and is not written back.
 
+**New: `DeleteInstanceAndUnusedSku` — the degenerate model.** A model that exists
+only for its articles (a book's *edition*: nobody catalogues it, its copies merely
+instantiate it) is removed with its **last** article, not the first one to leave,
+because two copies share one SKU. There is no flag for degeneracy and no trait —
+**choosing this operation is the assertion**, which keeps the fact out of storage
+where two articles of one model could disagree about it. It composes the existing
+halves instead of re-implementing them: `DeleteInstance` takes the article's images
+and association edges, `DeleteSku` takes the model's assembly edges, and both run in
+one transaction. Unlike `DeleteSku` it does **not** refuse while articles use the
+model — a copy must always be deletable, and a shared edition simply survives it.
+
 **The reference backend is no longer published.**
 
 - **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
@@ -106,7 +117,7 @@ that key parses without it and is not written back.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 242 passing; `dart run melos run coverage` reports 98.02% of `lib/`,
+- **Tests:** 247 passing; `dart run melos run coverage` reports 98.04% of `lib/`,
   above the 97% floor. The new edge has its own suite
   (`test/instance_association_test.dart`: direction preserved, two kinds on one
   pair as two rows, either-end fetch with a kind filter, the three refusals,
@@ -120,7 +131,12 @@ that key parses without it and is not written back.
   freeing the number, the copy path minting "(copy)" then "(copy 2)", and the
   catalogue's wiring exercised as wiring). `test/image_records_test.dart` pins the
   replacement read `imageIds` was standing in for: one pass over the records answers
-  which owners have images, and it tracks a delete.
+  which owners have images, and it tracks a delete. The degenerate-model rule has its
+  own suite too (`test/delete_instance_and_unused_sku_test.dart`: the model surviving
+  its first copy and going with its last, both cascades intact when it does go, a
+  shared model keeping its assembly edges while a copy leaves, other models
+  untouched), and the rule was proved discriminating by inverting it — four cases go
+  red when the model is taken early.
 
 ## 2.0.0
 

@@ -29,6 +29,7 @@ export 'create_trait.dart';
 export 'create_trait_attribute_definition.dart';
 export 'delete_image_record.dart';
 export 'delete_instance.dart';
+export 'delete_instance_and_unused_sku.dart';
 export 'delete_instance_association.dart';
 export 'delete_locate.dart';
 export 'delete_manufacturer.dart';
