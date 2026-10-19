@@ -7,11 +7,39 @@ made for itself. Do not restate bible rules below; if you need one, link it.
 
 ## Deviations from the bible
 
-**The live list lives in [`BACKLOG.md`](BACKLOG.md)**, under "Deviations from the
-Bible (flagged for review — do NOT auto-fix)": one entry per place the code and
-the doctrine disagree, each with its reasoning. They are **recorded, not
-auto-fixed** — the bible may itself be wrong, so every one is a human call. Do not
-restate the list here; a second copy is a second truth.
+One entry per place the code and the doctrine disagree, each with its reasoning.
+They are **recorded, not auto-fixed** — the bible may itself be wrong, so every one
+is a human call (bible §1.3, §10.15a). A **fixable defect** is not a deviation: it
+goes to [`BACKLOG.md`](BACKLOG.md) as a terse item to fix.
+
+### The repository contracts carry no `uow`, and no `clearAll`
+
+**Divergence:** the bible puts an optional `IUnitOfWork? uow` on every repository
+write method — reads may take one, never require it — so the seam is uniform
+(§5.5), and gives a many-store wipe one unit of work (§5.6). Here the contracts are
+**five plain methods** — `fetchAll`, `fetchById`, `create`, `update`, `delete`,
+plus the one extra fetch a store declares — with no `uow` parameter and no
+`clearAll()`. The transaction sits on the **use case** that writes more than once:
+`DeleteSku` and `DeleteInstance` take an `IUnitOfWork?` and wrap their writes in
+it.
+
+**Why:** neither was ever called. A use case that writes several times owns its own
+atomicity, so a store never had to enroll anything, and clearing a store is not a
+word this model has.
+
+**What it costs, and where the seam went:** the *adapter* keeps it. A transactional
+backend must publish its open transaction where its repositories can find it,
+because they are no longer handed one — set the active client inside `runEither`,
+clear it in its `finally`, and route **every** read through it too, or a read in an
+open transaction blocks on it. Enrollment is therefore per *use case*, not per
+write: a consumer can hand their own `IUnitOfWork` to a catalog use case
+(`DeleteInstance(unitOfWork: mine)`), but cannot take a single write of one into
+their own transaction.
+
+**Status:** deliberate, and on review. The alternative — a bible clause sanctioning
+the use-case seam — was considered and held: the estate has no second adopter, and
+it would change what every future package's contracts look like in order to settle
+one package's preference.
 
 ## One package, on purpose
 
