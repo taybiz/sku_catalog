@@ -31,13 +31,15 @@ import 'in_memory_unit_of_work.dart';
 ///   API, the only way to make it cheaper is a narrower contract
 ///   (see [AssertUniqueAttributeValues]).
 ///
-/// Deliberately *not* wrapped: the single-store use cases. `FetchAllSkus(skus)` or
-/// `CreateTrait(traits)` is already one line with the store in hand, and wrapping
-/// all of them would be a second copy of the operations ring. A single-store
-/// *write* that carries a rule is wrapped, because the rule is the point —
-/// `createLocate` and `createManufacturer` are here for the same reason
-/// `createInstance` is, and `createSku` and `updateSku` joined them when the
-/// model-number rule arrived.
+/// Deliberately *not* wrapped: the one-liners. `FetchAllSkus(skus)` or
+/// `CreateTrait(traits)` is already a single line with the store in hand, and
+/// wrapping every operation would just be a second copy of the operations ring.
+///
+/// **What is here:** every operation that takes a `UnitOfWork` — one that steps
+/// more than once, or decides a rule by reading and then writes. A transaction is a
+/// composition decision, so a transaction-taking operation is *always* something the
+/// composition root wires, and that is all fourteen of them. Add one to the package
+/// without adding it here and this file stops being the worked example.
 class InMemoryCatalog {
   /// Creates an empty in-memory catalog.
   InMemoryCatalog();
@@ -227,6 +229,17 @@ class InMemoryCatalog {
     unitOfWork: unitOfWork,
   );
 
+  /// Deletes a trait and its attribute definitions in one transaction, refusing
+  /// while it is somebody's parent or is attached to a SKU, a maker or a place.
+  late final DeleteTrait deleteTrait = DeleteTrait(
+    traitRepository: traits,
+    skuRepository: skus,
+    manufacturerRepository: manufacturers,
+    locateRepository: locates,
+    traitAttributeRepository: attributes,
+    unitOfWork: unitOfWork,
+  );
+
   /// Adds an assembly edge, refusing a cycle or a missing SKU.
   late final AddSkuComponent addSkuComponent = AddSkuComponent(
     repository: assemblies,
@@ -242,6 +255,21 @@ class InMemoryCatalog {
         instanceRepository: instances,
         unitOfWork: unitOfWork,
       );
+
+  /// Adds a relationship edge between two models, refusing a missing SKU or a blank
+  /// kind. A relationship graph may cycle, so there is no cycle guard here.
+  late final AddSkuAssociation addSkuAssociation = AddSkuAssociation(
+    repository: associations,
+    skuRepository: skus,
+    unitOfWork: unitOfWork,
+  );
+
+  /// Updates an assembly edge's quantity. The component contract has no update
+  /// path, so the row is deleted and re-created — two writes, one transaction.
+  late final UpdateSkuComponent updateSkuComponent = UpdateSkuComponent(
+    assemblies,
+    unitOfWork: unitOfWork,
+  );
 
   /// Folds an assembly tree into the parts a build needs.
   late final AggregateBillOfMaterials billOfMaterials =
