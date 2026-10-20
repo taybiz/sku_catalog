@@ -114,27 +114,24 @@ void main() {
             ),
           ),
           AddSkuComponent(
+            unitOfWork: noOpUnitOfWork,
             repository: InMemorySkuComponentRepository(),
             skuRepository: repository,
           ),
           AddInstanceAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: InMemoryInstanceAssociationRepository(),
             instanceRepository: InMemoryInstanceRepository(),
           ),
           AssertUniqueModelNumber(InMemorySkuRepository()),
           DeleteInstanceAndUnusedSku(
-            deleteInstance: DeleteInstance(
-              instanceRepository: InMemoryInstanceRepository(),
-              imageRepository: InMemoryImageRepository(),
-              instanceAssociationRepository:
-                  InMemoryInstanceAssociationRepository(),
-            ),
-            deleteSku: DeleteSku(
-              skuRepository: repository,
-              instanceRepository: InMemoryInstanceRepository(),
-              skuComponentRepository: InMemorySkuComponentRepository(),
-            ),
+            unitOfWork: noOpUnitOfWork,
             instanceRepository: InMemoryInstanceRepository(),
+            skuRepository: repository,
+            skuComponentRepository: InMemorySkuComponentRepository(),
+            imageRepository: InMemoryImageRepository(),
+            instanceAssociationRepository:
+                InMemoryInstanceAssociationRepository(),
           ),
           AggregateBillOfMaterials(
             skuRepository: repository,
@@ -142,6 +139,7 @@ void main() {
           ),
           WouldCreateAssemblyCycle(InMemorySkuComponentRepository()),
           DeleteSku(
+            unitOfWork: noOpUnitOfWork,
             skuRepository: repository,
             instanceRepository: InMemoryInstanceRepository(),
             skuComponentRepository: InMemorySkuComponentRepository(),

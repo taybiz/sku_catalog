@@ -13,12 +13,15 @@ class AddSkuAssociation {
   const AddSkuAssociation({
     required ISkuAssociationRepository repository,
     required ISkuRepository skuRepository,
+    required UnitOfWork unitOfWork,
     this.idGenerator,
   }) : _repository = repository,
-       _skuRepository = skuRepository;
+       _skuRepository = skuRepository,
+       _unitOfWork = unitOfWork;
 
   final ISkuAssociationRepository _repository;
   final ISkuRepository _skuRepository;
+  final UnitOfWork _unitOfWork;
 
   /// Mints the new edge's id; defaults to a random UUID v4 when null.
   final IdGenerator? idGenerator;
@@ -35,18 +38,23 @@ class AddSkuAssociation {
       );
     }
 
-    return _skuRepository
-        .fetchById(id: sourceSkuId)
-        .andThen(() => _skuRepository.fetchById(id: targetSkuId))
-        .flatMap(
-          (_) => _repository.create(
-            association: SkuAssociation(
-              meta: newMeta(idGenerator: idGenerator),
-              sourceSkuId: sourceSkuId,
-              targetSkuId: targetSkuId,
-              kind: kind,
-            ),
-          ),
-        );
+    return TaskEither(
+      () => _unitOfWork<DomainFailure, SkuAssociation>(
+        body: () => _skuRepository
+            .fetchById(id: sourceSkuId)
+            .andThen(() => _skuRepository.fetchById(id: targetSkuId))
+            .flatMap(
+              (_) => _repository.create(
+                association: SkuAssociation(
+                  meta: newMeta(idGenerator: idGenerator),
+                  sourceSkuId: sourceSkuId,
+                  targetSkuId: targetSkuId,
+                  kind: kind,
+                ),
+              ),
+            )
+            .run(),
+      ),
+    );
   }
 }

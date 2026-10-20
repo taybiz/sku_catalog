@@ -14,15 +14,25 @@ class CreateLocate {
   const CreateLocate({
     required ILocateRepository locateRepository,
     required AssertUniqueAttributeValues assertUniqueAttributeValues,
+    required UnitOfWork unitOfWork,
   }) : _repository = locateRepository,
-       _assertUniqueAttributeValues = assertUniqueAttributeValues;
+       _assertUniqueAttributeValues = assertUniqueAttributeValues,
+       _unitOfWork = unitOfWork;
 
   final ILocateRepository _repository;
   final AssertUniqueAttributeValues _assertUniqueAttributeValues;
+  final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
+  ///
+  /// The rule reads all three holder stores before the row lands, so the check
+  /// and the write share the unit of work.
   TaskEither<DomainFailure, Locate> call({required Locate locate}) =>
-      _assertUniqueAttributeValues(
-        holder: PlaceHolder(locate),
-      ).flatMap((_) => _repository.create(locate: locate));
+      TaskEither(
+        () => _unitOfWork<DomainFailure, Locate>(
+          body: () => _assertUniqueAttributeValues(
+            holder: PlaceHolder(locate),
+          ).flatMap((_) => _repository.create(locate: locate)).run(),
+        ),
+      );
 }

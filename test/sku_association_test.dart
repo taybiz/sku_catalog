@@ -40,6 +40,7 @@ void main() {
       )(sku: sku('anthology-1')).run();
 
       final result = await AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'a1',
@@ -76,6 +77,7 @@ void main() {
       )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'e1',
@@ -86,6 +88,7 @@ void main() {
         kind: 'edited',
       ).run();
       await AddSkuAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: associations,
             skuRepository: skus,
             idGenerator: () => 'c1',
@@ -116,6 +119,7 @@ void main() {
       )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'a1',
@@ -151,6 +155,7 @@ void main() {
 
   test('an association to a SKU that does not exist is refused', () async {
     final result = await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
     )(sourceSkuId: 'ghost', targetSkuId: 'anthology-1', kind: 'edited').run();
@@ -168,6 +173,7 @@ void main() {
     )(sku: sku('anthology-1')).run();
 
     final result = await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
     )(sourceSkuId: 'smith', targetSkuId: 'anthology-1', kind: '   ').run();
@@ -189,6 +195,7 @@ void main() {
     )(sku: sku('anthology-1')).run();
 
     await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
       idGenerator: () => 'a1',

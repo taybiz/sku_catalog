@@ -24,17 +24,35 @@ import 'delete_sku.dart';
 /// edges that name it, and [DeleteSku] takes the model's own assembly edges. So a
 /// model that nobody else references is not removed alone — everything that hung off
 /// it goes too.
+///
+/// It builds those two itself, over the stores it is handed. That is the whole
+/// reason the transaction is a **required** dependency: this operation owns the
+/// unit of work, so the pieces it composes are wired with `noOpUnitOfWork` — a
+/// piece that opened its own would nest one transaction inside another, which no
+/// store is obliged to support.
 class DeleteInstanceAndUnusedSku {
   /// Creates a [DeleteInstanceAndUnusedSku] use case.
-  const DeleteInstanceAndUnusedSku({
-    required DeleteInstance deleteInstance,
-    required DeleteSku deleteSku,
+  DeleteInstanceAndUnusedSku({
     required IInstanceRepository instanceRepository,
-    UnitOfWork? unitOfWork,
-  }) : _deleteInstance = deleteInstance,
-       _deleteSku = deleteSku,
-       _instanceRepository = instanceRepository,
-       _unitOfWork = unitOfWork ?? noOpUnitOfWork;
+    required ISkuRepository skuRepository,
+    required ISkuComponentRepository skuComponentRepository,
+    required IImageRepository imageRepository,
+    required IInstanceAssociationRepository instanceAssociationRepository,
+    required UnitOfWork unitOfWork,
+  }) : _instanceRepository = instanceRepository,
+       _unitOfWork = unitOfWork,
+       _deleteInstance = DeleteInstance(
+         instanceRepository: instanceRepository,
+         imageRepository: imageRepository,
+         instanceAssociationRepository: instanceAssociationRepository,
+         unitOfWork: noOpUnitOfWork,
+       ),
+       _deleteSku = DeleteSku(
+         skuRepository: skuRepository,
+         instanceRepository: instanceRepository,
+         skuComponentRepository: skuComponentRepository,
+         unitOfWork: noOpUnitOfWork,
+       );
 
   final DeleteInstance _deleteInstance;
   final DeleteSku _deleteSku;
@@ -42,21 +60,20 @@ class DeleteInstanceAndUnusedSku {
   final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call({required String id}) =>
-      _instanceRepository.fetchById(id: id).flatMap((article) {
+  TaskEither<DomainFailure, void> call({required String id}) => TaskEither(
+    () => _unitOfWork<DomainFailure, void>(
+      body: () => _instanceRepository.fetchById(id: id).flatMap((article) {
         return _instanceRepository.fetchAll().flatMap((all) {
           final isLastArticle = !all.any(
             (other) => other.meta.id != id && other.skuId == article.skuId,
           );
-          return TaskEither<DomainFailure, void>(
-            () => _unitOfWork<DomainFailure, void>(
-              body: () async {
-                final removed = await _deleteInstance(id: id).run();
-                if (removed.isLeft() || !isLastArticle) return removed;
-                return await _deleteSku(id: article.skuId).run();
-              },
-            ),
-          );
+          return TaskEither<DomainFailure, void>(() async {
+            final removed = await _deleteInstance(id: id).run();
+            if (removed.isLeft() || !isLastArticle) return removed;
+            return await _deleteSku(id: article.skuId).run();
+          });
         });
-      });
+      }).run(),
+    ),
+  );
 }

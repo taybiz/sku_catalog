@@ -49,12 +49,14 @@ void main() {
   );
 
   CreateInstance createInstance() => CreateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
   UpdateInstance updateInstance() => UpdateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
@@ -75,6 +77,7 @@ void main() {
     manufacturers = InMemoryManufacturerRepository();
 
     final createLocate = CreateLocate(
+      unitOfWork: noOpUnitOfWork,
       locateRepository: locates,
       assertUniqueAttributeValues: uniqueness(),
     );
@@ -211,6 +214,7 @@ void main() {
     ).run();
 
     final result = await DeleteInstance(
+      unitOfWork: noOpUnitOfWork,
       instanceRepository: instances,
       imageRepository: images,
       instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
@@ -239,6 +243,7 @@ void main() {
       ).run();
 
       await DeleteInstance(
+        unitOfWork: noOpUnitOfWork,
         instanceRepository: instances,
         imageRepository: images,
         instanceAssociationRepository: InMemoryInstanceAssociationRepository(),

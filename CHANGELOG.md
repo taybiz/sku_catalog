@@ -108,6 +108,22 @@ rollback, and still the adapter's to perform. An adapter writes a closure now,
 checked against the type where it is handed over; a class with a matching generic
 `call` still works, because a callable object is assignable to the function type.
 
+**Breaking: the transaction is a required constructor dependency, not an optional
+parameter.** `DeleteSku`, `DeleteInstance`, `DeleteInstanceAndUnusedSku`,
+`DeleteTrait`, `UpdateSkuComponent`, the six rule-carrying create/update operations
+(instance, locate, manufacturer) and the three edge writers now take
+`required UnitOfWork unitOfWork` — three of them took an optional one, the rest took
+none. The failure mode the optional form had is the reason: `DeleteInstance(id: x)`
+compiled, defaulted to `noOpUnitOfWork`, and silently meant *no transaction*, so the
+safe path was the opt-in one and a store that genuinely cannot roll back looked
+exactly like a caller who forgot. Wiring with `noOpUnitOfWork` is now a statement
+somebody makes at the composition root. Two consequences worth knowing: a
+rule-carrying write runs its **checks inside** the unit of work, so a transactional
+store sees the check and the row as one step rather than a race; and
+`DeleteInstanceAndUnusedSku` builds the two operations it composes itself, over the
+stores it is handed, so its halves run inside its one transaction instead of opening
+nested ones.
+
 **`ReportProperty` is gone, and with it the package's only reporting vocabulary.** It
 was a label/value/unit row — the shape of a consumer's device card — with no producer
 here and one consumer outside the package, which no longer needs it. Reports are not
@@ -134,7 +150,7 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 247 passing; `dart run melos run coverage` reports 98.25% of `lib/`,
+- **Tests:** 249 passing; `dart run melos run coverage` reports 98.30% of `lib/`,
   against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
   that lost its tests fails the build, not a number to chase, and the suite runs at
   ~98%, so the floor is slack). The new edge has its own suite

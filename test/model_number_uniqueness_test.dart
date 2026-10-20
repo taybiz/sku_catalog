@@ -112,6 +112,7 @@ void main() {
   test('deleting a model frees its number for the maker', () async {
     await create()(sku: sku('a')).run();
     (await DeleteSku(
+      unitOfWork: noOpUnitOfWork,
       skuRepository: skus,
       instanceRepository: InMemoryInstanceRepository(),
       skuComponentRepository: InMemorySkuComponentRepository(),

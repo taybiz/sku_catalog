@@ -14,26 +14,33 @@ goes to [`BACKLOG.md`](BACKLOG.md) as a terse item to fix.
 
 ### The repository contracts carry no `uow`, and no `clearAll`
 
-**Divergence:** the bible puts an optional `IUnitOfWork? uow` on every repository
-write method — reads may take one, never require it — so the seam is uniform
-(§5.5), and gives a many-store wipe one unit of work (§5.6). Here the contracts are
-**five plain methods** — `fetchAll`, `fetchById`, `create`, `update`, `delete`,
-plus the one extra fetch a store declares — with no `uow` parameter and no
-`clearAll()`. The transaction sits on the **use case** that writes more than once:
-`DeleteSku` and `DeleteInstance` take an `IUnitOfWork?` and wrap their writes in
-it.
+**Divergence:** the bible puts an optional `uow` (its `IUnitOfWork?`) on every
+repository write method — reads may take one, never require it — so the seam is
+uniform (§5.5), and gives a many-store wipe one unit of work (§5.6). Here the
+contracts are **five plain methods** — `fetchAll`, `fetchById`, `create`, `update`,
+`delete`, plus the one extra fetch a store declares — with no `uow` parameter and no
+`clearAll()`. The transaction sits on the **use case**, as a `UnitOfWork` (a function
+type) that the operations needing one take as a **required constructor dependency**:
+the three cascading deletes, `DeleteTrait`, `UpdateSkuComponent`, the six
+rule-carrying create/update paths and the three edge writers. There is no optional
+form and no default — a store that cannot roll back is wired with `noOpUnitOfWork` at
+the composition root, so the choice is stated rather than assumed. An operation that
+composes others owns the only transaction and wires its pieces with the no-op, so
+nothing nests.
 
-**Why:** neither was ever called. A use case that writes several times owns its own
-atomicity, so a store never had to enroll anything, and clearing a store is not a
-word this model has.
+**Why:** the optional `uow` was never called on the contracts, and the optional form
+on the use case had an unsafe shape — `DeleteInstance(id: x)` compiled, defaulted to
+a no-op and silently meant "no transaction", so the safe path was the opt-in one. A
+use case that steps more than once owns its own atomicity, so a store never had to
+enroll anything, and clearing a store is not a word this model has.
 
 **What it costs, and where the seam went:** the *adapter* keeps it. A transactional
 backend must publish its open transaction where its repositories can find it,
-because they are no longer handed one — set the active client inside `runEither`,
-clear it in its `finally`, and route **every** read through it too, or a read in an
-open transaction blocks on it. Enrollment is therefore per *use case*, not per
-write: a consumer can hand their own `IUnitOfWork` to a catalog use case
-(`DeleteInstance(unitOfWork: mine)`), but cannot take a single write of one into
+because they are no longer handed one — set the active client inside the unit of
+work, clear it in its `finally`, and route **every** read through it too, or a read
+in an open transaction blocks on it. Enrollment is therefore per *use case*, not per
+write: a consumer hands their own `UnitOfWork` to the operation they construct
+(`DeleteSku(..., unitOfWork: mine)`), but cannot take a single write of one into
 their own transaction.
 
 **Status:** deliberate, and on review. The alternative — a bible clause sanctioning

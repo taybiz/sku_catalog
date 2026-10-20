@@ -9,12 +9,15 @@ class AddSkuComponent {
   const AddSkuComponent({
     required ISkuComponentRepository repository,
     required ISkuRepository skuRepository,
+    required UnitOfWork unitOfWork,
     this.idGenerator,
   }) : _repository = repository,
-       _skuRepository = skuRepository;
+       _skuRepository = skuRepository,
+       _unitOfWork = unitOfWork;
 
   final ISkuComponentRepository _repository;
   final ISkuRepository _skuRepository;
+  final UnitOfWork _unitOfWork;
 
   /// Mints the new edge's id; defaults to a random UUID v4 when null.
   final IdGenerator? idGenerator;
@@ -25,33 +28,38 @@ class AddSkuComponent {
     required String parentSkuId,
     required String childSkuId,
     required int quantity,
-  }) => _skuRepository
-      .fetchById(id: parentSkuId)
-      .andThen(() => _skuRepository.fetchById(id: childSkuId))
-      .flatMap(
-        (_) => WouldCreateAssemblyCycle(_repository)(
-          parentSkuId: parentSkuId,
-          childSkuId: childSkuId,
-        ),
-      )
-      .flatMap((wouldCycle) {
-        if (wouldCycle) {
-          return TaskEither.left(
-            const WouldCreateCycleFailure(
-              'Adding this component would create a cycle',
+  }) => TaskEither(
+    () => _unitOfWork<DomainFailure, SkuComponent>(
+      body: () => _skuRepository
+          .fetchById(id: parentSkuId)
+          .andThen(() => _skuRepository.fetchById(id: childSkuId))
+          .flatMap(
+            (_) => WouldCreateAssemblyCycle(_repository)(
+              parentSkuId: parentSkuId,
+              childSkuId: childSkuId,
             ),
-          );
-        }
+          )
+          .flatMap((wouldCycle) {
+            if (wouldCycle) {
+              return TaskEither<DomainFailure, SkuComponent>.left(
+                const WouldCreateCycleFailure(
+                  'Adding this component would create a cycle',
+                ),
+              );
+            }
 
-        // Ids must be unique even for two edges added in the same millisecond:
-        // a timestamp is not an identifier.
-        final component = SkuComponent(
-          meta: newMeta(idGenerator: idGenerator),
-          parentSkuId: parentSkuId,
-          childSkuId: childSkuId,
-          quantity: quantity,
-        );
+            // Ids must be unique even for two edges added in the same
+            // millisecond: a timestamp is not an identifier.
+            final component = SkuComponent(
+              meta: newMeta(idGenerator: idGenerator),
+              parentSkuId: parentSkuId,
+              childSkuId: childSkuId,
+              quantity: quantity,
+            );
 
-        return _repository.create(component: component);
-      });
+            return _repository.create(component: component);
+          })
+          .run(),
+    ),
+  );
 }

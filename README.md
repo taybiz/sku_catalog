@@ -266,15 +266,23 @@ and a consumer is expected to build their own against these contracts. That
 reference is an example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
-domain. `UnitOfWork` is the transaction seam for adapters that have one — a
-function, so an adapter writes one as a closure over its client, checked where it
-is handed over. Pass it to the use cases that write more than once (`DeleteSku`,
-`DeleteInstance`, `DeleteInstanceAndUnusedSku`) and a failure half-way through
-rolls back. Repositories do not take it: the use case that wraps the writes is the
-one that enrolls them, and a store just writes. The body returns `Either`, and a
-`Left` is the rollback signal handed back unchanged, so **rollback is a value, not
-a thrown error** — the adapter undoes the writes and the domain never throws.
-`noOpUnitOfWork` is the honest implementation for a store that cannot roll back.
+domain. `UnitOfWork` is the transaction seam: a function an adapter writes as a
+closure over its client, checked where it is handed over. Its body returns
+`Either`, and a `Left` is the rollback signal handed back unchanged, so **rollback
+is a value, not a thrown error** — the adapter undoes the writes and the domain
+never throws.
+
+It is a **required constructor dependency** of every operation whose correctness
+depends on more than one store interaction being one step: the three cascading
+deletes (`DeleteSku`, `DeleteInstance`, `DeleteInstanceAndUnusedSku`), `DeleteTrait`,
+`UpdateSkuComponent`, the six rule-carrying create/update paths (instance, locate,
+manufacturer) and the three edge writers. There is no optional form and no default,
+because the optional one had an unsafe shape: `DeleteInstance(id: x)` compiled,
+defaulted to a no-op, and silently meant *no transaction*. A store that cannot roll
+back is wired with `noOpUnitOfWork` — a statement the composition root makes out
+loud. An operation that composes others owns the only transaction, and its pieces
+are wired with the no-op so nothing nests. Repositories never take it: the use case
+that wraps the writes enrolls them, and a store just writes.
 
 ## A reference backend (in the repository)
 

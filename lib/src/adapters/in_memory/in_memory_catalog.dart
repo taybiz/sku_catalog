@@ -150,6 +150,7 @@ class InMemoryCatalog {
     instanceRepository: instances,
     assertUniqueInstanceName: uniqueNames,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Updates an instance, guarded by the model's rules.
@@ -157,6 +158,7 @@ class InMemoryCatalog {
     instanceRepository: instances,
     assertUniqueInstanceName: uniqueNames,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Copies an instance: a new article, with every unique value dropped.
@@ -170,24 +172,28 @@ class InMemoryCatalog {
   late final CreateLocate createLocate = CreateLocate(
     locateRepository: locates,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Updates a place, guarded by the tree rule and the unique-value rule.
   late final UpdateLocate updateLocate = UpdateLocate(
     locateRepository: locates,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Creates a maker, guarded by the unique-value rule.
   late final CreateManufacturer createManufacturer = CreateManufacturer(
     manufacturerRepository: manufacturers,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Updates a maker, guarded by the unique-value rule.
   late final UpdateManufacturer updateManufacturer = UpdateManufacturer(
     manufacturerRepository: manufacturers,
     assertUniqueAttributeValues: uniqueValues,
+    unitOfWork: unitOfWork,
   );
 
   /// Deletes an instance, its images and its association edges in one
@@ -200,12 +206,15 @@ class InMemoryCatalog {
   );
 
   /// Deletes an article and, when it was its model's last one, the model too —
-  /// for a model nobody catalogues, which only its articles instantiate.
+  /// for a model nobody catalogues, which only its articles instantiate. It owns
+  /// one transaction over both halves.
   late final DeleteInstanceAndUnusedSku deleteInstanceAndUnusedSku =
       DeleteInstanceAndUnusedSku(
-        deleteInstance: deleteInstance,
-        deleteSku: deleteSku,
         instanceRepository: instances,
+        skuRepository: skus,
+        skuComponentRepository: assemblies,
+        imageRepository: images,
+        instanceAssociationRepository: instanceAssociations,
         unitOfWork: unitOfWork,
       );
 
@@ -222,6 +231,7 @@ class InMemoryCatalog {
   late final AddSkuComponent addSkuComponent = AddSkuComponent(
     repository: assemblies,
     skuRepository: skus,
+    unitOfWork: unitOfWork,
   );
 
   /// Adds a relationship edge between two articles, refusing a self-edge, a
@@ -230,6 +240,7 @@ class InMemoryCatalog {
       AddInstanceAssociation(
         repository: instanceAssociations,
         instanceRepository: instances,
+        unitOfWork: unitOfWork,
       );
 
   /// Folds an assembly tree into the parts a build needs.

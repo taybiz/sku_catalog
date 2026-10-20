@@ -48,6 +48,7 @@ void main() {
 
     final result =
         await AddInstanceAssociation(
+              unitOfWork: noOpUnitOfWork,
               repository: associations,
               instanceRepository: instances,
               idGenerator: () => 'a1',
@@ -77,6 +78,7 @@ void main() {
     await store(article('copy-2'));
 
     await AddInstanceAssociation(
+          unitOfWork: noOpUnitOfWork,
           repository: associations,
           instanceRepository: instances,
           idGenerator: () => 'a1',
@@ -87,6 +89,7 @@ void main() {
         )
         .run();
     await AddInstanceAssociation(
+          unitOfWork: noOpUnitOfWork,
           repository: associations,
           instanceRepository: instances,
           idGenerator: () => 'a2',
@@ -111,6 +114,7 @@ void main() {
       await store(article('copy-3'));
 
       final add = AddInstanceAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         instanceRepository: instances,
         idGenerator: () => 'a1',
@@ -121,6 +125,7 @@ void main() {
         kind: 'replaced_by',
       ).run();
       await AddInstanceAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: associations,
             instanceRepository: instances,
             idGenerator: () => 'a2',
@@ -157,6 +162,7 @@ void main() {
 
       final result =
           await AddInstanceAssociation(
+                unitOfWork: noOpUnitOfWork,
                 repository: associations,
                 instanceRepository: instances,
               )(
@@ -178,6 +184,7 @@ void main() {
 
     final result =
         await AddInstanceAssociation(
+              unitOfWork: noOpUnitOfWork,
               repository: associations,
               instanceRepository: instances,
             )(
@@ -200,6 +207,7 @@ void main() {
 
       final result =
           await AddInstanceAssociation(
+                unitOfWork: noOpUnitOfWork,
                 repository: associations,
                 instanceRepository: instances,
               )(
@@ -224,6 +232,7 @@ void main() {
       await store(article('copy-2'));
 
       await AddInstanceAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: associations,
             instanceRepository: instances,
             idGenerator: () => 'a1',
@@ -258,6 +267,7 @@ void main() {
       await store(article('copy-3'));
 
       final add = AddInstanceAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         instanceRepository: instances,
         idGenerator: () => 'a1',
@@ -268,6 +278,7 @@ void main() {
         kind: 'replaced_by',
       ).run();
       await AddInstanceAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: associations,
             instanceRepository: instances,
             idGenerator: () => 'a2',
@@ -279,6 +290,7 @@ void main() {
           .run();
 
       final result = await DeleteInstance(
+        unitOfWork: noOpUnitOfWork,
         instanceRepository: instances,
         imageRepository: InMemoryImageRepository(),
         instanceAssociationRepository: associations,

@@ -65,6 +65,7 @@ void main() {
 
   test('without a unit of work the assembly line is already gone', () async {
     final result = await DeleteSku(
+      unitOfWork: noOpUnitOfWork,
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
@@ -81,6 +82,7 @@ void main() {
     () async {
       final images = InMemoryImageRepository();
       await CreateInstance(
+            unitOfWork: noOpUnitOfWork,
             instanceRepository: instances,
             assertUniqueInstanceName: AssertUniqueInstanceName(instances),
             assertUniqueAttributeValues: catalog.uniqueValues,

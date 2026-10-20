@@ -97,6 +97,7 @@ void main() {
             )
             .run();
         await CreateInstance(
+              unitOfWork: noOpUnitOfWork,
               instanceRepository: catalog.instances,
               assertUniqueInstanceName: AssertUniqueInstanceName(
                 catalog.instances,
@@ -146,6 +147,7 @@ void main() {
           }
 
           final edge = await AddSkuComponent(
+            unitOfWork: noOpUnitOfWork,
             repository: components,
             skuRepository: skus,
             idGenerator: () => 'EDGE-1',
@@ -177,6 +179,7 @@ void main() {
 
           final updated = await UpdateSkuComponent(
             components,
+            unitOfWork: noOpUnitOfWork,
             idGenerator: () => 'EDGE-2',
           )(skuId: 'e1', quantity: 5).run();
 

@@ -27,7 +27,11 @@ void main() {
     skus = catalog.skus;
     components = catalog.assemblies;
     instances = catalog.instances;
-    addEdge = AddSkuComponent(repository: components, skuRepository: skus);
+    addEdge = AddSkuComponent(
+      repository: components,
+      skuRepository: skus,
+      unitOfWork: noOpUnitOfWork,
+    );
     for (final id in ['base', 'card', 'rack']) {
       await CreateSku(
         skuRepository: skus,
@@ -119,6 +123,7 @@ void main() {
 
   test('deleting a SKU that an instance instantiates is refused', () async {
     await CreateInstance(
+          unitOfWork: noOpUnitOfWork,
           instanceRepository: instances,
           assertUniqueInstanceName: AssertUniqueInstanceName(instances),
           assertUniqueAttributeValues: catalog.uniqueValues,
@@ -133,6 +138,7 @@ void main() {
         .run();
 
     final result = await DeleteSku(
+      unitOfWork: noOpUnitOfWork,
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
@@ -151,6 +157,7 @@ void main() {
       await addEdge(parentSkuId: 'rack', childSkuId: 'card', quantity: 8).run();
 
       final deleted = await DeleteSku(
+        unitOfWork: noOpUnitOfWork,
         skuRepository: skus,
         instanceRepository: instances,
         skuComponentRepository: components,

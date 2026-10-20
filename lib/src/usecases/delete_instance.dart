@@ -7,7 +7,8 @@ import '../domain/domain.dart';
 /// Everything the catalog itself stores *about* an article goes with it: the
 /// images it owns and both ends of any `InstanceAssociation` it is part of, so a
 /// deleted article leaves no row pointing at an id nothing holds. Three writes
-/// happen, so pass a [UnitOfWork] when your store can roll back.
+/// happen, so the transaction is a **required** dependency — a store that cannot
+/// roll back is wired with `noOpUnitOfWork` and says so at the composition root.
 ///
 /// Anything *outside* the catalog that references an instance — a wiring graph, a
 /// bill of materials, a harness — is that consumer's to cascade. Deleting
@@ -19,11 +20,11 @@ class DeleteInstance {
     required IInstanceRepository instanceRepository,
     required IImageRepository imageRepository,
     required IInstanceAssociationRepository instanceAssociationRepository,
-    UnitOfWork? unitOfWork,
+    required UnitOfWork unitOfWork,
   }) : _instanceRepository = instanceRepository,
        _imageRepository = imageRepository,
        _instanceAssociationRepository = instanceAssociationRepository,
-       _unitOfWork = unitOfWork ?? noOpUnitOfWork;
+       _unitOfWork = unitOfWork;
 
   final IInstanceRepository _instanceRepository;
   final IImageRepository _imageRepository;
@@ -31,8 +32,9 @@ class DeleteInstance {
   final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
-  TaskEither<DomainFailure, void> call({required String id}) =>
-      _imageRepository.fetchAll().flatMap((images) {
+  TaskEither<DomainFailure, void> call({required String id}) => TaskEither(
+    () => _unitOfWork<DomainFailure, void>(
+      body: () => _imageRepository.fetchAll().flatMap((images) {
         final mine = images
             .where((i) => i.owner == ImageOwner.instance && i.ownerId == id)
             .toList();
@@ -43,17 +45,15 @@ class DeleteInstance {
                     edge.sourceInstanceId == id || edge.targetInstanceId == id,
               )
               .toList();
-          return TaskEither<DomainFailure, void>(
-            () => _unitOfWork<DomainFailure, void>(
-              body: () => sequenceTaskEither(
-                tasks: [
-                  for (final img in mine) _imageRepository.delete(id: img.id),
-                  for (final edge in touching)
-                    _instanceAssociationRepository.delete(id: edge.meta.id),
-                ],
-              ).flatMap((_) => _instanceRepository.delete(id: id)).run(),
-            ),
-          );
+          return sequenceTaskEither(
+            tasks: [
+              for (final img in mine) _imageRepository.delete(id: img.id),
+              for (final edge in touching)
+                _instanceAssociationRepository.delete(id: edge.meta.id),
+            ],
+          ).flatMap((_) => _instanceRepository.delete(id: id));
         });
-      });
+      }).run(),
+    ),
+  );
 }

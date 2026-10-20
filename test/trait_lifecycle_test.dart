@@ -47,6 +47,7 @@ void main() {
   }
 
   DeleteTrait deleteTrait() => DeleteTrait(
+    unitOfWork: noOpUnitOfWork,
     traitRepository: catalog.traits,
     skuRepository: catalog.skus,
     manufacturerRepository: catalog.manufacturers,

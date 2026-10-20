@@ -53,12 +53,14 @@ void main() {
   );
 
   CreateInstance createInstance() => CreateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
   UpdateInstance updateInstance() => UpdateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
@@ -394,6 +396,7 @@ void main() {
       ).run();
 
       await DeleteInstance(
+        unitOfWork: noOpUnitOfWork,
         instanceRepository: instances,
         imageRepository: images,
         instanceAssociationRepository: InMemoryInstanceAssociationRepository(),

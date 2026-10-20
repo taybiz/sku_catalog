@@ -18,12 +18,15 @@ class AddInstanceAssociation {
   const AddInstanceAssociation({
     required IInstanceAssociationRepository repository,
     required IInstanceRepository instanceRepository,
+    required UnitOfWork unitOfWork,
     this.idGenerator,
   }) : _repository = repository,
-       _instanceRepository = instanceRepository;
+       _instanceRepository = instanceRepository,
+       _unitOfWork = unitOfWork;
 
   final IInstanceAssociationRepository _repository;
   final IInstanceRepository _instanceRepository;
+  final UnitOfWork _unitOfWork;
 
   /// Mints the new edge's id; defaults to a random UUID v4 when null.
   final IdGenerator? idGenerator;
@@ -49,18 +52,23 @@ class AddInstanceAssociation {
       );
     }
 
-    return _instanceRepository
-        .fetchById(id: sourceInstanceId)
-        .andThen(() => _instanceRepository.fetchById(id: targetInstanceId))
-        .flatMap(
-          (_) => _repository.create(
-            association: InstanceAssociation(
-              meta: newMeta(idGenerator: idGenerator),
-              sourceInstanceId: sourceInstanceId,
-              targetInstanceId: targetInstanceId,
-              kind: kind,
-            ),
-          ),
-        );
+    return TaskEither(
+      () => _unitOfWork<DomainFailure, InstanceAssociation>(
+        body: () => _instanceRepository
+            .fetchById(id: sourceInstanceId)
+            .andThen(() => _instanceRepository.fetchById(id: targetInstanceId))
+            .flatMap(
+              (_) => _repository.create(
+                association: InstanceAssociation(
+                  meta: newMeta(idGenerator: idGenerator),
+                  sourceInstanceId: sourceInstanceId,
+                  targetInstanceId: targetInstanceId,
+                  kind: kind,
+                ),
+              ),
+            )
+            .run(),
+      ),
+    );
   }
 }
