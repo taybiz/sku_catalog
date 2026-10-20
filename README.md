@@ -60,18 +60,9 @@ A serial number is not a field on `Instance`. It is an attribute value, because 
 two halves are different facts: the **model** is serializable — a trait on the SKU,
 which is why the trait is `sku`-scoped — and the **article** carries one particular
 number. The package names that pair, because the rule that comes with it is a
-catalog invariant rather than your spelling of it:
-
-```dart
-final serializable = SerializableTrait.define(
-  traitMeta: Meta(id: 'serializable', notes: '', createdAt: now, updatedAt: now),
-  attributeMeta: Meta(
-    id: 'serializable-serial_number', notes: '', createdAt: now, updatedAt: now,
-  ),
-);
-// serializable.trait        → Trait('Serializable', scope: [TraitScope.sku])
-// serializable.serialNumber → TraitAttributeDefinition('serial_number', string, isUnique: true)
-```
+catalog invariant rather than your spelling of it: `SerializableTrait.define` mints
+that pair — the trait `Serializable`, scoped to SKUs, and its one attribute
+`serial_number`, a string marked `isUnique`.
 
 `isUnique` is a flag **any** trait's attribute can carry — `serializable` is not
 special. It means *at most one **holder** in the catalog may hold a value for this
@@ -80,36 +71,17 @@ the **place** it sits at (a `Locate`) and the **maker** of its model (a
 `Manufacturer`). All four records — a SKU too — carry an `attributeValues` map;
 being a holder is about the rule, not about the field. A unique value is unique
 across all three at once, so a serial number one article holds cannot be minted by
-a place or a maker either:
+a place or a maker either.
 
-```dart
-final rule = AssertUniqueAttributeValues(
-  instanceRepository: myInstanceRepository,
-  locateRepository: myLocateRepository,
-  manufacturerRepository: myManufacturerRepository,
-  // An article's schema is its own traits plus its model's, walked up their
-  // parent chains; a place's or a maker's is the traits it carries itself.
-  resolveInstanceSchema: ResolveInstanceSchema(
-    skuRepository: mySkuRepository,
-    resolveSchema: myResolveSchema,
-  ),
-  resolveSchema: myResolveSchema,
-);
-
-final createInstance = CreateInstance(
-  instanceRepository: myInstanceRepository,
-  assertUniqueInstanceName: AssertUniqueInstanceName(myInstanceRepository),
-  assertUniqueAttributeValues: rule,
-);
-
-// The first article takes SN-0001...
-await createInstance(instance: panelWithSerial('SN-0001')).run();
-// ...so anything else claiming it is refused with a
-// DuplicateAttributeValueFailure rather than stored — a second article, a place,
-// or a maker. `CreateLocate`, `UpdateLocate`, `CreateManufacturer` and
-// `UpdateManufacturer` are guarded by the same rule, and the reference backend
-// hands all of them to you wired (`catalog.createLocate(...)`).
-```
+The rule is one object, built where your stores are. `AssertUniqueAttributeValues`
+takes the three holder repositories and two schema resolvers — an article's schema is
+its own traits plus its model's, walked up their parent chains, while a place's or a
+maker's is the traits it carries itself — and every write path that can claim a value
+takes it: `CreateInstance` and `UpdateInstance`, and the same rule guards
+`CreateLocate`, `UpdateLocate`, `CreateManufacturer` and `UpdateManufacturer`. The
+first article to take `SN-0001` gets it; anything else claiming it — a second article,
+a place, a maker — is refused with a `DuplicateAttributeValueFailure` instead of being
+stored, and the reference backend hands you all of those paths already wired.
 
 A **model** is not a holder: a value on a SKU describes the class, not one article,
 so nothing on a SKU is unique in this sense — a model *declares* that serial numbers
@@ -138,11 +110,6 @@ stays a use case rather than a storage feature.
 
 `sku_catalog` is the whole thing — the model **and** the operations:
 
-```yaml
-dependencies:
-  sku_catalog: ^1.0.0
-```
-
 ```dart
 import 'package:sku_catalog/sku_catalog.dart';
 ```
@@ -154,95 +121,30 @@ the model usable.
 
 ## Quick start
 
-```dart
-final now = DateTime.now().toUtc().toIso8601String();
-
-// A classification, and the typed field it contributes.
-final switchTrait = Trait(
-  meta: Meta(id: 'switch', notes: '', createdAt: now, updatedAt: now),
-  name: 'Switch',
-  scope: const [TraitScope.sku],
-);
-
-final ratedAmps = TraitAttributeDefinition(
-  meta: Meta(id: 'switch-rated_amps', notes: '', createdAt: now, updatedAt: now),
-  traitId: 'switch',
-  key: 'rated_amps',
-  displayLabel: 'Rated Amperage',
-  dataType: DataType.number,
-  unit: 'A',
-  isRequired: true,
-);
-
-// A SKU carrying that trait, and the value for it.
-final breaker = Sku(
-  meta: Meta(id: 'qo120', notes: '', createdAt: now, updatedAt: now),
-  manufacturerId: 'square-d',
-  modelNumber: 'QO120',
-  traitIds: const ['switch'],
-  attributeValues: const {'rated_amps': 20},
-);
-
-// A SKU assembled from other SKUs.
-final panel = Sku(
-  meta: Meta(id: 'pnl-1', notes: '', createdAt: now, updatedAt: now),
-  manufacturerId: 'square-d',
-  modelNumber: 'QO-16',
-  traitIds: const ['panel'],
-);
-
-final assembly = SkuComponent(
-  meta: Meta(id: 'pnl-1-holds-qo120', notes: '', createdAt: now, updatedAt: now),
-  parentSkuId: 'pnl-1',
-  childSkuId: 'qo120',
-  quantity: 16,
-);
-```
+There is no wiring ceremony to learn: define the traits and their typed attributes,
+build SKUs that carry them, then construct the operations over your stores. The
+runnable version is in
+[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart)
+— it implements two contracts over its own little store and wires `CreateSku`,
+`AddSkuComponent` and the rest to them, so `dart run example/sku_catalog_example.dart`
+works from the archive as well as from a clone.
 
 Resolving what can be said about a SKU is two calls: walk the trait tree, then
-merge the attribute definitions.
-
-```dart
-final attributes = await ResolveSchema(
-  traitRepository: myTraitRepository,
-  attributeRepository: myAttributeRepository,
-)(traitIds: breaker.traitIds).run();
-// attributes: [Rated Amperage (number, A, required)]
-```
+merge the attribute definitions. `ResolveSchema(traitRepository:,
+attributeRepository:)` answers for a set of traits, and `ResolveInstanceSchema` adds
+the model's own to an article's.
 
 Adding an assembly edge is guarded — it refuses a loop, and refuses edges to
-SKUs that do not exist.
-
-```dart
-await AddSkuComponent(
-  repository: mySkuComponentRepository,
-  skuRepository: mySkuRepository,
-)(
-  parentSkuId: 'pnl-1',
-  childSkuId: 'qo120',
-  quantity: 16,
-).run();
-```
+SKUs that do not exist. `AddSkuComponent(repository:, skuRepository:, unitOfWork:)`
+reads the graph the guard walks, which is why it takes the transaction.
 
 Folding an assembly into the parts a build needs is a separate operation from
 resolving attributes: resolution *merges* the layers that describe one thing,
 this *folds* the tree that builds one thing.
-
-```dart
-final bom = await AggregateBillOfMaterials(
-  skuRepository: mySkuRepository,
-  skuComponentRepository: mySkuComponentRepository,
-)(skuId: panel.meta.id, units: 12).run();
-// → one line per distinct part: quantity, level, and whether it is itself
-//   an assembly. A part reached by two paths is one line whose quantity is the
-//   sum of both; a loop is a failure, not a number.
-```
-
-A runnable end-to-end version ships with the package:
-[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart)
-implements two contracts over its own little store and wires the operations to them,
-so `dart run example/sku_catalog_example.dart` works from the archive as well as from
-a clone.
+`AggregateBillOfMaterials(skuRepository:, skuComponentRepository:)(skuId:, units:)`
+answers one line per distinct part — quantity, level, and whether the part is itself
+an assembly. A part reached by two paths is one line whose quantity is the sum of
+both, and a loop is a failure rather than a number.
 
 ## Bringing your own storage
 
@@ -301,21 +203,12 @@ dependencies:
   sku_catalog: ^3.0.0        # the model and the operations
 ```
 
-In a clone of this repository, a second barrel reaches the reference backend:
-
-```dart
-import 'package:sku_catalog/in_memory.dart';   // in a clone, not from pub.dev
-import 'package:sku_catalog/sku_catalog.dart';
-
-final catalog = InMemoryCatalog();
-
-// Every store is a contract, so it goes anywhere one is expected.
-final ISkuRepository skus = catalog.skus;
-
-// Rules and operations come wired, over those stores.
-await catalog.createInstance(instance: panel).run();   // the model's rules apply
-await catalog.deleteSku(id: 'qo-16').run();            // two writes, one transaction
-```
+In a clone of this repository, a second barrel reaches the reference backend —
+`package:sku_catalog/in_memory.dart`, and not from pub.dev, because the backend is
+not published. Every store it holds *is* a contract, so it goes anywhere one is
+expected, and the rules and operations come wired over those stores:
+`catalog.createInstance(...)` applies the model's rules, and `catalog.deleteSku(...)`
+does its two writes in one transaction.
 
 Three things it is worth reading — in
 [`lib/src/adapters/in_memory/`](https://github.com/taybiz/sku_catalog/tree/main/lib/src/adapters/in_memory),
