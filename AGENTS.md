@@ -14,41 +14,30 @@ goes to [`BACKLOG.md`](BACKLOG.md) as a terse item to fix.
 
 ### The repository contracts carry no `uow`, and no `clearAll`
 
-**Divergence:** the bible puts an optional `uow` (its `IUnitOfWork?`) on every
-repository write method — reads may take one, never require it — so the seam is
-uniform (§5.5), and gives a many-store wipe one unit of work (§5.6). Here the
-contracts are **five plain methods** — `fetchAll`, `fetchById`, `create`, `update`,
-`delete`, plus the one extra fetch a store declares — with no `uow` parameter and no
-`clearAll()`. The transaction sits on the **use case**, as a `UnitOfWork` (a function
-type) that the operations needing one take as a **required constructor dependency**:
-the three cascading deletes, `DeleteTrait`, `UpdateSkuComponent`, the six
-rule-carrying create/update paths and the three edge writers. There is no optional
-form and no default — a store that cannot roll back is wired with `noOpUnitOfWork` at
-the composition root, so the choice is stated rather than assumed. An operation that
-composes others owns the only transaction and wires its pieces with the no-op, so
-nothing nests.
+**Divergence:** the bible puts an optional `uow` on every repository write method —
+so the seam is uniform (§5.5) — and gives a many-store wipe one unit of work (§5.6).
+Here the contracts are **five plain methods** — `fetchAll`, `fetchById`, `create`,
+`update`, `delete`, plus the one extra fetch a store declares — with no `uow`
+parameter and no `clearAll()`. The transaction sits on the **use case**: a
+`UnitOfWork` (a function type) taken as a **required constructor dependency** by the
+fourteen operations that need one — the three cascading deletes, `DeleteTrait`,
+`UpdateSkuComponent`, the six rule-carrying create/update paths, the three edge
+writers. No optional form, no default: a store that cannot roll back is wired with
+`noOpUnitOfWork` at the composition root. An operation that composes others owns the
+only transaction and wires its pieces with the no-op, so nothing nests.
 
-**Why:** the optional `uow` was never called on the contracts, and the optional form
-on the use case had an unsafe shape — `DeleteInstance(id: x)` compiled, defaulted to
-a no-op and silently meant "no transaction", so the safe path was the opt-in one. A
-use case that steps more than once owns its own atomicity, so a store never had to
-enroll anything, and clearing a store is not a word this model has.
+**Why:** the contracts' optional `uow` was never called, and an optional one on a use
+case had an unsafe shape — `DeleteInstance(id: x)` compiled, defaulted to a no-op and
+silently meant "no transaction". A bible clause sanctioning the use-case seam was
+considered and left out: no second adopter.
 
-**What it costs, and where the seam went:** the *adapter* keeps it. A transactional
-backend must publish its open transaction where its repositories can find it,
-because they are no longer handed one — set the active client inside the unit of
-work, clear it in its `finally`, and route **every** read through it too: a read that
-goes to another connection does not block, it answers from the *pre-transaction*
-snapshot — silent staleness, which for a rule's check is worse than a failure, because
-nothing reports it. Enrollment is therefore per *use case*, not per
-write: a consumer hands their own `UnitOfWork` to the operation they construct
-(`DeleteSku(..., unitOfWork: mine)`), but cannot take a single write of one into
-their own transaction.
-
-**Status:** deliberate, and on review. The alternative — a bible clause sanctioning
-the use-case seam — was considered and held: the estate has no second adopter, and
-it would change what every future package's contracts look like in order to settle
-one package's preference.
+**What the adapter pays:** it keeps the seam. Publish the open transaction where the
+repositories can find it — set the active client inside the unit of work, clear it in
+a `finally`, route **every** read through it too, and treat a busy store as a unit that
+did not happen. Enrollment is per *use case*, not per write: a consumer hands their own
+`UnitOfWork` to the operation they construct, but cannot take a single write of one into
+their own transaction. The four rules an implementer has to get right are on the
+`UnitOfWork` type itself.
 
 ## One package, on purpose
 
@@ -62,48 +51,38 @@ in dependency order, with version lockstep.
 The backend in this repo is a **reference adapter, and it is NOT published**:
 `lib/src/adapters/in_memory/`, reachable in a clone at
 `package:sku_catalog/in_memory.dart`, tested by its own suite
-(`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` —
-together with `lib/in_memory.dart` and `example/`, which runs on it — so the
-published package stays the model and the operations, and no consumer inherits
-someone else's storage story. (2.0.0 published it; 3.0.0 took it back out. Do not
-flip this again without a reason that survives "a domain package that ships one
-storage story makes that story look like its own".) It is an example rather than a
-promise — no durability, no indexes, no concurrency — and it is **outside the
-model**: nothing under `lib/src/domain/` or `lib/src/usecases/` may import it, which
+(`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` — together
+with `lib/in_memory.dart` and `example/`, which runs on it. 2.0.0 shipped it and 3.0.0
+took it back out: do not flip that again without a reason that survives "a package that
+ships one storage story makes that story look like its own". It is an example, not a
+promise — no durability, no indexes, no concurrency — and it is **outside the model**:
+nothing under `lib/src/domain/` or `lib/src/usecases/` may import it, which
 `test/boundary_test.dart` fails the build over, while the one-way `adapters` row in
-`test/architecture_test.dart`'s edge table keeps the dependency pointing in. A
-consumer is expected to build their own backend against the contracts; this one
-exists so the contracts and the operations can be read as a running system in a
-clone.
+`test/architecture_test.dart`'s edge table keeps the dependency pointing in. Consumers
+build their own backend against the contracts; this one exists so the contracts and the
+operations can be read as a running system in a clone.
 
 ## Not doing: instance composition
 
-An `Instance` is one article of a SKU at one place; it owns no parts, and there is
-no `parentId` on it — do not add instance-level parentage. Composition already has
-two homes and a third would duplicate both: a SKU containing SKUs (`SkuComponent`,
-folded into a bill of materials) and a place inside a place (`Locate`). An article
-that lives inside a host is the consumer's own convention, and it needs nothing
-from the catalog to express it: leave the article's `locate` unset and the host
-holds the place. The catalog does not force that on a trait name — an article with
-no place of its own simply has no place, and only the consumer knows which those
-are.
+An `Instance` is one article of a SKU at one place: it owns no parts and carries no
+`parentId`. Do not add instance-level parentage — composition already has two homes (a
+SKU containing SKUs, `SkuComponent` into a bill of materials; a place inside a place,
+`Locate`) and a third would duplicate both. An article that lives inside a host is the
+consumer's own convention: leave the article's `locate` unset and the host holds the
+place. No trait name is forced on it — only the consumer knows which articles have no
+place of their own.
 
 ## Association is at both levels, and an edge connects peers
 
 Composition is SKU-only (above); **association is not**. The model carries two edge
-entities on purpose, and which one a fact belongs to is decided by the *predicate*,
-not by taste: `SkuAssociation` for a fact of the models ("an author `edited` a
-work", "compatible with"), `InstanceAssociation` for a fact of two particular
-articles ("this copy is `bound_with` that copy", "this copy was `replaced_by` that
-one"). Stating a model fact on the articles restates it once per article owned and
-lets the copies disagree; stating an article fact on the models claims something
-about articles nobody asked about.
-
-Do not re-litigate that into one polymorphic edge. A sealed node reference
-(`SkuRef | InstanceRef`) changes every existing wire key *and* erases the
-class/token distinction exactly where the type system is the thing enforcing it,
-so the `Add*Association` operations would have to say at runtime what the types say
-now. 3.0.0 considered it and took the second entity instead.
+entities on purpose, and the *predicate* decides which one a fact belongs to:
+`SkuAssociation` for a fact of the models ("an author `edited` a work"), and
+`InstanceAssociation` for a fact of two particular articles ("this copy is
+`bound_with` that copy"). A model fact stated on the articles is restated once per
+copy and lets the copies disagree; an article fact stated on the models claims
+something about articles nobody asked about. Do not collapse the two into one
+polymorphic edge — a sealed `SkuRef | InstanceRef` changes every wire key and erases
+the class/token distinction exactly where the type system is what enforces it.
 
 The rule both entities share: **an edge connects peers** — an article never points
 at a SKU (it points at its model through its own `skuId`), and an article is not
@@ -113,18 +92,15 @@ hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
 
 ## Local wiring
 
-- Melos workspace of one (bible §3.3 "Topology C"): the package *is* the
-  workspace root — `melos: useRootAsPackage: true` in `pubspec.yaml`, no
-  `melos.yaml`, no pub `workspace:`. The gate is five scripts, and CI calls them
-  by name so a script that rots fails the build: `dart run melos run format`,
-  `analyze`, `test`, `coverage`, `publish-dry` (after `dart pub get`; `dart run melos
-  bootstrap` once per clone, which writes `melos_<pkg>.iml` and `.idea/` — kept
-  out of git and the archive by `*.iml` / `.idea/` in `.gitignore` and `.pubignore`).
-  `coverage` runs `coverage:test_with_coverage --fail-under=90`, so the number is
-  enforced rather than asserted. **A floor is a floor, not a target** — it is where a
-  layer that lost its tests fails the build. The suite runs at ~98%, so the floor is
-  slack on most days, and ratcheting it up to chase the actual number only reds the
-  gate on noise.
+- Melos workspace of one (bible §3.3 "Topology C"): the package *is* the workspace
+  root — `melos: useRootAsPackage: true` in `pubspec.yaml`, no `melos.yaml`, no pub
+  `workspace:`. Five gate scripts, called by name in CI so one that rots fails the
+  build: `dart run melos run format`, `analyze`, `test`, `coverage`, `publish-dry`
+  (after `dart pub get`; `melos bootstrap` once per clone writes `melos_<pkg>.iml` and
+  `.idea/`, kept out of git and the archive by `*.iml` / `.idea/`). `coverage` runs
+  `coverage:test_with_coverage --fail-under=90`: a floor, not a target, so it is where a
+  layer that lost its tests fails the build. The suite runs at ~98%, so ratcheting the
+  number up only reds the gate on noise.
 - Publishing needs a **committed** tree: pub warns about modified checked-in files
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is gated three ways, deliberately. The **gate** is
@@ -150,20 +126,16 @@ hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
 
 ## Done means shipped
 
-**This package is in production: changes land through a pull request.** `main`
-takes no direct pushes — not from a human, not from an agent, not from a
-dispatched worker. The delivery path is: branch off `main`, commit, push the
-branch, open the PR.
+**Changes land through a pull request.** `main` takes no direct pushes — not from a
+human, not from an agent, not from a dispatched worker. Branch off `main`, commit, push
+the branch, open the PR.
 
-The line for "ready to report done" and "ready to open the PR" is the **same
-line** — the gate: formatted, analyzed, tested, covered to the floor `dart run
-melos run coverage` enforces (90% of `lib/`), `publish-dry` at 0 warnings, CI
-green. If the work clears it and is good enough to tell the human
-it's done, it is good enough to push and open the PR. No extra review gate, no
-waiting, no "should I open a PR?" — velocity wins; the PR body carries what was
-verified and what was left. Merge is the human's call; the branch is deleted once
-the PR lands.
+The line for "ready to report done" and "ready to open the PR" is the **same line** —
+formatted, analyzed, tested, covered to the 90% floor, `publish-dry` at 0 warnings, CI
+green. Work that clears it is good enough to push and open the PR: no extra review
+gate, no waiting, no "should I open a PR?". The PR body carries what was verified and
+what was left. Merge is the human's call; the branch is deleted once the PR lands.
 
-While a release is being assembled, the commits accumulate on one branch and land
-as a single PR — a stack of interleaved PRs is a merge-order trap, and nobody
-should have to sort one out by hand.
+While a release is being assembled, the commits accumulate on one branch and land as a
+single PR — a stack of interleaved PRs is a merge-order trap nobody should have to sort
+out by hand.
