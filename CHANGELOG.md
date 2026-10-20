@@ -304,6 +304,22 @@ the SKU), the *article* carries one particular number (a value on the instance).
   defect to fix and not a rule this repo is failing — it is a category the rule was
   never about.
 
+- **Decided:** **the write-time rules scan, and the contracts stay minimal.** Every rule —
+  `AssertUniqueInstanceName`, `AssertUniqueAttributeValues`, `AssertUniqueModelNumber`,
+  `DeleteSku`, `DeleteInstanceAndUnusedSku` — reads its whole store through `fetchAll()`.
+  A narrower contract is possible in principle: instances by locate and by model, SKUs by
+  manufacturer, and a key-scoped read for the three holder kinds. It is not taken. The
+  rules' correctness lives in the domain's own comparison — `valuesMatch` trims and folds
+  case, the name rule spans the unplaced group, and schema resolution walks each holder's
+  traits — so a contract read would fix an index shape for adapters this package does not
+  own, and both adapters in the estate are the consumers'. The cost is stated instead:
+  the README says a large catalog pays one scan per write, and a backend that wants it
+  cheap needs a narrower contract, not an index of its own. The trigger for changing that
+  is a real adapter at a real scale — the read *it* turns out to need is what shapes the
+  contract, in a MAJOR, because adding a method to a contract breaks every implementer.
+  The same reasoning settles the wipe: a consumer's `ClearLibrary` loops the contracts
+  inside one unit of work, and §5.6 puts that unit on the operation, not on the store.
+
 - **Decided:** **no bundle import/export in the package either.** A slug-stable
   export and idempotent re-import of a whole catalog — stable ids, referential
   integrity — is a storage story, and this package holds no storage, so it holds
