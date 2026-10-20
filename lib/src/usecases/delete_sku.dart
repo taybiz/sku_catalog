@@ -13,16 +13,16 @@ class DeleteSku {
     required ISkuRepository skuRepository,
     required IInstanceRepository instanceRepository,
     required ISkuComponentRepository skuComponentRepository,
-    IUnitOfWork? unitOfWork,
+    UnitOfWork? unitOfWork,
   }) : _skuRepository = skuRepository,
        _instanceRepository = instanceRepository,
        _skuComponentRepository = skuComponentRepository,
-       _unitOfWork = unitOfWork ?? const NoOpUnitOfWork();
+       _unitOfWork = unitOfWork ?? noOpUnitOfWork;
 
   final ISkuRepository _skuRepository;
   final IInstanceRepository _instanceRepository;
   final ISkuComponentRepository _skuComponentRepository;
-  final IUnitOfWork _unitOfWork;
+  final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) =>
@@ -37,10 +37,10 @@ class DeleteSku {
               .where((c) => c.parentSkuId == id || c.childSkuId == id)
               .toList();
           // TaskEither's raw constructor takes an async Either, which is what
-          // runEither produces. TaskEither.tryCatch would take the Either as a
-          // *success* value and hand back Right(Left(...)).
+          // the unit of work produces. TaskEither.tryCatch would take that
+          // Either as a *success* value and hand back Right(Left(...)).
           return TaskEither<DomainFailure, void>(
-            () => _unitOfWork.runEither<DomainFailure, void>(
+            () => _unitOfWork<DomainFailure, void>(
               body: () => sequenceTaskEither(
                 tasks: [
                   for (final c in touching)

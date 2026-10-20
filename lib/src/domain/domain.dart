@@ -44,7 +44,6 @@ export 'contracts/image_repository.dart';
 export 'contracts/locate_repository.dart';
 export 'contracts/manufacturer_repository.dart';
 export 'contracts/meta_repository.dart';
-export 'contracts/no_op_unit_of_work.dart';
 export 'contracts/sku_association_repository.dart';
 export 'contracts/sku_component_repository.dart';
 export 'contracts/trait_attribute_definition_repository.dart';

@@ -28,9 +28,9 @@ void main() {
     final skus = InMemorySkuRepository();
     final locates = InMemoryLocateRepository();
     await skus.create(sku: sku('a')).run();
-    final uow = InMemoryUnitOfWork([skus, locates]);
+    final uow = inMemoryUnitOfWork([skus, locates]);
 
-    final result = await uow.runEither<DomainFailure, void>(
+    final result = await uow<DomainFailure, void>(
       body: () async {
         await skus.create(sku: sku('b')).run();
         await locates
@@ -47,12 +47,12 @@ void main() {
     (await locates.fetchAll().run()).getOrElse((_) => []).should.beEmpty();
   });
 
-  test('runEither rolls back on a Left and returns the failure', () async {
+  test('a Left body rolls back and returns the failure', () async {
     final skus = InMemorySkuRepository();
     await skus.create(sku: sku('a')).run();
-    final uow = InMemoryUnitOfWork([skus]);
+    final uow = inMemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(
+    final result = await uow<DomainFailure, void>(
       body: () async {
         await skus.create(sku: sku('b')).run();
         return const Left<DomainFailure, void>(InUseFailure('refused'));
@@ -69,9 +69,9 @@ void main() {
 
   test('a successful body commits', () async {
     final skus = InMemorySkuRepository();
-    final uow = InMemoryUnitOfWork([skus]);
+    final uow = inMemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(
+    final result = await uow<DomainFailure, void>(
       body: () async {
         await skus.create(sku: sku('a')).run();
         return const Right<DomainFailure, void>(null);
@@ -85,9 +85,9 @@ void main() {
   test('a store that is not registered is left alone', () async {
     final skus = InMemorySkuRepository();
     final others = InMemoryLocateRepository();
-    final uow = InMemoryUnitOfWork([skus]);
+    final uow = inMemoryUnitOfWork([skus]);
 
-    final result = await uow.runEither<DomainFailure, void>(
+    final result = await uow<DomainFailure, void>(
       body: () async {
         await others
             .create(

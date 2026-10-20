@@ -7,7 +7,7 @@ import '../domain/domain.dart';
 /// Everything the catalog itself stores *about* an article goes with it: the
 /// images it owns and both ends of any `InstanceAssociation` it is part of, so a
 /// deleted article leaves no row pointing at an id nothing holds. Three writes
-/// happen, so pass a [unitOfWork] when your store can roll back.
+/// happen, so pass a [UnitOfWork] when your store can roll back.
 ///
 /// Anything *outside* the catalog that references an instance — a wiring graph, a
 /// bill of materials, a harness — is that consumer's to cascade. Deleting
@@ -19,16 +19,16 @@ class DeleteInstance {
     required IInstanceRepository instanceRepository,
     required IImageRepository imageRepository,
     required IInstanceAssociationRepository instanceAssociationRepository,
-    IUnitOfWork? unitOfWork,
+    UnitOfWork? unitOfWork,
   }) : _instanceRepository = instanceRepository,
        _imageRepository = imageRepository,
        _instanceAssociationRepository = instanceAssociationRepository,
-       _unitOfWork = unitOfWork ?? const NoOpUnitOfWork();
+       _unitOfWork = unitOfWork ?? noOpUnitOfWork;
 
   final IInstanceRepository _instanceRepository;
   final IImageRepository _imageRepository;
   final IInstanceAssociationRepository _instanceAssociationRepository;
-  final IUnitOfWork _unitOfWork;
+  final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) =>
@@ -44,7 +44,7 @@ class DeleteInstance {
               )
               .toList();
           return TaskEither<DomainFailure, void>(
-            () => _unitOfWork.runEither<DomainFailure, void>(
+            () => _unitOfWork<DomainFailure, void>(
               body: () => sequenceTaskEither(
                 tasks: [
                   for (final img in mine) _imageRepository.delete(id: img.id),

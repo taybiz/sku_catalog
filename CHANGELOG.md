@@ -98,6 +98,16 @@ and association edges, `DeleteSku` takes the model's assembly edges, and both ru
 one transaction. Unlike `DeleteSku` it does **not** refuse while articles use the
 model — a copy must always be deletable, and a shared edition simply survives it.
 
+**Breaking: `IUnitOfWork` is `UnitOfWork` now, and it is a function type.** One
+method was all it ever had, so the class was ceremony. `runEither({body})` is now
+just calling the value — `typedef UnitOfWork = Future<Either<F, T>> Function<F, T>({
+required Future<Either<F, T>> Function() body })`. `noOpUnitOfWork` is the default,
+and the reference backend is `inMemoryUnitOfWork(tables)`, a closure over the tables
+it was built with. Nothing about the transaction moved: a `Left` body is still the
+rollback, and still the adapter's to perform. An adapter writes a closure now,
+checked against the type where it is handed over; a class with a matching generic
+`call` still works, because a callable object is assignable to the function type.
+
 **`ReportProperty` is gone, and with it the package's only reporting vocabulary.** It
 was a label/value/unit row — the shape of a consumer's device card — with no producer
 here and one consumer outside the package, which no longer needs it. Reports are not

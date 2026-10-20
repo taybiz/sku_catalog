@@ -3,8 +3,9 @@ import 'package:fpdart/fpdart.dart';
 import '../../domain/domain.dart';
 import 'in_memory_table.dart';
 
-/// A real transaction over in-memory tables: every table it was built over is
-/// snapshotted before the body runs and put back when the body returns a `Left`.
+/// A real transaction over in-memory tables, as a [UnitOfWork]: every table it
+/// was built over is snapshotted before the body runs and put back when the body
+/// answers `Left`.
 ///
 /// This is what makes a multi-write use case atomic without a database — pair it
 /// with `DeleteSku` or `DeleteInstance`. Register every table the operation
@@ -14,19 +15,11 @@ import 'in_memory_table.dart';
 ///
 /// Nothing here is durable and nothing is locked: it is the smallest thing that
 /// makes a two-write operation testable, and the shape a real adapter replaces.
-class InMemoryUnitOfWork implements IUnitOfWork {
-  /// Creates a unit of work over [tables].
-  InMemoryUnitOfWork(Iterable<InMemoryRowSource> tables)
-    : _tables = List<InMemoryRowSource>.unmodifiable(tables);
-
-  final List<InMemoryRowSource> _tables;
-
-  @override
-  Future<Either<F, T>> runEither<F, T>({
-    required Future<Either<F, T>> Function() body,
-  }) async {
+UnitOfWork inMemoryUnitOfWork(Iterable<InMemoryRowSource> tables) {
+  final registered = List<InMemoryRowSource>.unmodifiable(tables);
+  return <F, T>({required Future<Either<F, T>> Function() body}) async {
     final snapshots = <InMemoryRowSource, Map<String, Map<String, dynamic>>>{
-      for (final table in _tables) table: table.snapshot(),
+      for (final table in registered) table: table.snapshot(),
     };
     final result = await body();
     if (result.isLeft()) {
@@ -35,5 +28,5 @@ class InMemoryUnitOfWork implements IUnitOfWork {
       }
     }
     return result;
-  }
+  };
 }

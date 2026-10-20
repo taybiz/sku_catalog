@@ -82,7 +82,7 @@ class InMemoryCatalog {
   final InMemoryMetaRepository meta = InMemoryMetaRepository();
 
   /// A transaction over every table above, for the use cases that write twice.
-  late final InMemoryUnitOfWork unitOfWork = InMemoryUnitOfWork([
+  late final UnitOfWork unitOfWork = inMemoryUnitOfWork([
     traits,
     attributes,
     skus,

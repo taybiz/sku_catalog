@@ -266,15 +266,15 @@ and a consumer is expected to build their own against these contracts. That
 reference is an example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
-domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
-it to the use cases that write more than once (`DeleteSku`, `DeleteInstance`,
-`DeleteInstanceAndUnusedSku`) and a failure half-way through rolls back.
-Repositories do not take it: the use case that wraps the writes is the one that
-enrolls them, and a store just writes. `runEither` takes a
-body that returns `Either`; a `Left` is the rollback signal and is handed back
-unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
-writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
-for a store that cannot roll back.
+domain. `UnitOfWork` is the transaction seam for adapters that have one — a
+function, so an adapter writes one as a closure over its client, checked where it
+is handed over. Pass it to the use cases that write more than once (`DeleteSku`,
+`DeleteInstance`, `DeleteInstanceAndUnusedSku`) and a failure half-way through
+rolls back. Repositories do not take it: the use case that wraps the writes is the
+one that enrolls them, and a store just writes. The body returns `Either`, and a
+`Left` is the rollback signal handed back unchanged, so **rollback is a value, not
+a thrown error** — the adapter undoes the writes and the domain never throws.
+`noOpUnitOfWork` is the honest implementation for a store that cannot roll back.
 
 ## A reference backend (in the repository)
 
@@ -314,10 +314,10 @@ which is where the published package stops:
   with `fromJson()` on every read. That is what an adapter should persist: the
   wire form the model round-trips, so a record written before a field existed
   still parses.
-- **`InMemoryUnitOfWork`** takes the stores and rolls them back by snapshot when a
-  body returns a `Left`; `catalog.unitOfWork` is one built over *every* table the
-  catalog holds, which is how a multi-write operation stops depending on someone
-  remembering to register a store.
+- **`inMemoryUnitOfWork`** takes the stores and returns a `UnitOfWork` that rolls
+  them back by snapshot when a body answers `Left`; `catalog.unitOfWork` is one
+  built over *every* table the catalog holds, which is how a multi-write operation
+  stops depending on someone remembering to register a store.
 - **`InMemoryCatalog` is a composition root**: it holds the stores, the
   transaction, the schema resolvers and the operations that need more than one
   store, so `catalog.createInstance(...)` is a write with the model's rules

@@ -56,7 +56,7 @@ void main() {
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
-      unitOfWork: InMemoryUnitOfWork([skus, components]),
+      unitOfWork: inMemoryUnitOfWork([skus, components]),
     )(id: 'card').run();
 
     result.isLeft().should.beTrue();
@@ -108,7 +108,7 @@ void main() {
         instanceRepository: instances,
         imageRepository: images,
         instanceAssociationRepository: catalog.instanceAssociations,
-        unitOfWork: InMemoryUnitOfWork([instances, images]),
+        unitOfWork: inMemoryUnitOfWork([instances, images]),
       )(id: 'd1').run();
 
       result.isRight().should.beTrue();

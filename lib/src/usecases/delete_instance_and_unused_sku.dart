@@ -30,16 +30,16 @@ class DeleteInstanceAndUnusedSku {
     required DeleteInstance deleteInstance,
     required DeleteSku deleteSku,
     required IInstanceRepository instanceRepository,
-    IUnitOfWork? unitOfWork,
+    UnitOfWork? unitOfWork,
   }) : _deleteInstance = deleteInstance,
        _deleteSku = deleteSku,
        _instanceRepository = instanceRepository,
-       _unitOfWork = unitOfWork ?? const NoOpUnitOfWork();
+       _unitOfWork = unitOfWork ?? noOpUnitOfWork;
 
   final DeleteInstance _deleteInstance;
   final DeleteSku _deleteSku;
   final IInstanceRepository _instanceRepository;
-  final IUnitOfWork _unitOfWork;
+  final UnitOfWork _unitOfWork;
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) =>
@@ -49,7 +49,7 @@ class DeleteInstanceAndUnusedSku {
             (other) => other.meta.id != id && other.skuId == article.skuId,
           );
           return TaskEither<DomainFailure, void>(
-            () => _unitOfWork.runEither<DomainFailure, void>(
+            () => _unitOfWork<DomainFailure, void>(
               body: () async {
                 final removed = await _deleteInstance(id: id).run();
                 if (removed.isLeft() || !isLastArticle) return removed;
