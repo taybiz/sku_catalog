@@ -7,12 +7,9 @@ made for itself. Do not restate bible rules below; if you need one, link it.
 
 ## Deviations from the bible
 
-**None.** The one this repo carried — the transaction seam on the operation rather than
-an optional `uow` on the repository contracts — was amended into the bible and merged:
-§5.5 states the seam now, and §5.6 carries the adapter's side of it. Record a new entry
-here for each place the code and the doctrine disagree, each with its reasoning — a
-deviation is a human call, recorded and not auto-fixed, because the bible may itself be
-wrong.
+**None.** Record a new entry here for each place the code and the doctrine disagree,
+with its reasoning — a deviation is a human call, recorded and not auto-fixed, because
+the bible may itself be wrong.
 
 ## One package, on purpose
 

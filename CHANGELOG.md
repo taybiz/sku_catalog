@@ -329,21 +329,17 @@ dangling. `test/narrow_reads_test.dart` holds the whole thing — each spy is th
 reference store with `fetchAll()` answering a failure, so a rule that quietly goes back
 to scanning fails the suite instead of merely getting slower.
 
-- **Decided:** **the rules read what they need; the attribute family still scans.**
-  Five reads joined the contracts so that a rule stops costing a whole-store scan: one
-  locate group (`fetchByLocate`, nullable because the unplaced group is a group), one
-  maker's models (`fetchByManufacturer`), one model's articles (`fetchBySku`) and a
-  place's direct children (`fetchByParentLocate`) — plus the three reads the cascades
-  had been ignoring (`fetchByOwner`, `fetchByInstance`, `fetchByLocate`). What is *not*
-  taken is the attribute family: `AssertUniqueAttributeValues` asks which holders hold
-  any value under a key — articles, places and makers — and `DeleteTrait` asks who
-  carries a trait id. Both need an index the contract would have to describe, while the
-  comparison they serve lives in the domain (`valuesMatch` trims and folds case), and
-  no consumer is near the scale where it matters. The trigger for revisiting is a real
-  adapter at a real scale: the read *it* turns out to need is what shapes the contract,
-  in a MAJOR, because adding a method to a contract breaks every implementer. The same
-  reasoning settles the wipe: a consumer's `ClearLibrary` loops the contracts inside one
-  unit of work, and §5.6 puts that unit on the operation, not on the store.
+- **Decided:** **the rules read what they need; the attribute family still scans.** The
+  reads the rules were missing are in the contracts now — the entry above names them.
+  What is *not* taken is the attribute family: `AssertUniqueAttributeValues` asks which
+  holders hold any value under a key — articles, places and makers — and `DeleteTrait`
+  asks who carries a trait id. Both need an index the contract would have to describe,
+  while the comparison they serve lives in the domain (`valuesMatch` trims and folds
+  case), and no consumer is near the scale where it matters. The trigger for revisiting
+  is a real adapter at a real scale: the read *it* turns out to need is what shapes the
+  contract, in a MAJOR. The same reasoning settles the wipe — a consumer's `ClearLibrary`
+  loops the contracts inside one unit of work, and §5.6 puts that unit on the operation,
+  not the store.
 
 - **Decided:** **no bundle import/export in the package either.** A slug-stable
   export and idempotent re-import of a whole catalog — stable ids, referential
