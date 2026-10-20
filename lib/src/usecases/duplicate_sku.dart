@@ -21,16 +21,18 @@ class DuplicateSku {
   TaskEither<DomainFailure, Sku> call({required String id}) => _skuRepository
       .fetchById(id: id)
       .flatMap(
-        (current) => _skuRepository.fetchAll().flatMap((all) {
-          final copy = current.copyWith(
-            meta: newMeta(idGenerator: idGenerator),
-            modelNumber: uniqueCopyModelNumber(
-              baseNumber: current.modelNumber,
-              manufacturerId: current.manufacturerId,
-              all: all,
-            ),
-          );
-          return _skuRepository.create(sku: copy);
-        }),
+        (current) => _skuRepository
+            .fetchByManufacturer(manufacturerId: current.manufacturerId)
+            .flatMap((all) {
+              final copy = current.copyWith(
+                meta: newMeta(idGenerator: idGenerator),
+                modelNumber: uniqueCopyModelNumber(
+                  baseNumber: current.modelNumber,
+                  manufacturerId: current.manufacturerId,
+                  all: all,
+                ),
+              );
+              return _skuRepository.create(sku: copy);
+            }),
       );
 }

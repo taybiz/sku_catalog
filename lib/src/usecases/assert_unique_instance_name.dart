@@ -19,7 +19,7 @@ class AssertUniqueInstanceName {
     required String name,
     required String? locateId,
     String? excludeId,
-  }) => _repository.fetchAll().flatMap((all) {
+  }) => _repository.fetchByLocate(locateId: locateId).flatMap((all) {
     final clash = all.any(
       (instance) =>
           instance.meta.id != excludeId &&

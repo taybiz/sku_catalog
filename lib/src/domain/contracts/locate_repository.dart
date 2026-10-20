@@ -8,6 +8,11 @@ abstract interface class ILocateRepository {
   /// Fetch all locates.
   TaskEither<DomainFailure, List<Locate>> fetchAll();
 
+  /// Fetch the places directly inside a place; `null` is the top level.
+  TaskEither<DomainFailure, List<Locate>> fetchByParentLocate({
+    required String? parentLocateId,
+  });
+
   /// Fetch a single locate by id.
   TaskEither<DomainFailure, Locate> fetchById({required String id});
 

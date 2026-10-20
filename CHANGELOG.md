@@ -162,7 +162,7 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 256 passing; `dart run melos run coverage` reports 98.46% of `lib/`,
+- **Tests:** 263 passing; `dart run melos run coverage` reports 98.54% of `lib/`,
   against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
   that lost its tests fails the build, not a number to chase, and the suite runs at
   ~98%, so the floor is slack). The new edge has its own suite
@@ -304,21 +304,35 @@ the SKU), the *article* carries one particular number (a value on the instance).
   defect to fix and not a rule this repo is failing — it is a category the rule was
   never about.
 
-- **Decided:** **the write-time rules scan, and the contracts stay minimal.** Every rule —
-  `AssertUniqueInstanceName`, `AssertUniqueAttributeValues`, `AssertUniqueModelNumber`,
-  `DeleteSku`, `DeleteInstanceAndUnusedSku` — reads its whole store through `fetchAll()`.
-  A narrower contract is possible in principle: instances by locate and by model, SKUs by
-  manufacturer, and a key-scoped read for the three holder kinds. It is not taken. The
-  rules' correctness lives in the domain's own comparison — `valuesMatch` trims and folds
-  case, the name rule spans the unplaced group, and schema resolution walks each holder's
-  traits — so a contract read would fix an index shape for adapters this package does not
-  own, and both adapters in the estate are the consumers'. The cost is stated instead:
-  the README says a large catalog pays one scan per write, and a backend that wants it
-  cheap needs a narrower contract, not an index of its own. The trigger for changing that
-  is a real adapter at a real scale — the read *it* turns out to need is what shapes the
-  contract, in a MAJOR, because adding a method to a contract breaks every implementer.
-  The same reasoning settles the wipe: a consumer's `ClearLibrary` loops the contracts
-  inside one unit of work, and §5.6 puts that unit on the operation, not on the store.
+**Breaking: the contracts carry the reads the rules actually need.** Five joined them —
+`ISkuRepository.fetchByManufacturer`, `IInstanceRepository.fetchBySku`,
+`ILocateRepository.fetchByParentLocate`, and `IInstanceRepository.fetchByLocate` taking
+a **nullable** `locateId`, because the unplaced group is a group. Every adapter author
+implements them. In exchange, the per-locate name rule reads one locate group, the
+model-number rule reads one maker's models, `DeleteSku` and `DeleteInstanceAndUnusedSku`
+read one model's articles, and `DeleteInstance` and `DeleteLocate` stop scanning past
+reads their stores already had (`fetchByOwner`, `fetchByInstance`, `fetchByLocate`).
+`DeleteSku` keeps its component scan on purpose: `ISkuComponentRepository.fetchBySku`
+answers for the parent side only, and a row naming the SKU as its child would be left
+dangling. `test/narrow_reads_test.dart` holds the whole thing — each spy is the
+reference store with `fetchAll()` answering a failure, so a rule that quietly goes back
+to scanning fails the suite instead of merely getting slower.
+
+- **Decided:** **the rules read what they need; the attribute family still scans.**
+  Five reads joined the contracts so that a rule stops costing a whole-store scan: one
+  locate group (`fetchByLocate`, nullable because the unplaced group is a group), one
+  maker's models (`fetchByManufacturer`), one model's articles (`fetchBySku`) and a
+  place's direct children (`fetchByParentLocate`) — plus the three reads the cascades
+  had been ignoring (`fetchByOwner`, `fetchByInstance`, `fetchByLocate`). What is *not*
+  taken is the attribute family: `AssertUniqueAttributeValues` asks which holders hold
+  any value under a key — articles, places and makers — and `DeleteTrait` asks who
+  carries a trait id. Both need an index the contract would have to describe, while the
+  comparison they serve lives in the domain (`valuesMatch` trims and folds case), and
+  no consumer is near the scale where it matters. The trigger for revisiting is a real
+  adapter at a real scale: the read *it* turns out to need is what shapes the contract,
+  in a MAJOR, because adding a method to a contract breaks every implementer. The same
+  reasoning settles the wipe: a consumer's `ClearLibrary` loops the contracts inside one
+  unit of work, and §5.6 puts that unit on the operation, not on the store.
 
 - **Decided:** **no bundle import/export in the package either.** A slug-stable
   export and idempotent re-import of a whole catalog — stable ids, referential

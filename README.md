@@ -157,6 +157,9 @@ pass them in; the next section is a working one to copy.
 ```dart
 abstract interface class ISkuRepository {
   TaskEither<DomainFailure, List<Sku>> fetchAll();
+  TaskEither<DomainFailure, List<Sku>> fetchByManufacturer({
+    required String manufacturerId,
+  });
   TaskEither<DomainFailure, Sku> fetchById({required String id});
   TaskEither<DomainFailure, Sku> create({required Sku sku});
   TaskEither<DomainFailure, Sku> update({required Sku sku});
@@ -229,9 +232,9 @@ which is where the published package stops:
   `FetchAllSkus(catalog.skus)` is already one line.
 
 It is an example, not a promise: nothing there is durable, indexed or
-isolate-safe. Every write-time rule *scans* its store, because the rules call
-`fetchAll()` — a backend that wants them cheap needs a narrower contract, not an
-index of its own.
+isolate-safe. The rules read what they need — one locate group, one maker's models,
+one model's articles — but the unique-value rule reads every holder, which is the
+read a backend has to serve cheaply if a catalog ever grows that far.
 
 ## Identity
 

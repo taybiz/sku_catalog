@@ -28,6 +28,16 @@ class InMemoryLocateRepository
       TaskEither.of(table.all());
 
   @override
+  TaskEither<DomainFailure, List<Locate>> fetchByParentLocate({
+    required String? parentLocateId,
+  }) => TaskEither.of(
+    table
+        .all()
+        .where((locate) => locate.parentLocateId == parentLocateId)
+        .toList(),
+  );
+
+  @override
   TaskEither<DomainFailure, Locate> fetchById({required String id}) {
     final found = table.find(id);
     if (found == null) {

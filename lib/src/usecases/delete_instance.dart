@@ -34,26 +34,23 @@ class DeleteInstance {
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) => TaskEither(
     () => _unitOfWork<DomainFailure, void>(
-      body: () => _imageRepository.fetchAll().flatMap((images) {
-        final mine = images
-            .where((i) => i.owner == ImageOwner.instance && i.ownerId == id)
-            .toList();
-        return _instanceAssociationRepository.fetchAll().flatMap((edges) {
-          final touching = edges
-              .where(
-                (edge) =>
-                    edge.sourceInstanceId == id || edge.targetInstanceId == id,
-              )
-              .toList();
-          return sequenceTaskEither(
-            tasks: [
-              for (final img in mine) _imageRepository.delete(id: img.id),
-              for (final edge in touching)
-                _instanceAssociationRepository.delete(id: edge.meta.id),
-            ],
-          ).flatMap((_) => _instanceRepository.delete(id: id));
-        });
-      }).run(),
+      body: () => _imageRepository
+          .fetchByOwner(owner: ImageOwner.instance, ownerId: id)
+          .flatMap(
+            (mine) => _instanceAssociationRepository
+                .fetchByInstance(instanceId: id)
+                .flatMap(
+                  (touching) => sequenceTaskEither(
+                    tasks: [
+                      for (final img in mine)
+                        _imageRepository.delete(id: img.id),
+                      for (final edge in touching)
+                        _instanceAssociationRepository.delete(id: edge.meta.id),
+                    ],
+                  ).flatMap((_) => _instanceRepository.delete(id: id)),
+                ),
+          )
+          .run(),
     ),
   );
 }

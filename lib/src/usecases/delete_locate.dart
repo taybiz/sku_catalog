@@ -16,12 +16,16 @@ class DeleteLocate {
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) =>
-      _locateRepository.fetchAll().flatMap((locates) {
-        if (locates.any((l) => l.parentLocateId == id)) {
+      _locateRepository.fetchByParentLocate(parentLocateId: id).flatMap((
+        children,
+      ) {
+        if (children.isNotEmpty) {
           return TaskEither.left(InUseFailure('This locate has sub-locates.'));
         }
-        return _instanceRepository.fetchAll().flatMap((instances) {
-          if (instances.any((d) => d.locateId == id)) {
+        return _instanceRepository.fetchByLocate(locateId: id).flatMap((
+          instances,
+        ) {
+          if (instances.isNotEmpty) {
             return TaskEither.left(
               InUseFailure('This locate has assigned instances.'),
             );

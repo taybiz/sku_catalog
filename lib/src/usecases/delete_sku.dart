@@ -33,12 +33,17 @@ class DeleteSku {
   /// before the delete lands.
   TaskEither<DomainFailure, void> call({required String id}) => TaskEither(
     () => _unitOfWork<DomainFailure, void>(
-      body: () => _instanceRepository.fetchAll().flatMap((instances) {
+      body: () => _instanceRepository.fetchBySku(skuId: id).flatMap((
+        instances,
+      ) {
         if (instances.any((d) => d.skuId == id)) {
           return TaskEither<DomainFailure, void>.left(
             InUseFailure('This SKU is in use by one or more instances.'),
           );
         }
+        // Both ends have to be read: `fetchBySku` on components answers for the
+        // parent side only, and a row naming this SKU as its child would be left
+        // dangling.
         return _skuComponentRepository.fetchAll().flatMap((components) {
           final touching = components
               .where((c) => c.parentSkuId == id || c.childSkuId == id)

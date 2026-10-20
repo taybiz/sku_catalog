@@ -8,6 +8,11 @@ abstract interface class ISkuRepository {
   /// Fetch all SKUs.
   TaskEither<DomainFailure, List<Sku>> fetchAll();
 
+  /// Fetch the SKUs one manufacturer makes.
+  TaskEither<DomainFailure, List<Sku>> fetchByManufacturer({
+    required String manufacturerId,
+  });
+
   /// Fetch a single SKU by id.
   TaskEither<DomainFailure, Sku> fetchById({required String id});
 

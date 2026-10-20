@@ -127,6 +127,14 @@ class SkuStore implements ISkuRepository {
       TaskEither.of([for (final row in rows.values) Sku.fromJson(row)]);
 
   @override
+  TaskEither<DomainFailure, List<Sku>> fetchByManufacturer({
+    required String manufacturerId,
+  }) => TaskEither.of([
+    for (final row in rows.values)
+      if (Sku.fromJson(row).manufacturerId == manufacturerId) Sku.fromJson(row),
+  ]);
+
+  @override
   TaskEither<DomainFailure, Sku> fetchById({required String id}) {
     final row = rows[id];
     return row == null

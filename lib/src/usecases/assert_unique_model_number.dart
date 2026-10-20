@@ -26,21 +26,23 @@ class AssertUniqueModelNumber {
     required String modelNumber,
     required String manufacturerId,
     String? excludeId,
-  }) => _repository.fetchAll().flatMap((all) {
-    final clash = all.any(
-      (sku) =>
-          sku.meta.id != excludeId &&
-          sku.manufacturerId == manufacturerId &&
-          sku.modelNumber == modelNumber,
-    );
-    if (clash) {
-      return TaskEither<DomainFailure, Unit>.left(
-        AlreadyExistsFailure(
-          'Manufacturer "$manufacturerId" already makes a model numbered '
-          '"$modelNumber"',
-        ),
+  }) => _repository.fetchByManufacturer(manufacturerId: manufacturerId).flatMap(
+    (all) {
+      final clash = all.any(
+        (sku) =>
+            sku.meta.id != excludeId &&
+            sku.manufacturerId == manufacturerId &&
+            sku.modelNumber == modelNumber,
       );
-    }
-    return TaskEither<DomainFailure, Unit>.of(unit);
-  });
+      if (clash) {
+        return TaskEither<DomainFailure, Unit>.left(
+          AlreadyExistsFailure(
+            'Manufacturer "$manufacturerId" already makes a model numbered '
+            '"$modelNumber"',
+          ),
+        );
+      }
+      return TaskEither<DomainFailure, Unit>.of(unit);
+    },
+  );
 }
