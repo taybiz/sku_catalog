@@ -7,37 +7,12 @@ made for itself. Do not restate bible rules below; if you need one, link it.
 
 ## Deviations from the bible
 
-One entry per place the code and the doctrine disagree, each with its reasoning.
-They are **recorded, not auto-fixed** — the bible may itself be wrong, so every one
-is a human call (bible §1.3, §10.15a). A **fixable defect** is not a deviation: it
-goes to [`BACKLOG.md`](BACKLOG.md) as a terse item to fix.
-
-### The repository contracts carry no `uow`, and no `clearAll`
-
-**Divergence:** the bible puts an optional `uow` on every repository write method —
-so the seam is uniform (§5.5) — and gives a many-store wipe one unit of work (§5.6).
-Here the contracts are **five plain methods** — `fetchAll`, `fetchById`, `create`,
-`update`, `delete`, plus the one extra fetch a store declares — with no `uow`
-parameter and no `clearAll()`. The transaction sits on the **use case**: a
-`UnitOfWork` (a function type) taken as a **required constructor dependency** by the
-fourteen operations that need one — the three cascading deletes, `DeleteTrait`,
-`UpdateSkuComponent`, the six rule-carrying create/update paths, the three edge
-writers. No optional form, no default: a store that cannot roll back is wired with
-`noOpUnitOfWork` at the composition root. An operation that composes others owns the
-only transaction and wires its pieces with the no-op, so nothing nests.
-
-**Why:** the contracts' optional `uow` was never called, and an optional one on a use
-case had an unsafe shape — `DeleteInstance(id: x)` compiled, defaulted to a no-op and
-silently meant "no transaction". A bible clause sanctioning the use-case seam was
-considered and left out: no second adopter.
-
-**What the adapter pays:** it keeps the seam. Publish the open transaction where the
-repositories can find it — set the active client inside the unit of work, clear it in
-a `finally`, route **every** read through it too, and treat a busy store as a unit that
-did not happen. Enrollment is per *use case*, not per write: a consumer hands their own
-`UnitOfWork` to the operation they construct, but cannot take a single write of one into
-their own transaction. The four rules an implementer has to get right are on the
-`UnitOfWork` type itself.
+**None.** The one this repo carried — the transaction seam on the operation rather than
+an optional `uow` on the repository contracts — was amended into the bible and merged:
+§5.5 states the seam now, and §5.6 carries the adapter's side of it. Record a new entry
+here for each place the code and the doctrine disagree, each with its reasoning — a
+deviation is a human call, recorded and not auto-fixed, because the bible may itself be
+wrong.
 
 ## One package, on purpose
 

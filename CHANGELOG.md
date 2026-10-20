@@ -101,8 +101,9 @@ model — a copy must always be deletable, and a shared edition simply survives 
 **Breaking: `IUnitOfWork` is `UnitOfWork` now, and it is a function type.** One
 method was all it ever had, so the class was ceremony. `runEither({body})` is now
 just calling the value — `typedef UnitOfWork = Future<Either<F, T>> Function<F, T>({
-required Future<Either<F, T>> Function() body })`. `noOpUnitOfWork` is the default,
-and the reference backend is `inMemoryUnitOfWork(tables)`, a closure over the tables
+required Future<Either<F, T>> Function() body })`. `noOpUnitOfWork` is what a store
+that cannot roll back is wired with, and the reference backend is
+`inMemoryUnitOfWork(tables)`, a closure over the tables
 it was built with. Nothing about the transaction moved: a `Left` body is still the
 rollback, and still the adapter's to perform. An adapter writes a closure now,
 checked against the type where it is handed over; a class with a matching generic
@@ -123,6 +124,12 @@ store sees the check and the row as one step rather than a race; and
 `DeleteInstanceAndUnusedSku` builds the two operations it composes itself, over the
 stores it is handed, so its halves run inside its one transaction instead of opening
 nested ones.
+
+**Doctrine: the seam is the bible's own rule now.** It was a recorded deviation while
+§5.5 put an optional `uow` on the contracts; §5.5 has since been amended to this shape
+— the seam on the operation, required at construction, the contracts transaction-free
+— and §5.6 carries the four rules a transactional adapter owes it. The `AGENTS.md`
+deviation entry is retired, and this package states no divergence from the bible.
 
 **`ReportProperty` is gone, and with it the package's only reporting vocabulary.** It
 was a label/value/unit row — the shape of a consumer's device card — with no producer
