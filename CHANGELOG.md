@@ -133,16 +133,21 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
 
 **The reference backend is no longer published.**
 
-- **Removed from the archive:** `lib/in_memory.dart`, `lib/src/adapters/` and
-  `example/`, via `.pubignore`. The published package is the model and the
-  operations; a domain package that ships one storage story makes that story look
-  like its own. An import of `package:sku_catalog/in_memory.dart` against the
-  hosted package stops resolving — a 2.x consumer that used the reference backend
-  copies it into their own project, or keeps a `path:` dependency on a clone,
-  which is the work a consumer writing their own storage was always expected to
-  do. `example/` goes with it because the tour runs on that backend, and a
-  published example importing an unpublished path would not analyze. Everything
-  is unchanged in a clone: the suite and the tour still run on it.
+- **Removed from the archive:** `lib/in_memory.dart` and `lib/src/adapters/`, via
+  `.pubignore`. The published package is the model and the operations; a domain
+  package that ships one storage story makes that story look like its own. An import
+  of `package:sku_catalog/in_memory.dart` against the hosted package stops resolving
+  — a 2.x consumer that used the reference backend copies it into their own project,
+  or keeps a `path:` dependency on a clone, which is the work a consumer writing
+  their own storage was always expected to do. Everything is unchanged in a clone:
+  the suite and the tour still run on it.
+- **`example/` ships again, as the consumer's tour.** It used to run on the reference
+  backend, which the bullet above puts out of the archive — a published example
+  importing an unpublished path would not analyze. It now implements two contracts
+  over its own little store and wires the operations to them, so it runs on published
+  code alone; `test/example_runs_test.dart` executes it, and `test/model_tour_test.dart`
+  keeps the model tour that needs the full backend. A published package is expected to
+  carry a real, CI-tested example, and the one it had could not.
 - **Reversal:** 2.0.0 shipped that backend and reversed the earlier *"the adapter
   rules do not bind this package"* decision; this entry reverses the reversal on
   the **publishing** question only. The one-way `adapters` row in
@@ -150,7 +155,7 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 249 passing; `dart run melos run coverage` reports 98.30% of `lib/`,
+- **Tests:** 256 passing; `dart run melos run coverage` reports 98.46% of `lib/`,
   against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
   that lost its tests fails the build, not a number to chase, and the suite runs at
   ~98%, so the floor is slack). The new edge has its own suite

@@ -1,245 +1,240 @@
-// A runnable tour of the package: classify, value, assemble, place, instantiate,
-// fold.
+// A tour of what a consumer writes: implement the repository contracts over your
+// own storage, wire the rules, run the operations.
 //
-// The storage is this repository's reference backend — `InMemoryCatalog`, which
-// is repo-only and not in the published archive — so this file is about the model
-// and nothing else. A real consumer writes their own store classes against the
-// same contracts; `lib/src/adapters/in_memory/` is the shape to copy, and swapping
-// it in is a one-line change here.
+// `sku_catalog` ships no storage, so there is nothing to import but the package
+// itself. The two stores below keep their rows in `Map`s for the sake of a single
+// runnable file; a real one is a database or a file, and the shape it has to
+// satisfy is the contract. The reference implementation worth reading next lives in
+// the repository at `lib/src/adapters/in_memory/`.
 //
 //   dart run example/sku_catalog_example.dart
-import 'package:sku_catalog/in_memory.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:sku_catalog/sku_catalog.dart';
 
 Future<void> main() async {
-  // One object holds every store, a transaction over all of them, and the
-  // operations that need more than one store wired together.
-  final catalog = InMemoryCatalog();
-  final traits = catalog.traits;
-  final attributes = catalog.attributes;
-  final skus = catalog.skus;
-  final assemblies = catalog.assemblies;
-  final instances = catalog.instances;
+  final skus = SkuStore();
+  final parts = SkuComponentStore();
 
-  // 1. Classify. Traits form a tree: Breaker is a Switch with more to say.
-  final switchTrait = Trait(
-    meta: _meta('switch'),
-    name: 'Switch',
-    scope: const [TraitScope.sku],
-  );
-  final breakerTrait = Trait(
-    meta: _meta('breaker'),
-    name: 'Breaker',
-    parentTraitId: switchTrait.meta.id,
-    scope: const [TraitScope.sku],
-  );
-  await CreateTrait(traits)(trait: switchTrait).run();
-  await CreateTrait(traits)(trait: breakerTrait).run();
+  // A transaction over both tables. `transaction` below is the smallest thing that
+  // can be called a unit of work; the four rules a real adapter has to get right
+  // are on the `UnitOfWork` type.
+  final unitOfWork = transaction([skus.rows, parts.rows]);
 
-  // 2. Value: each trait contributes typed fields, and a child overrides them.
-  //
-  //    The serializable trait is the package's one canonical one: a serial
-  //    number is not a field on the instance, it is an attribute value — the
-  //    model carries the trait, the article carries the number, and `isUnique`
-  //    is what makes the catalog refuse a second article holding the same one.
-  final serializable = SerializableTrait.define(
-    traitMeta: _meta('serializable'),
-    attributeMeta: _meta('serializable-serial_number'),
+  // Wire the rules once and share them: a rule that reads a store is built where
+  // the store is, and every path that writes that entity takes the same one.
+  final createSku = CreateSku(
+    skuRepository: skus,
+    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
   );
-  await CreateTrait(traits)(trait: serializable.trait).run();
-  await CreateTraitAttributeDefinition(attributes)(
-    attribute: serializable.serialNumber,
-  ).run();
-
-  await CreateTraitAttributeDefinition(attributes)(
-    attribute: TraitAttributeDefinition(
-      meta: _meta('switch-rated_amps'),
-      traitId: switchTrait.meta.id,
-      key: 'rated_amps',
-      displayLabel: 'Rated Amperage',
-      dataType: DataType.number,
-      unit: 'A',
-      isRequired: true,
-    ),
-  ).run();
-  await CreateTraitAttributeDefinition(attributes)(
-    attribute: TraitAttributeDefinition(
-      meta: _meta('breaker-trip_amperage'),
-      traitId: breakerTrait.meta.id,
-      key: 'trip_amperage',
-      displayLabel: 'Trip Amperage',
-      dataType: DataType.number,
-      unit: 'A',
-    ),
-  ).run();
-
-  // 3. Catalogue the SKUs. A panel and a breaker are both products.
-  final breakerModel = Sku(
-    meta: _meta('qo120'),
-    manufacturerId: 'square-d',
-    modelNumber: 'QO120',
-    traitIds: [breakerTrait.meta.id],
-    attributeValues: const {'rated_amps': 20, 'trip_amperage': 20},
+  final addComponent = AddSkuComponent(
+    repository: parts,
+    skuRepository: skus,
+    unitOfWork: unitOfWork,
   );
-  final panelModel = Sku(
-    meta: _meta('qo-16'),
+
+  // A failure is a value: `.run()` hands back an `Either`, and nothing threw.
+  final panel = Sku(
+    meta: newMeta(),
     manufacturerId: 'square-d',
     modelNumber: 'QO-16',
-    traitIds: [serializable.trait.meta.id],
   );
-  await CreateSku(
-    skuRepository: skus,
-    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
-  )(sku: breakerModel).run();
-  await CreateSku(
-    skuRepository: skus,
-    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
-  )(sku: panelModel).run();
-  final subPanelModel = Sku(
-    meta: _meta('qo-4'),
+  final breaker = Sku(
+    meta: newMeta(),
     manufacturerId: 'square-d',
-    modelNumber: 'QO-4',
+    modelNumber: 'QO120',
   );
-  await CreateSku(
-    skuRepository: skus,
-    assertUniqueModelNumber: AssertUniqueModelNumber(skus),
-  )(sku: subPanelModel).run();
+  print(
+    'create     ${_show(await createSku(sku: panel).run(), 'stored QO-16')}',
+  );
+  print(
+    'create     ${_show(await createSku(sku: breaker).run(), 'stored QO120')}',
+  );
 
-  // 4. Assemble: the panel holds eight breakers and four sub-panels, and each
-  //    sub-panel holds four breakers — so a build consumes the breaker two
-  //    ways. On purpose the edge is then tried the other way round, to show the
-  //    cycle guard refuse it.
-  final addComponent = catalog.addSkuComponent;
-  await addComponent(
-    parentSkuId: panelModel.meta.id,
-    childSkuId: breakerModel.meta.id,
+  // A model number is unique per maker, so the same one twice is refused — on
+  // create as much as on update. A create is not a back door.
+  final clash = await createSku(sku: panel.copyWith(meta: newMeta())).run();
+  print('duplicate  ${_show(clash, 'allowed — BUG')}');
+
+  // Assemble. This writes once, but it decides by reading the graph first, which is
+  // why it takes the transaction: on a store that can lock, the check and the edge
+  // are one step.
+  final edge = await addComponent(
+    parentSkuId: panel.meta.id,
+    childSkuId: breaker.meta.id,
     quantity: 8,
   ).run();
-  await addComponent(
-    parentSkuId: panelModel.meta.id,
-    childSkuId: subPanelModel.meta.id,
-    quantity: 4,
-  ).run();
-  await addComponent(
-    parentSkuId: subPanelModel.meta.id,
-    childSkuId: breakerModel.meta.id,
-    quantity: 4,
-  ).run();
+  print('assemble   ${_show(edge, '8 × QO120 under QO-16')}');
+
+  // ...and the reverse edge would close a loop, so the guard refuses it.
   final loop = await addComponent(
-    parentSkuId: breakerModel.meta.id,
-    childSkuId: panelModel.meta.id,
+    parentSkuId: breaker.meta.id,
+    childSkuId: panel.meta.id,
     quantity: 1,
   ).run();
+  print('cycle      ${_show(loop, 'allowed — BUG')}');
 
-  // 5. Place: a Locate is a place, and places nest. The panel goes in a room.
-  final garage = Locate(meta: _meta('garage'), name: 'Garage');
-  final panelPlace = Locate(
-    meta: _meta('garage.panel'),
-    name: 'Panel Position',
-    parentLocateId: garage.meta.id,
+  // Drive the seam yourself when you write more than once: a `Left` undoes
+  // everything the body wrote, and the failure comes back untouched.
+  final undone = await unitOfWork<DomainFailure, String>(
+    body: () async {
+      await parts
+          .create(
+            component: SkuComponent(
+              meta: newMeta(),
+              parentSkuId: panel.meta.id,
+              childSkuId: breaker.meta.id,
+              quantity: 99,
+            ),
+          )
+          .run();
+      return const Left(InvalidInputFailure('changed my mind'));
+    },
   );
-  await catalog.createLocate(locate: garage).run();
-  await catalog.createLocate(locate: panelPlace).run();
-
-  // 6. Instantiate: an instance is one article of a SKU, at one place. Its
-  //    serial number is an attribute value, and because the trait marks it
-  //    unique the write path refuses a second article claiming the same one.
-  final createInstance = catalog.createInstance;
-  final panelInstance = Instance(
-    meta: _meta('pnl-1'),
-    skuId: panelModel.meta.id,
-    locateId: panelPlace.meta.id,
-    name: 'Garage Panel 1',
-    attributeValues: const {SerializableTrait.serialNumberKey: 'QO-0001'},
-  );
-  await createInstance(instance: panelInstance).run();
-  final duplicateSerial = await createInstance(
-    instance: panelInstance.copyWith(
-      meta: _meta('pnl-2'),
-      name: 'Garage Panel 2',
-    ),
-  ).run();
-
-  // 7. Ask the model what it knows. Traits inherit, so the breaker's schema
-  //    carries Switch's attributes too.
-  final schema = await catalog.schema(traitIds: breakerModel.traitIds).run();
-
-  final schemaLine = schema.fold(
-    (failure) => 'failed: ${failure.message}',
-    (resolved) => resolved
-        .map((a) => '${a.name}${a.def.unit == null ? '' : ' (${a.def.unit})'}')
-        .join(', '),
-  );
-  final partsCount = await FetchComponentsBySku(assemblies)(
-    skuId: panelModel.meta.id,
-  ).run();
-  final breakersDirect = partsCount.fold(
-    (failure) => '?',
-    (rows) =>
-        '${rows.firstWhere((c) => c.childSkuId == breakerModel.meta.id).quantity}',
-  );
-  final subPanelsDirect = partsCount.fold(
-    (failure) => '?',
-    (rows) =>
-        '${rows.firstWhere((c) => c.childSkuId == subPanelModel.meta.id).quantity}',
-  );
-  final instancesAtPlace = await FetchInstancesByLocate(instances)(
-    locateId: panelPlace.meta.id,
-  ).run();
-
+  final leftTheNinetyNine = (await parts.fetchAll().run())
+      .getOrElse((_) => [])
+      .any((component) => component.quantity == 99);
   print(
-    'SKU        ${panelModel.modelNumber} — holds $breakersDirect × '
-    '${breakerModel.modelNumber} directly, plus $subPanelsDirect × '
-    '${subPanelModel.modelNumber}',
-  );
-  print('Schema     ${breakerModel.modelNumber} → $schemaLine');
-  print(
-    'Place      ${garage.name} / ${panelPlace.name} → '
-    '${instancesAtPlace.fold((f) => '?', (rows) => rows.single.name)}',
-  );
-  print(
-    'Assembly   panel in breaker? '
-    '${loop.fold((failure) => 'refused (${failure.message})', (_) => 'allowed — BUG')}',
-  );
-  print(
-    'Serial     QO-0001 on a second panel? '
-    '${duplicateSerial.fold((failure) => 'refused (${failure.message})', (_) => 'allowed — BUG')}',
+    'rollback   ${_show(undone, 'committed — unexpected')}  '
+    '(the 99 is gone: ${!leftTheNinetyNine})',
   );
 
-  // 8. Fold: what does a build of two panels consume? This is not resolution —
-  //    that merges the layers describing one thing. This folds the tree that
-  //    builds one thing: quantities multiply down the levels, and the breaker,
-  //    reached directly and through a sub-panel, is one line with the total.
-  final bom = await catalog
-      .billOfMaterials(skuId: panelModel.meta.id, units: 2)
-      .run();
+  // Read the catalog back, and ask what a build consumes. Nothing here throws.
+  final stored = (await FetchAllSkus(skus)().run()).getOrElse((_) => []);
+  print('skus       ${stored.map((s) => s.modelNumber).join(', ')}');
 
-  final bomLine = bom.fold(
-    (failure) => 'failed: ${failure.message}',
-    (bill) => bill.lines
-        .map(
-          (line) =>
-              '${line.quantity} × ${line.modelNumber} '
-              '(level ${line.depth}${line.isAssembly ? ', itself an assembly' : ''})',
-        )
-        .join(', '),
+  final bom = await AggregateBillOfMaterials(
+    skuRepository: skus,
+    skuComponentRepository: parts,
+  )(skuId: panel.meta.id, units: 2).run();
+  print(
+    'parts      2 × ${panel.modelNumber} → '
+    '${bom.fold((failure) => 'failed: ${failure.message}', (bill) => bill.lines.map((line) => '${line.quantity} × ${line.modelNumber}').join(', '))}',
   );
-  print('Parts      2 × ${panelModel.modelNumber} → $bomLine');
-
-  // 9. An instance carries its own classification and values, independent of the
-  //    model it came from — which is what lets one SKU be wired two ways.
-  final spare = panelInstance.copyWith(
-    name: 'Spare Panel',
-    locateId: null,
-    traitIds: const ['spare'],
-    attributeValues: const {'note': 'not yet fitted'},
-  );
-  print('Instance   ${spare.name} is placed? ${spare.isPlaced}');
 }
 
-Meta _meta(String id) => Meta(
-  id: id,
-  notes: '',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-);
+String _show(Either<DomainFailure, Object?> result, String whenOk) =>
+    result.fold((failure) => 'refused (${failure.message})', (_) => whenOk);
+
+/// A SKU store over a `Map`, keeping rows as the wire form the model round-trips —
+/// the form an adapter should persist, so a record written before a field existed
+/// still parses.
+class SkuStore implements ISkuRepository {
+  /// The rows, by id. Public because a transaction snapshots them.
+  final Map<String, Map<String, dynamic>> rows = {};
+
+  @override
+  TaskEither<DomainFailure, List<Sku>> fetchAll() =>
+      TaskEither.of([for (final row in rows.values) Sku.fromJson(row)]);
+
+  @override
+  TaskEither<DomainFailure, Sku> fetchById({required String id}) {
+    final row = rows[id];
+    return row == null
+        ? TaskEither.left(NotFoundFailure('No SKU is stored under "$id"'))
+        : TaskEither.of(Sku.fromJson(row));
+  }
+
+  @override
+  TaskEither<DomainFailure, Sku> create({required Sku sku}) {
+    if (rows.containsKey(sku.meta.id)) {
+      return TaskEither.left(
+        AlreadyExistsFailure('"${sku.meta.id}" is already stored'),
+      );
+    }
+    rows[sku.meta.id] = sku.toJson();
+    return TaskEither.of(sku);
+  }
+
+  @override
+  TaskEither<DomainFailure, Sku> update({required Sku sku}) {
+    if (!rows.containsKey(sku.meta.id)) {
+      return TaskEither.left(
+        NotFoundFailure('No SKU is stored under "${sku.meta.id}"'),
+      );
+    }
+    rows[sku.meta.id] = sku.toJson();
+    return TaskEither.of(sku);
+  }
+
+  @override
+  TaskEither<DomainFailure, void> delete({required String id}) {
+    if (rows.remove(id) == null) {
+      return TaskEither.left(NotFoundFailure('No SKU is stored under "$id"'));
+    }
+    return TaskEither.of(null);
+  }
+}
+
+/// The same, for assembly edges. The contract has no `update`: an edge's quantity is
+/// changed by deleting it and creating the replacement, which is two writes and
+/// therefore a transaction.
+class SkuComponentStore implements ISkuComponentRepository {
+  /// The rows, by id. Public because a transaction snapshots them.
+  final Map<String, Map<String, dynamic>> rows = {};
+
+  @override
+  TaskEither<DomainFailure, List<SkuComponent>> fetchAll() => TaskEither.of([
+    for (final row in rows.values) SkuComponent.fromJson(row),
+  ]);
+
+  @override
+  TaskEither<DomainFailure, List<SkuComponent>> fetchBySku({
+    required String skuId,
+  }) => TaskEither.of([
+    for (final row in rows.values)
+      if (row['parent_sku_id'] == skuId) SkuComponent.fromJson(row),
+  ]);
+
+  @override
+  TaskEither<DomainFailure, SkuComponent> fetchById({required String id}) {
+    final row = rows[id];
+    return row == null
+        ? TaskEither.left(NotFoundFailure('No edge is stored under "$id"'))
+        : TaskEither.of(SkuComponent.fromJson(row));
+  }
+
+  @override
+  TaskEither<DomainFailure, SkuComponent> create({
+    required SkuComponent component,
+  }) {
+    if (rows.containsKey(component.meta.id)) {
+      return TaskEither.left(
+        AlreadyExistsFailure('"${component.meta.id}" is already stored'),
+      );
+    }
+    rows[component.meta.id] = component.toJson();
+    return TaskEither.of(component);
+  }
+
+  @override
+  TaskEither<DomainFailure, void> delete({required String id}) {
+    if (rows.remove(id) == null) {
+      return TaskEither.left(NotFoundFailure('No edge is stored under "$id"'));
+    }
+    return TaskEither.of(null);
+  }
+}
+
+/// A unit of work over `Map` rows: snapshot every table, run the body, and put the
+/// tables back if it answers `Left`.
+///
+/// A real adapter hands this job to its store's own transaction — `BEGIN IMMEDIATE`
+/// on SQLite, a session elsewhere — and the rules for doing that are on `UnitOfWork`
+/// itself. What matters here is the shape: a `Left` means undo, and the adapter is
+/// the only code that can.
+UnitOfWork transaction(List<Map<String, Map<String, dynamic>>> tables) =>
+    <F, T>({required Future<Either<F, T>> Function() body}) async {
+      final snapshots = [
+        for (final table in tables)
+          Map<String, Map<String, dynamic>>.from(table),
+      ];
+      final result = await body();
+      if (result.isLeft()) {
+        for (var i = 0; i < tables.length; i++) {
+          tables[i]
+            ..clear()
+            ..addAll(snapshots[i]);
+        }
+      }
+      return result;
+    };

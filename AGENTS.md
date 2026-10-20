@@ -52,8 +52,10 @@ The backend in this repo is a **reference adapter, and it is NOT published**:
 `lib/src/adapters/in_memory/`, reachable in a clone at
 `package:sku_catalog/in_memory.dart`, tested by its own suite
 (`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` — together
-with `lib/in_memory.dart` and `example/`, which runs on it — so the published package is
-the model and the operations, and no consumer inherits somebody else's storage story.
+with `lib/in_memory.dart` — so the published package is the model and the operations, and
+no consumer inherits somebody else's storage story. `example/` *does* ship, because a
+published package is expected to carry a real, CI-tested example: it runs on the published
+import alone, with its own little store, and `test/example_runs_test.dart` executes it.
 2.0.0 shipped it and 3.0.0 took it back out: do not flip that again without a reason that
 survives "a package that ships one storage story makes it look like its own". It is an
 example, not a promise — no durability, no indexes, no concurrency — and it is **outside

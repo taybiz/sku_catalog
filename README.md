@@ -238,9 +238,11 @@ final bom = await AggregateBillOfMaterials(
 //   sum of both; a loop is a failure, not a number.
 ```
 
-A runnable end-to-end version — on the repository's own reference backend — is in
-[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart),
-which is repo-only: run it from a clone.
+A runnable end-to-end version ships with the package:
+[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart)
+implements two contracts over its own little store and wires the operations to them,
+so `dart run example/sku_catalog_example.dart` works from the archive as well as from
+a clone.
 
 ## Bringing your own storage
 
@@ -289,9 +291,10 @@ that wraps the writes enrolls them, and a store just writes.
 The package ships **no storage**. What it carries instead is a working in-memory
 backend in this repository — **the thing to copy** — so the contracts and the
 operations can be read as a running system instead of imagined. It is *not* in
-the published archive: `.pubignore` keeps `lib/in_memory.dart`,
-`lib/src/adapters/` and `example/` out, because a domain package that ships one
-storage story makes that story look like its own.
+the published archive: `.pubignore` keeps `lib/in_memory.dart` and
+`lib/src/adapters/` out, because a domain package that ships one storage story makes
+that story look like its own. (`example/` ships: it runs on the published import
+alone, with its own store.)
 
 ```yaml
 dependencies:
@@ -402,7 +405,7 @@ lib/src/domain/             entities, enums, value objects, failures, contracts
 lib/src/usecases/           one file per operation
 lib/src/adapters/in_memory/ the reference backend: stores, transaction, catalogue
                             (repo-only)
-example/                    a runnable tour, on the reference backend (repo-only)
+example/                    a runnable tour of the contracts, on its own tiny store
 test/                       the suite (repo-only — not published)
 ```
 
@@ -440,7 +443,7 @@ dart pub publish
 One package, one version, one publish — there is no dependency order to get
 right and no sibling constraint to keep in step. Check the file list the dry run
 prints: the pubspec, `lib/` (minus the adapter ring and its door), `README.md`,
-`CHANGELOG.md` and `LICENSE` belong there; `test/`, `example/`,
+`CHANGELOG.md`, `LICENSE` and `example/` belong there; `test/`,
 `lib/in_memory.dart`, `lib/src/adapters/`, `AGENTS.md` and `BACKLOG.md` do not.
 
 The package holds its structural rules in `test/boundary_test.dart`, and they fail
