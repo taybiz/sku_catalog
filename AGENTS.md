@@ -52,10 +52,12 @@ The backend in this repo is a **reference adapter, and it is NOT published**:
 `lib/src/adapters/in_memory/`, reachable in a clone at
 `package:sku_catalog/in_memory.dart`, tested by its own suite
 (`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` — together
-with `lib/in_memory.dart` and `example/`, which runs on it. 2.0.0 shipped it and 3.0.0
-took it back out: do not flip that again without a reason that survives "a package that
-ships one storage story makes that story look like its own". It is an example, not a
-promise — no durability, no indexes, no concurrency — and it is **outside the model**:
+with `lib/in_memory.dart` and `example/`, which runs on it — so the published package is
+the model and the operations, and no consumer inherits somebody else's storage story.
+2.0.0 shipped it and 3.0.0 took it back out: do not flip that again without a reason that
+survives "a package that ships one storage story makes it look like its own". It is an
+example, not a promise — no durability, no indexes, no concurrency — and it is **outside
+the model**:
 nothing under `lib/src/domain/` or `lib/src/usecases/` may import it, which
 `test/boundary_test.dart` fails the build over, while the one-way `adapters` row in
 `test/architecture_test.dart`'s edge table keeps the dependency pointing in. Consumers
@@ -81,8 +83,10 @@ entities on purpose, and the *predicate* decides which one a fact belongs to:
 `bound_with` that copy"). A model fact stated on the articles is restated once per
 copy and lets the copies disagree; an article fact stated on the models claims
 something about articles nobody asked about. Do not collapse the two into one
-polymorphic edge — a sealed `SkuRef | InstanceRef` changes every wire key and erases
-the class/token distinction exactly where the type system is what enforces it.
+polymorphic edge: a sealed `SkuRef | InstanceRef` changes every wire key and erases the
+class/token distinction exactly where the type system is what enforces it, so the
+`Add*Association` operations would have to say at runtime what the types say now. That
+was settled in 3.0.0 — the second entity stands.
 
 The rule both entities share: **an edge connects peers** — an article never points
 at a SKU (it points at its model through its own `skuId`), and an article is not
