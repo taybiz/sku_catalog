@@ -37,8 +37,10 @@ enroll anything, and clearing a store is not a word this model has.
 **What it costs, and where the seam went:** the *adapter* keeps it. A transactional
 backend must publish its open transaction where its repositories can find it,
 because they are no longer handed one — set the active client inside the unit of
-work, clear it in its `finally`, and route **every** read through it too, or a read
-in an open transaction blocks on it. Enrollment is therefore per *use case*, not per
+work, clear it in its `finally`, and route **every** read through it too: a read that
+goes to another connection does not block, it answers from the *pre-transaction*
+snapshot — silent staleness, which for a rule's check is worse than a failure, because
+nothing reports it. Enrollment is therefore per *use case*, not per
 write: a consumer hands their own `UnitOfWork` to the operation they construct
 (`DeleteSku(..., unitOfWork: mine)`), but cannot take a single write of one into
 their own transaction.
