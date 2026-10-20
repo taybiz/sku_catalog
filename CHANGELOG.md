@@ -162,7 +162,7 @@ blessed dead API. With its consumer gone nothing holds it and no port is owed.
   and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
   and the operations still may never name the backend, and the backend still may
   not reach back.
-- **Tests:** 263 passing; `dart run melos run coverage` reports 98.54% of `lib/`,
+- **Tests:** 269 passing; `dart run melos run coverage` reports 98.54% of `lib/`,
   against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
   that lost its tests fails the build, not a number to chase, and the suite runs at
   ~98%, so the floor is slack). The new edge has its own suite
@@ -303,6 +303,17 @@ the SKU), the *article* carries one particular number (a value on the instance).
   contracts. Recorded here rather than as a BACKLOG deviation, because it is not a
   defect to fix and not a rule this repo is failing — it is a category the rule was
   never about.
+
+**Breaking: the tree-cycle rule moved to the domain, over typed links.**
+`WouldCreateTreeCycle` is gone — a use case that took `List<Map<String, dynamic>>` plus
+the name of the parent key (`parentKey: 'parent_locate_id'`), and answered a `TaskEither`
+for a question that has no failure case. The rule is now
+`wouldCreateTreeCycle({links, nodeId, parentId})` in the domain, over a `ParentLink`
+record (`(id:, parentId:)`), and answers a plain `bool`: a wire field name is storage's
+business, and a rule that reads one stops being true when the wire changes.
+`UpdateLocate` and `UpdateTrait` build the links from their own entities, and
+`test/tree_cycle_test.dart` tests the rule directly rather than through the two
+operations that use it. A consumer that called the use case calls the function instead.
 
 **Breaking: the contracts carry the reads the rules actually need.** Five joined them —
 `ISkuRepository.fetchByManufacturer`, `IInstanceRepository.fetchBySku`,
