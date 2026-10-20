@@ -34,10 +34,11 @@ import 'resolve_schema.dart';
 ///   values the way this package compares values anywhere: strings trimmed and
 ///   case-insensitively, numbers by value, different types as different values,
 ///   and a value nobody set never clashes with anything;
-/// - **Nothing extra to implement.** The check reads through `fetchAll()` on the
-///   three contracts, so a backend needs only the contracts it already
-///   implements. An adapter that wants this cheap can index the unique keys on
-///   its own side; the rule stays a use case, not a storage feature.
+/// - **Nothing extra to implement, and nothing cheaper either.** The check reads
+///   through `fetchAll()` on the three contracts, so a backend needs only the
+///   contracts it already implements — and because those contracts *are* the API,
+///   the check is a full scan of all three. Going cheaper than that means
+///   narrowing a contract, not indexing behind one.
 class AssertUniqueAttributeValues {
   /// Creates an [AssertUniqueAttributeValues] use case.
   const AssertUniqueAttributeValues({

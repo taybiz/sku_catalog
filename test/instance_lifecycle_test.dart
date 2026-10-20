@@ -49,12 +49,14 @@ void main() {
   );
 
   CreateInstance createInstance() => CreateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
   );
 
   UpdateInstance updateInstance() => UpdateInstance(
+    unitOfWork: noOpUnitOfWork,
     instanceRepository: instances,
     assertUniqueInstanceName: AssertUniqueInstanceName(instances),
     assertUniqueAttributeValues: uniqueness(),
@@ -75,12 +77,21 @@ void main() {
     manufacturers = InMemoryManufacturerRepository();
 
     final createLocate = CreateLocate(
+      unitOfWork: noOpUnitOfWork,
       locateRepository: locates,
       assertUniqueAttributeValues: uniqueness(),
     );
-    await CreateSku(skus)(
-      sku: Sku(meta: meta('free'), manufacturerId: 'm', modelNumber: 'FREE'),
-    ).run();
+    await CreateSku(
+          skuRepository: skus,
+          assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+        )(
+          sku: Sku(
+            meta: meta('free'),
+            manufacturerId: 'm',
+            modelNumber: 'FREE',
+          ),
+        )
+        .run();
     await createLocate(
       locate: Locate(meta: meta('rack-1'), name: 'Rack 1'),
     ).run();
@@ -203,8 +214,10 @@ void main() {
     ).run();
 
     final result = await DeleteInstance(
+      unitOfWork: noOpUnitOfWork,
       instanceRepository: instances,
       imageRepository: images,
+      instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
     )(id: 'd1').run();
 
     result.isRight().should.beTrue();
@@ -230,8 +243,10 @@ void main() {
       ).run();
 
       await DeleteInstance(
+        unitOfWork: noOpUnitOfWork,
         instanceRepository: instances,
         imageRepository: images,
+        instanceAssociationRepository: InMemoryInstanceAssociationRepository(),
       )(id: 'd1').run();
 
       (await images.fetchAll().run()).getOrElse((_) => []).should.haveCount(1);

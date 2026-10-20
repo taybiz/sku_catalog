@@ -75,7 +75,7 @@ class InMemoryTable<T> implements InMemoryRowSource {
 /// A repository backed by one [InMemoryTable], exposing that table's rows — so a
 /// transaction snapshots the repository itself instead of reaching into it.
 ///
-/// Every store in this backend mixes this in; it is why `InMemoryUnitOfWork` takes
+/// Every store in this backend mixes this in; it is why `inMemoryUnitOfWork` takes
 /// the repositories, not their tables.
 mixin InMemoryRowSourceBy<T> implements InMemoryRowSource {
   /// The rows behind this repository — what a transaction snapshots.

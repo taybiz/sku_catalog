@@ -12,11 +12,13 @@
 /// `Future<Either<DomainFailure, T>>`.
 library;
 
+export 'add_instance_association.dart';
 export 'add_sku_association.dart';
 export 'add_sku_component.dart';
 export 'aggregate_bill_of_materials.dart';
 export 'assert_unique_attribute_values.dart';
 export 'assert_unique_instance_name.dart';
+export 'assert_unique_model_number.dart';
 export 'create_image_record.dart';
 export 'create_instance.dart';
 export 'create_locate.dart';
@@ -27,6 +29,8 @@ export 'create_trait.dart';
 export 'create_trait_attribute_definition.dart';
 export 'delete_image_record.dart';
 export 'delete_instance.dart';
+export 'delete_instance_and_unused_sku.dart';
+export 'delete_instance_association.dart';
 export 'delete_locate.dart';
 export 'delete_manufacturer.dart';
 export 'delete_sku.dart';
@@ -44,6 +48,7 @@ export 'fetch_all_sku_components.dart';
 export 'fetch_all_skus.dart';
 export 'fetch_all_trait_attribute_definitions.dart';
 export 'fetch_all_traits.dart';
+export 'fetch_associations_by_instance.dart';
 export 'fetch_associations_by_sku.dart';
 export 'fetch_attributes_by_trait.dart';
 export 'fetch_components_by_sku.dart';
@@ -71,4 +76,3 @@ export 'update_sku_component.dart';
 export 'update_trait.dart';
 export 'update_trait_attribute_definition.dart';
 export 'would_create_assembly_cycle.dart';
-export 'would_create_tree_cycle.dart';

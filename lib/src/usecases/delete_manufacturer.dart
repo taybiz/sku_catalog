@@ -15,7 +15,7 @@ class DeleteManufacturer {
 
   /// Executes the use case.
   TaskEither<DomainFailure, void> call({required String id}) =>
-      _skuRepository.fetchAll().flatMap((types) {
+      _skuRepository.fetchByManufacturer(manufacturerId: id).flatMap((types) {
         if (types.any((t) => t.manufacturerId == id)) {
           return TaskEither.left(
             InUseFailure('This manufacturer is in use by one or more SKUs.'),

@@ -1,8 +1,6 @@
 import '../domain/domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'would_create_tree_cycle.dart';
-
 /// Update an existing trait, refusing parent changes that would loop the
 /// trait tree.
 class UpdateTrait {
@@ -17,23 +15,22 @@ class UpdateTrait {
         final parentChanged = trait.parentTraitId != original.parentTraitId;
         if (!parentChanged) return _repository.update(trait: trait);
         return _repository.fetchAll().flatMap((allTraits) {
-          return WouldCreateTreeCycle()
-              .call(
-                items: [for (final t in allTraits) t.toJson()],
-                itemId: trait.meta.id,
-                newParentId: trait.parentTraitId ?? '',
-                parentKey: 'parent_trait_id',
-              )
-              .flatMap((wouldCreate) {
-                if (wouldCreate) {
-                  return TaskEither.left(
-                    WouldCreateCycleFailure(
-                      'That parent would create a loop in the trait tree.',
-                    ),
-                  );
-                }
-                return _repository.update(trait: trait);
-              });
+          final wouldCreate = wouldCreateTreeCycle(
+            links: [
+              for (final other in allTraits)
+                (id: other.meta.id, parentId: other.parentTraitId),
+            ],
+            nodeId: trait.meta.id,
+            parentId: trait.parentTraitId,
+          );
+          if (wouldCreate) {
+            return TaskEither.left(
+              WouldCreateCycleFailure(
+                'That parent would create a loop in the trait tree.',
+              ),
+            );
+          }
+          return _repository.update(trait: trait);
         });
       });
 }

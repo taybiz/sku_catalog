@@ -29,11 +29,13 @@ import 'dart:io';
 import 'package:dart_arch_test/dart_arch_test.dart';
 import 'package:test/test.dart';
 
-/// The public entry points — the doors into the package (§2.6).
+/// The entry points — the doors into the package (§2.6).
 ///
-/// There are two on purpose: the model and the operations ship together through
-/// `sku_catalog.dart`, and the reference in-memory backend has its own door so a
-/// consumer who writes their own storage never carries it.
+/// One is published: the model and the operations ship together through
+/// `sku_catalog.dart`. The other is repo-only: `in_memory.dart` is how this
+/// repository's own suite and tour reach the reference backend, and no consumer
+/// carries it. Both stay in this table because the rule below is that nothing
+/// under `lib/src/` may reach through either door.
 const _publicDoors = <String>{
   'package:sku_catalog/sku_catalog.dart',
   'package:sku_catalog/in_memory.dart',

@@ -27,11 +27,12 @@ Why this seam is a tuple rather than a `Future` is recorded in
 | `Trait` | A **classification attached to a SKU, a place or a manufacturer** — never to an instance: an article holds the *values* of the traits in scope for it. Traits form a tree: `Switch → Breaker` inherits `Switch`'s attributes and may override them. |
 | `TraitAttributeDefinition` | A **typed field** a trait contributes: `rated_amps` (number, `A`, required), `gfci` (boolean), `load_type` (enum). |
 | `SkuComponent` | An **assembly edge**: this SKU contains *n* of that SKU. |
-| `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). |
+| `SkuAssociation` | A **labeled relationship edge**: this SKU acts *as `kind`* on that SKU (an author `edited` an anthology). A fact of the models. |
+| `InstanceAssociation` | A **labeled relationship edge between two articles**: this article acts *as `kind`* on that one (a copy `bound_with` its neighbour). A fact of particular articles — an edge connects peers. |
 | `Manufacturer` | Who makes it, with its own traits (`is_preferred`) and attributes. |
 | `Locate` | A **place**, as a tree — a hole, a mount, a rack slot, a room. Places outlive their occupants. |
 | `Instance` | An **instance of a SKU**, sitting at exactly one `Locate`, holding the attribute values of the traits in scope for it. |
-| `ImageRecord` | A photo attached to a SKU, an instance or a place. |
+| `ImageRecord` | A photo attached to a SKU, an instance or a place — **the only home for an entity's images**; none of the three carries a list of its own. |
 
 Two ideas do most of the work:
 
@@ -46,7 +47,12 @@ Two ideas do most of the work:
   of N of that", folded into a bill of materials with a cycle guard.
   `SkuAssociation` is *relationship* — "this acts as `kind` on that", a labeled,
   directed edge with no quantity and no fold, for facts that are not parts of a
-  build (an author `edited` an anthology).
+  build (an author `edited` an anthology). `InstanceAssociation` is the same
+  relation one level down, between two *articles*, for facts the models cannot
+  state at all: this copy is `bound_with` that copy, this copy was `replaced_by`
+  that one. Both edges are real and neither store sees the other's rows, and both
+  connect peers — an edge names two things of the same level, never a SKU on one
+  end and an article on the other.
 
 ## Serial numbers, and the one trait the package names
 
@@ -54,18 +60,9 @@ A serial number is not a field on `Instance`. It is an attribute value, because 
 two halves are different facts: the **model** is serializable — a trait on the SKU,
 which is why the trait is `sku`-scoped — and the **article** carries one particular
 number. The package names that pair, because the rule that comes with it is a
-catalog invariant rather than your spelling of it:
-
-```dart
-final serializable = SerializableTrait.define(
-  traitMeta: Meta(id: 'serializable', notes: '', createdAt: now, updatedAt: now),
-  attributeMeta: Meta(
-    id: 'serializable-serial_number', notes: '', createdAt: now, updatedAt: now,
-  ),
-);
-// serializable.trait        → Trait('Serializable', scope: [TraitScope.sku])
-// serializable.serialNumber → TraitAttributeDefinition('serial_number', string, isUnique: true)
-```
+catalog invariant rather than your spelling of it: `SerializableTrait.define` mints
+that pair — the trait `Serializable`, scoped to SKUs, and its one attribute
+`serial_number`, a string marked `isUnique`.
 
 `isUnique` is a flag **any** trait's attribute can carry — `serializable` is not
 special. It means *at most one **holder** in the catalog may hold a value for this
@@ -74,36 +71,17 @@ the **place** it sits at (a `Locate`) and the **maker** of its model (a
 `Manufacturer`). All four records — a SKU too — carry an `attributeValues` map;
 being a holder is about the rule, not about the field. A unique value is unique
 across all three at once, so a serial number one article holds cannot be minted by
-a place or a maker either:
+a place or a maker either.
 
-```dart
-final rule = AssertUniqueAttributeValues(
-  instanceRepository: myInstanceRepository,
-  locateRepository: myLocateRepository,
-  manufacturerRepository: myManufacturerRepository,
-  // An article's schema is its own traits plus its model's, walked up their
-  // parent chains; a place's or a maker's is the traits it carries itself.
-  resolveInstanceSchema: ResolveInstanceSchema(
-    skuRepository: mySkuRepository,
-    resolveSchema: myResolveSchema,
-  ),
-  resolveSchema: myResolveSchema,
-);
-
-final createInstance = CreateInstance(
-  instanceRepository: myInstanceRepository,
-  assertUniqueInstanceName: AssertUniqueInstanceName(myInstanceRepository),
-  assertUniqueAttributeValues: rule,
-);
-
-// The first article takes SN-0001...
-await createInstance(instance: panelWithSerial('SN-0001')).run();
-// ...so anything else claiming it is refused with a
-// DuplicateAttributeValueFailure rather than stored — a second article, a place,
-// or a maker. `CreateLocate`, `UpdateLocate`, `CreateManufacturer` and
-// `UpdateManufacturer` are guarded by the same rule, and the reference backend
-// hands all of them to you wired (`catalog.createLocate(...)`).
-```
+The rule is one object, built where your stores are. `AssertUniqueAttributeValues`
+takes the three holder repositories and two schema resolvers — an article's schema is
+its own traits plus its model's, walked up their parent chains, while a place's or a
+maker's is the traits it carries itself — and every write path that can claim a value
+takes it: `CreateInstance` and `UpdateInstance`, and the same rule guards
+`CreateLocate`, `UpdateLocate`, `CreateManufacturer` and `UpdateManufacturer`. The
+first article to take `SN-0001` gets it; anything else claiming it — a second article,
+a place, a maker — is refused with a `DuplicateAttributeValueFailure` instead of being
+stored, and the reference backend hands you all of those paths already wired.
 
 A **model** is not a holder: a value on a SKU describes the class, not one article,
 so nothing on a SKU is unique in this sense — a model *declares* that serial numbers
@@ -126,17 +104,11 @@ copy does not inherit. Deleting the holder frees its value.
 
 Nothing new to implement in a backend: the check reads through `fetchAll()` on the
 three contracts, so the contracts you already implement are enough, and the rule
-stays a use case rather than a storage feature. An adapter that wants it cheap can
-index the unique keys on its own side.
+stays a use case rather than a storage feature.
 
 ## One package
 
 `sku_catalog` is the whole thing — the model **and** the operations:
-
-```yaml
-dependencies:
-  sku_catalog: ^1.0.0
-```
 
 ```dart
 import 'package:sku_catalog/sku_catalog.dart';
@@ -149,92 +121,30 @@ the model usable.
 
 ## Quick start
 
-```dart
-final now = DateTime.now().toUtc().toIso8601String();
-
-// A classification, and the typed field it contributes.
-final switchTrait = Trait(
-  meta: Meta(id: 'switch', notes: '', createdAt: now, updatedAt: now),
-  name: 'Switch',
-  scope: const [TraitScope.sku],
-);
-
-final ratedAmps = TraitAttributeDefinition(
-  meta: Meta(id: 'switch-rated_amps', notes: '', createdAt: now, updatedAt: now),
-  traitId: 'switch',
-  key: 'rated_amps',
-  displayLabel: 'Rated Amperage',
-  dataType: DataType.number,
-  unit: 'A',
-  isRequired: true,
-);
-
-// A SKU carrying that trait, and the value for it.
-final breaker = Sku(
-  meta: Meta(id: 'qo120', notes: '', createdAt: now, updatedAt: now),
-  manufacturerId: 'square-d',
-  modelNumber: 'QO120',
-  traitIds: const ['switch'],
-  attributeValues: const {'rated_amps': 20},
-);
-
-// A SKU assembled from other SKUs.
-final panel = Sku(
-  meta: Meta(id: 'pnl-1', notes: '', createdAt: now, updatedAt: now),
-  manufacturerId: 'square-d',
-  modelNumber: 'QO-16',
-  traitIds: const ['panel'],
-);
-
-final assembly = SkuComponent(
-  meta: Meta(id: 'pnl-1-holds-qo120', notes: '', createdAt: now, updatedAt: now),
-  parentSkuId: 'pnl-1',
-  childSkuId: 'qo120',
-  quantity: 16,
-);
-```
+There is no wiring ceremony to learn: define the traits and their typed attributes,
+build SKUs that carry them, then construct the operations over your stores. The
+runnable version is in
+[`example/sku_catalog_example.dart`](https://github.com/taybiz/sku_catalog/blob/main/example/sku_catalog_example.dart)
+— it implements two contracts over its own little store and wires `CreateSku`,
+`AddSkuComponent` and the rest to them, so `dart run example/sku_catalog_example.dart`
+works from the archive as well as from a clone.
 
 Resolving what can be said about a SKU is two calls: walk the trait tree, then
-merge the attribute definitions.
-
-```dart
-final attributes = await ResolveSchema(
-  traitRepository: myTraitRepository,
-  attributeRepository: myAttributeRepository,
-)(traitIds: breaker.traitIds).run();
-// attributes: [Rated Amperage (number, A, required)]
-```
+merge the attribute definitions. `ResolveSchema(traitRepository:,
+attributeRepository:)` answers for a set of traits, and `ResolveInstanceSchema` adds
+the model's own to an article's.
 
 Adding an assembly edge is guarded — it refuses a loop, and refuses edges to
-SKUs that do not exist.
-
-```dart
-await AddSkuComponent(
-  repository: mySkuComponentRepository,
-  skuRepository: mySkuRepository,
-)(
-  parentSkuId: 'pnl-1',
-  childSkuId: 'qo120',
-  quantity: 16,
-).run();
-```
+SKUs that do not exist. `AddSkuComponent(repository:, skuRepository:, unitOfWork:)`
+reads the graph the guard walks, which is why it takes the transaction.
 
 Folding an assembly into the parts a build needs is a separate operation from
 resolving attributes: resolution *merges* the layers that describe one thing,
 this *folds* the tree that builds one thing.
-
-```dart
-final bom = await AggregateBillOfMaterials(
-  skuRepository: mySkuRepository,
-  skuComponentRepository: mySkuComponentRepository,
-)(skuId: panel.meta.id, units: 12).run();
-// → one line per distinct part: quantity, level, and whether it is itself
-//   an assembly. A part reached by two paths is one line whose quantity is the
-//   sum of both; a loop is a failure, not a number.
-```
-
-A runnable end-to-end version — on the package's own reference backend — is in
-[`example/sku_catalog_example.dart`](example/sku_catalog_example.dart).
+`AggregateBillOfMaterials(skuRepository:, skuComponentRepository:)(skuId:, units:)`
+answers one line per distinct part — quantity, level, and whether the part is itself
+an assembly. A part reached by two paths is one line whose quantity is the sum of
+both, and a loop is a failure rather than a number.
 
 ## Bringing your own storage
 
@@ -247,6 +157,9 @@ pass them in; the next section is a working one to copy.
 ```dart
 abstract interface class ISkuRepository {
   TaskEither<DomainFailure, List<Sku>> fetchAll();
+  TaskEither<DomainFailure, List<Sku>> fetchByManufacturer({
+    required String manufacturerId,
+  });
   TaskEither<DomainFailure, Sku> fetchById({required String id});
   TaskEither<DomainFailure, Sku> create({required Sku sku});
   TaskEither<DomainFailure, Sku> update({required Sku sku});
@@ -254,57 +167,64 @@ abstract interface class ISkuRepository {
 }
 ```
 
-**The backend is yours.** The package ships one so the contracts can be read as a
-running system — the reference in-memory adapter in the next section — but a
-consumer is expected to build their own against these contracts. It is an
-example: no durability, no indexes, no concurrency.
+**The backend is yours.** The package publishes none: a working one lives in this
+repository (the next section) so the contracts can be read as a running system,
+and a consumer is expected to build their own against these contracts. That
+reference is an example: no durability, no indexes, no concurrency.
 
 Failures are values (`TaskEither<DomainFailure, T>`), never thrown from the
-domain. `IUnitOfWork` is the transaction seam for adapters that have one — pass
-it to the use cases that write more than once (`DeleteSku`,
-`DeleteInstance`) and a failure half-way through rolls back. Repositories do not
-take it: the use case that wraps the writes is the one that enrolls them, and a
-store just writes. `runEither` takes a
-body that returns `Either`; a `Left` is the rollback signal and is handed back
-unchanged, so **rollback is a value, not a thrown error** — the adapter undoes the
-writes and the domain never throws. `NoOpUnitOfWork` is the honest implementation
-for a store that cannot roll back.
+domain. `UnitOfWork` is the transaction seam: a function an adapter writes as a
+closure over its client, checked where it is handed over. Its body returns
+`Either`, and a `Left` is the rollback signal handed back unchanged, so **rollback
+is a value, not a thrown error** — the adapter undoes the writes and the domain
+never throws.
 
-## A reference backend
+It is a **required constructor dependency** of every operation whose correctness
+depends on more than one store interaction being one step: the three cascading
+deletes (`DeleteSku`, `DeleteInstance`, `DeleteInstanceAndUnusedSku`), `DeleteTrait`,
+`UpdateSkuComponent`, the six rule-carrying create/update paths (instance, locate,
+manufacturer) and the three edge writers. There is no optional form and no default,
+because the optional one had an unsafe shape: `DeleteInstance(id: x)` compiled,
+defaulted to a no-op, and silently meant *no transaction*. A store that cannot roll
+back is wired with `noOpUnitOfWork` — a statement the composition root makes out
+loud. An operation that composes others owns the only transaction, and its pieces
+are wired with the no-op so nothing nests. Repositories never take it: the use case
+that wraps the writes enrolls them, and a store just writes.
 
-The package also ships a working in-memory backend — **the thing to copy** — so
-the contracts and the operations can be read as a running system instead of
-imagined:
+## A reference backend (in the repository)
+
+The package ships **no storage**. What it carries instead is a working in-memory
+backend in this repository — **the thing to copy** — so the contracts and the
+operations can be read as a running system instead of imagined. It is *not* in
+the published archive: `.pubignore` keeps `lib/in_memory.dart` and
+`lib/src/adapters/` out, because a domain package that ships one storage story makes
+that story look like its own. (`example/` ships: it runs on the published import
+alone, with its own store.)
 
 ```yaml
 dependencies:
-  sku_catalog: ^2.0.0
+  sku_catalog: ^3.0.0        # the model and the operations
 ```
 
-```dart
-import 'package:sku_catalog/in_memory.dart';
-import 'package:sku_catalog/sku_catalog.dart';
+In a clone of this repository, a second barrel reaches the reference backend —
+`package:sku_catalog/in_memory.dart`, and not from pub.dev, because the backend is
+not published. Every store it holds *is* a contract, so it goes anywhere one is
+expected, and the rules and operations come wired over those stores:
+`catalog.createInstance(...)` applies the model's rules, and `catalog.deleteSku(...)`
+does its two writes in one transaction.
 
-final catalog = InMemoryCatalog();
-
-// Every store is a contract, so it goes anywhere one is expected.
-final ISkuRepository skus = catalog.skus;
-
-// Rules and operations come wired, over those stores.
-await catalog.createInstance(instance: panel).run();   // the model's rules apply
-await catalog.deleteSku(id: 'qo-16').run();            // two writes, one transaction
-```
-
-Three things it is worth reading:
+Three things it is worth reading — in
+[`lib/src/adapters/in_memory/`](https://github.com/taybiz/sku_catalog/tree/main/lib/src/adapters/in_memory),
+which is where the published package stops:
 
 - **One `InMemoryTable<T>` per aggregate**, holding `id → toJson()` and decoding
   with `fromJson()` on every read. That is what an adapter should persist: the
   wire form the model round-trips, so a record written before a field existed
   still parses.
-- **`InMemoryUnitOfWork`** takes the stores and rolls them back by snapshot when a
-  body returns a `Left`; `catalog.unitOfWork` is one built over *every* table the
-  catalog holds, which is how a multi-write operation stops depending on someone
-  remembering to register a store.
+- **`inMemoryUnitOfWork`** takes the stores and returns a `UnitOfWork` that rolls
+  them back by snapshot when a body answers `Left`; `catalog.unitOfWork` is one
+  built over *every* table the catalog holds, which is how a multi-write operation
+  stops depending on someone remembering to register a store.
 - **`InMemoryCatalog` is a composition root**: it holds the stores, the
   transaction, the schema resolvers and the operations that need more than one
   store, so `catalog.createInstance(...)` is a write with the model's rules
@@ -312,9 +232,9 @@ Three things it is worth reading:
   `FetchAllSkus(catalog.skus)` is already one line.
 
 It is an example, not a promise: nothing there is durable, indexed or
-isolate-safe, and the unique-value rule *scans* five stores per write because it
-reads through `fetchAll()`. A real adapter that wants that cheap indexes the
-unique keys on its own side; the rule stays a use case.
+isolate-safe. The rules read what they need — one locate group, one maker's models,
+one model's articles — but the unique-value rule reads every holder, which is the
+read a backend has to serve cheaply if a catalog ever grows that far.
 
 ## Identity
 
@@ -331,16 +251,33 @@ that mint ids *internally* — `DuplicateSku`, `DuplicateInstance`,
 one rule the catalog asks of a generator is **stability**: whatever an adapter
 stores must read back unchanged.
 
+**A model number is the maker's production number, unique against the maker.**
+`AssertUniqueModelNumber` keeps that rule on the SKU write paths, so a second model
+from the same `manufacturerId` cannot take a number another model already holds, and
+an edit that keeps its own number is not a clash with itself. The comparison is
+**exact** — a production number is an identifier, so `QO120` and `qo120` are two
+different numbers, unlike an instance name, which the per-locate rule compares
+case-insensitively because it is prose a person reads. `DuplicateSku` mints the next
+free "(copy)" number rather than being refused. What a maker *calls* a thing, when
+that differs from its production number, is a different fact: optional, with no rule
+to keep, so it is a trait you declare rather than a field here.
+
 Two deliberate consequences worth knowing:
 
 - **Domain vocabulary stays out.** What a short code on an article means, and
   which trait holds it, are *your* words and *your* screen. The package names
   exactly one pair, `serializable` and its `serial_number`, because `isUnique`
   turns it into a catalog-wide rule rather than a convention (see above).
-- **The catalog does not cascade what it cannot see.** `DeleteInstance` removes the
-  instance and its images. If something else references instances — a wiring graph,
-  a harness, a bill of materials — that is yours to cascade, and the use case
-  documents it.
+- **The catalog cascades only what it owns.** `DeleteInstance` removes the article,
+  its images and the `InstanceAssociation` edges that name it — everything the
+  catalog itself stores *about* that article. If something else references instances
+  — a wiring graph, a harness, a bill of materials — that is yours to cascade, and
+  the use case documents it.
+- **A model that exists only for its articles goes with the last one.**
+  `DeleteInstanceAndUnusedSku` is for a book's *edition*: nobody catalogues it, its
+  copies only instantiate it, and two copies share it — so the model is removed when
+  nothing else names it, not when the first copy leaves. There is no flag for that:
+  choosing the operation is the assertion.
 
 ## What is deliberately not here
 
@@ -351,26 +288,29 @@ topology graphs, reports, import/export bundles, and any naming convention. If
 you need one of those, compose it around this package rather than inside it.
 
 The one backend in the repository is the **reference** one
-(`package:sku_catalog/in_memory.dart`): it exists to be read and copied, and it is
-not a supported storage layer — no durability, no indexes, no concurrency.
+(`lib/in_memory.dart`, repo-only): it exists to be read and copied, and it is not
+a supported storage layer — no durability, no indexes, no concurrency.
 
 ## Layout
 
 ```
 lib/sku_catalog.dart        the front door: the model and the operations
 lib/in_memory.dart          the other door: the reference in-memory backend
+                            (repo-only — not in the published archive)
 lib/src/domain/             entities, enums, value objects, failures, contracts
 lib/src/usecases/           one file per operation
 lib/src/adapters/in_memory/ the reference backend: stores, transaction, catalogue
-example/                    a runnable tour, on the reference backend
+                            (repo-only)
+example/                    a runnable tour of the contracts, on its own tiny store
 test/                       the suite (repo-only — not published)
 ```
 
-`lib/src/` is internal — import one of the two barrels,
-`package:sku_catalog/sku_catalog.dart` for the model and its operations or
-`package:sku_catalog/in_memory.dart` for the reference backend. The model and the
-operations are one dependency and cannot be split; the adapter is a separate door
-so a consumer who writes their own storage never carries it.
+`lib/src/` is internal — import the barrel. `package:sku_catalog/sku_catalog.dart`
+is the published package: the model and its operations, one dependency, and it
+cannot be split. In a clone there is a second barrel,
+`package:sku_catalog/in_memory.dart`, for the reference backend that the suite and
+the tour run on — a consumer writing their own storage never carries it, because
+it is not in the archive.
 
 ## Working on it
 
@@ -398,8 +338,9 @@ dart pub publish
 
 One package, one version, one publish — there is no dependency order to get
 right and no sibling constraint to keep in step. Check the file list the dry run
-prints: `lib/`, `example/`, `README.md`, `CHANGELOG.md`, `LICENSE` and the
-pubspec belong there; `test/support/` does not.
+prints: the pubspec, `lib/` (minus the adapter ring and its door), `README.md`,
+`CHANGELOG.md`, `LICENSE` and `example/` belong there; `test/`,
+`lib/in_memory.dart`, `lib/src/adapters/`, `AGENTS.md` and `BACKLOG.md` do not.
 
 The package holds its structural rules in `test/boundary_test.dart`, and they fail
 the build rather than waiting for review:
@@ -408,7 +349,8 @@ the build rather than waiting for review:
   consumer's word shows up in this API, the boundary has moved without anyone
   deciding it should;
 - **the model and the operations may never reach for the adapter** — the reference
-  backend ships inside this package, so the model cannot start depending on it;
+  backend lives in this repository (outside the published archive), so the model
+  cannot start depending on it;
 - **the areas of `lib/src/` may only depend in the allowed direction** — the
   dependency table lives in that test (`domain`, `usecases`, `adapters`, each with
   the packages it may use; `adapters -> usecases -> domain` and never back), and an

@@ -29,6 +29,7 @@ void main() {
   /// An assembly edge, written the way a consumer writes one.
   Future<void> edge(String parent, String child, int quantity) async {
     final result = await AddSkuComponent(
+      unitOfWork: noOpUnitOfWork,
       repository: components,
       skuRepository: skus,
     )(parentSkuId: parent, childSkuId: child, quantity: quantity).run();
@@ -63,7 +64,10 @@ void main() {
     );
 
     for (final id in ['machine', 'rack', 'card', 'shelf', 'bolt']) {
-      await CreateSku(skus)(sku: sku(id)).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku(id)).run();
     }
   });
 

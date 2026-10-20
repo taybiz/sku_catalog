@@ -42,13 +42,20 @@ void main() {
         .should
         .be('QO120');
 
-    (await UpdateSku(catalog.skus)(
-      sku: Sku(
-        meta: meta('qo120'),
-        manufacturerId: 'square-d',
-        modelNumber: 'QO120-2',
-      ),
-    ).run()).isRight().should.beTrue();
+    (await UpdateSku(
+              skuRepository: catalog.skus,
+              assertUniqueModelNumber: AssertUniqueModelNumber(catalog.skus),
+            )(
+              sku: Sku(
+                meta: meta('qo120'),
+                manufacturerId: 'square-d',
+                modelNumber: 'QO120-2',
+              ),
+            )
+            .run())
+        .isRight()
+        .should
+        .beTrue();
     (await FetchSkuById(catalog.skus)(id: 'qo120').run())
         .getOrElse((_) => fail('expected the model back'))
         .modelNumber

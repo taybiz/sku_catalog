@@ -13,10 +13,23 @@
 AGENTS.md
 BACKLOG.md
 
-# The whole test tree, not just what it imports. The reference backend is
-# PUBLISHED (lib/in_memory.dart, lib/src/adapters/); what stays behind is the
-# suite that tests it, which is repo-only — consumers are expected to build their
-# own backend against the contracts. Readable on GitHub at
+# The reference backend and its door are REPO-ONLY. The published package is the
+# model and the operations: a consumer implements the repository contracts over
+# their own storage, and the reference they copy lives in the repository (readable
+# at github.com/taybiz/sku_catalog). Shipping it in the archive would make one
+# storage story look like the package's own, and would put an adapter ring inside a
+# domain package's published surface.
+#
+# `example/` is NOT excluded: it is a published deliverable, and it runs on the
+# published import alone, with its own little store.
+#
+# These are anchored: a pattern containing a slash starts at this directory.
+lib/in_memory.dart
+lib/src/adapters/
+
+# The whole test tree, not just what it imports. What stays behind is the suite
+# that tests the model *and* the reference backend — consumers are expected to
+# build their own backend against the contracts. Readable on GitHub at
 # github.com/taybiz/sku_catalog/tree/main/test.
 test/
 

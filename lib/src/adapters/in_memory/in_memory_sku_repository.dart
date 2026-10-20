@@ -27,6 +27,13 @@ class InMemorySkuRepository
   TaskEither<DomainFailure, List<Sku>> fetchAll() => TaskEither.of(table.all());
 
   @override
+  TaskEither<DomainFailure, List<Sku>> fetchByManufacturer({
+    required String manufacturerId,
+  }) => TaskEither.of(
+    table.all().where((sku) => sku.manufacturerId == manufacturerId).toList(),
+  );
+
+  @override
   TaskEither<DomainFailure, Sku> fetchById({required String id}) {
     final found = table.find(id);
     if (found == null) {

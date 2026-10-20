@@ -1,5 +1,190 @@
 # sku_catalog changelog
 
+## 3.0.0
+
+**Breaking.** Two changes, and each is one half of the same idea: the edge model
+gains the level it was missing, and the package stops publishing storage.
+
+**An article can be related to another article.** `SkuComponent` and
+`SkuAssociation` both name a SKU on either end, so every relationship the model
+could state was a relationship of the *models*. A fact true of particular
+articles — this copy is bound with that copy, this copy was replaced by that one —
+had nowhere to live, and stating it on the models made it false for every other
+article of them.
+
+- **New:** `InstanceAssociation` (`meta`, `sourceInstanceId`, `targetInstanceId`,
+  `kind`; `source_instance_id` / `target_instance_id` / `kind` on the wire) — the
+  article-level sibling of `SkuAssociation`, with no quantity, no fold and no
+  cycle guard. The two are **axes, not alternatives**: a fact of the models
+  belongs on the SKUs, a fact of two particular articles belongs here, and neither
+  store sees the other's rows.
+- **New:** `IInstanceAssociationRepository` (`fetchAll`, `fetchByInstance`,
+  `fetchById`, `create`, `delete`) and the use cases `AddInstanceAssociation`,
+  `DeleteInstanceAssociation` and `FetchAssociationsByInstance`.
+  `AddInstanceAssociation` refuses a blank kind, a missing article and a
+  self-edge: **an edge connects peers**, and an article is not its own peer. No
+  new `DomainFailure` leaf was needed — both refusals are `InvalidInputFailure`,
+  the leaf the SKU-level edge already returns for a blank kind — so a consumer's
+  exhaustive switch over the sealed hierarchy still compiles.
+- **Changed (breaking signature):** `DeleteInstance` takes a required
+  `instanceAssociationRepository` and deletes the edges that name the article
+  along with its images, in one transaction. Deleting an article used to leave
+  rows pointing at an id nothing held; the catalog's own data is now consistent
+  with itself. References *outside* the catalog (a wiring graph, a bill of
+  materials) remain the consumer's to cascade, as before.
+- **New (reference backend):** `InMemoryInstanceAssociationRepository`, wired into
+  `InMemoryCatalog` as `instanceAssociations`, registered in its transaction and
+  exposed as `catalog.addInstanceAssociation` — a write that carries rules, so it
+  is wrapped the way `catalog.createInstance` is.
+- **Closed:** the BACKLOG item *"the edge model has no instance endpoints"*. The
+  other route it named — generalizing both endpoints into a sealed node reference
+  — was not taken: it changes every existing wire key, and it would erase the
+  class/token distinction exactly where the type system is the thing enforcing it.
+
+**A model number is the maker's production number.** The field's doc has always
+claimed "unique per manufacturer" and nothing enforced it; it does now. The field
+beside it, which was doing a *different* job under a name that read as a variant of
+it, is gone.
+
+- **New:** `AssertUniqueModelNumber` — a model number is unique against its
+  `manufacturerId`, compared **exactly** (`QO120` is not `qo120`; case-insensitivity
+  is `namesClash`, for instance names, which are prose). `CreateSku` and `UpdateSku`
+  take it as a required dependency, the update path excluding the model's own id so
+  an edit that keeps its number is not a clash with itself, and `InMemoryCatalog`
+  wires it as `catalog.createSku` / `catalog.updateSku`.
+- **New:** `uniqueCopyModelNumber` — `DuplicateSku` mints the next free "(copy)"
+  number for its maker instead of reusing the original's, the same choice
+  `DuplicateInstance` makes with a unique value: a copy is a new thing and is never
+  refused for inheriting an identity.
+- **Changed (breaking signatures):** `CreateSku` and `UpdateSku` take
+  `skuRepository:` and `assertUniqueModelNumber:` as named parameters; the bare
+  positional `CreateSku(repository)` no longer compiles.
+- **Removed (breaking):** `Sku.manufacturerModelNumber` and its
+  `manufacturer_model_number` wire key. It was never a variant of `modelNumber`: what
+  a maker *calls* a thing, when that differs from its production number, is optional
+  and carries no rule, so it is a trait a consumer declares. The package names a pair
+  (`serializable`, `serial_number`) only when it enforces something on it.
+- **Removed (breaking):** `Instance.skuModelNumber` and its `sku_model_number` wire
+  key — a copy of a SKU field kept for labelling that nothing maintained and that
+  could only disagree with the SKU it came from. The BACKLOG item that asked for a
+  home for it is closed by removing it.
+- **Note for a consumer's data:** the rule fires on write, so stored rows are safe
+  until touched — but placeholder model numbers collide the moment they are written.
+  A book's production number is its ISBN and its publisher is the manufacturer, so
+  per-maker uniqueness is the right rule for a library too, and a `'FREE'`-style
+  placeholder is the thing to replace rather than the rule to relax.
+
+**`imageIds` leaves the entities: `ImageRecord` is the only home.** `Sku`,
+`Instance` and `Locate` each carried a list of image ids while `ImageRecord` already
+named its owner (`owner`, `ownerId`) — and the owner tag is the copy the package
+queries by: `IImageRepository.fetchByOwner`, `FetchImageRecords`, and the cascade
+`DeleteInstance` runs when an article goes. Nothing in `lib/` filled or read the
+list, so the two copies could only disagree; a cover added through
+`CreateImageRecord` never appeared in the field, and an entity loaded from storage
+carried whatever the last writer put there. A consumer that read it for convenience
+(`library_scanner` counts covers with `books.where((b) => b.imageIds.isNotEmpty)`)
+gets a better answer from one `fetchAll()` grouped by `ownerId`, which cannot go
+stale. The `image_ids` wire key goes with the field; a stored record still carrying
+that key parses without it and is not written back.
+
+**New: `DeleteInstanceAndUnusedSku` — the degenerate model.** A model that exists
+only for its articles (a book's *edition*: nobody catalogues it, its copies merely
+instantiate it) is removed with its **last** article, not the first one to leave,
+because two copies share one SKU. There is no flag for degeneracy and no trait —
+**choosing this operation is the assertion**, which keeps the fact out of storage
+where two articles of one model could disagree about it. It composes the existing
+halves instead of re-implementing them: `DeleteInstance` takes the article's images
+and association edges, `DeleteSku` takes the model's assembly edges, and both run in
+one transaction. Unlike `DeleteSku` it does **not** refuse while articles use the
+model — a copy must always be deletable, and a shared edition simply survives it.
+
+**Breaking: `IUnitOfWork` is `UnitOfWork` now, and it is a function type.** One
+method was all it ever had, so the class was ceremony. `runEither({body})` is now
+just calling the value — `typedef UnitOfWork = Future<Either<F, T>> Function<F, T>({
+required Future<Either<F, T>> Function() body })`. `noOpUnitOfWork` is what a store
+that cannot roll back is wired with, and the reference backend is
+`inMemoryUnitOfWork(tables)`, a closure over the tables
+it was built with. Nothing about the transaction moved: a `Left` body is still the
+rollback, and still the adapter's to perform. An adapter writes a closure now,
+checked against the type where it is handed over; a class with a matching generic
+`call` still works, because a callable object is assignable to the function type.
+
+**Breaking: the transaction is a required constructor dependency, not an optional
+parameter.** `DeleteSku`, `DeleteInstance`, `DeleteInstanceAndUnusedSku`,
+`DeleteTrait`, `UpdateSkuComponent`, the six rule-carrying create/update operations
+(instance, locate, manufacturer) and the three edge writers now take
+`required UnitOfWork unitOfWork` — three of them took an optional one, the rest took
+none. The failure mode the optional form had is the reason: `DeleteInstance(id: x)`
+compiled, defaulted to `noOpUnitOfWork`, and silently meant *no transaction*, so the
+safe path was the opt-in one and a store that genuinely cannot roll back looked
+exactly like a caller who forgot. Wiring with `noOpUnitOfWork` is now a statement
+somebody makes at the composition root. Two consequences worth knowing: a
+rule-carrying write runs its **checks inside** the unit of work, so a transactional
+store sees the check and the row as one step rather than a race; and
+`DeleteInstanceAndUnusedSku` builds the two operations it composes itself, over the
+stores it is handed, so its halves run inside its one transaction instead of opening
+nested ones.
+
+**Doctrine: the seam is the bible's own rule now.** It was a recorded deviation while
+§5.5 put an optional `uow` on the contracts; §5.5 has since been amended to this shape
+— the seam on the operation, required at construction, the contracts transaction-free
+— and §5.6 carries the four rules a transactional adapter owes it. The `AGENTS.md`
+deviation entry is retired, and this package states no divergence from the bible.
+
+**`ReportProperty` is gone, and with it the package's only reporting vocabulary.** It
+was a label/value/unit row — the shape of a consumer's device card — with no producer
+here and one consumer outside the package, which no longer needs it. Reports are not
+this package's job (the README's "deliberately not here" list already said so), and it
+was the one file the coverage floor could not reach, since testing it would have
+blessed dead API. With its consumer gone nothing holds it and no port is owed.
+
+**The reference backend is no longer published.**
+
+- **Removed from the archive:** `lib/in_memory.dart` and `lib/src/adapters/`, via
+  `.pubignore`. The published package is the model and the operations; a domain
+  package that ships one storage story makes that story look like its own. An import
+  of `package:sku_catalog/in_memory.dart` against the hosted package stops resolving
+  — a 2.x consumer that used the reference backend copies it into their own project,
+  or keeps a `path:` dependency on a clone, which is the work a consumer writing
+  their own storage was always expected to do. Everything is unchanged in a clone:
+  the suite and the tour still run on it.
+- **`example/` ships again, as the consumer's tour.** It used to run on the reference
+  backend, which the bullet above puts out of the archive — a published example
+  importing an unpublished path would not analyze. It now implements two contracts
+  over its own little store and wires the operations to them, so it runs on published
+  code alone; `test/example_runs_test.dart` executes it, and `test/model_tour_test.dart`
+  keeps the model tour that needs the full backend. A published package is expected to
+  carry a real, CI-tested example, and the one it had could not.
+- **Reversal:** 2.0.0 shipped that backend and reversed the earlier *"the adapter
+  rules do not bind this package"* decision; this entry reverses the reversal on
+  the **publishing** question only. The one-way `adapters` row in
+  `test/architecture_test.dart`, the text tripwire in `test/boundary_test.dart`
+  and the `plugins:` rules in `import_rules.yaml` all stay as they are — the model
+  and the operations still may never name the backend, and the backend still may
+  not reach back.
+- **Tests:** 269 passing; `dart run melos run coverage` reports 98.54% of `lib/`,
+  against a floor of **90%** (lowered from 97% on purpose — a floor is where a layer
+  that lost its tests fails the build, not a number to chase, and the suite runs at
+  ~98%, so the floor is slack). The new edge has its own suite
+  (`test/instance_association_test.dart`: direction preserved, two kinds on one
+  pair as two rows, either-end fetch with a kind filter, the three refusals,
+  delete, and the cascade through `DeleteInstance`), the new store answers the
+  shared contract table in `test/in_memory_repository_contract_test.dart`, and
+  `test/in_memory_catalog_test.dart` proves the composition root has the edge
+  wired rather than merely available. The model-number rule has its own suite too
+  (`test/model_number_uniqueness_test.dart`: a clash refused and nothing stored, the
+  same number under another maker allowed, case and padding *not* the same number,
+  a rename onto a taken number refused while keeping its own is allowed, a delete
+  freeing the number, the copy path minting "(copy)" then "(copy 2)", and the
+  catalogue's wiring exercised as wiring). `test/image_records_test.dart` pins the
+  replacement read `imageIds` was standing in for: one pass over the records answers
+  which owners have images, and it tracks a delete. The degenerate-model rule has its
+  own suite too (`test/delete_instance_and_unused_sku_test.dart`: the model surviving
+  its first copy and going with its last, both cascades intact when it does go, a
+  shared model keeping its assembly edges while a copy leaves, other models
+  untouched), and the rule was proved discriminating by inverting it — four cases go
+  red when the model is taken early.
+
 ## 2.0.0
 
 **Breaking.** A serial number is no longer a field on `Instance` — it is a trait
@@ -118,6 +303,43 @@ the SKU), the *article* carries one particular number (a value on the instance).
   contracts. Recorded here rather than as a BACKLOG deviation, because it is not a
   defect to fix and not a rule this repo is failing — it is a category the rule was
   never about.
+
+**Breaking: the tree-cycle rule moved to the domain, over typed links.**
+`WouldCreateTreeCycle` is gone — a use case that took `List<Map<String, dynamic>>` plus
+the name of the parent key (`parentKey: 'parent_locate_id'`), and answered a `TaskEither`
+for a question that has no failure case. The rule is now
+`wouldCreateTreeCycle({links, nodeId, parentId})` in the domain, over a `ParentLink`
+record (`(id:, parentId:)`), and answers a plain `bool`: a wire field name is storage's
+business, and a rule that reads one stops being true when the wire changes.
+`UpdateLocate` and `UpdateTrait` build the links from their own entities, and
+`test/tree_cycle_test.dart` tests the rule directly rather than through the two
+operations that use it. A consumer that called the use case calls the function instead.
+
+**Breaking: the contracts carry the reads the rules actually need.** Five joined them —
+`ISkuRepository.fetchByManufacturer`, `IInstanceRepository.fetchBySku`,
+`ILocateRepository.fetchByParentLocate`, and `IInstanceRepository.fetchByLocate` taking
+a **nullable** `locateId`, because the unplaced group is a group. Every adapter author
+implements them. In exchange, the per-locate name rule reads one locate group, the
+model-number rule reads one maker's models, `DeleteSku` and `DeleteInstanceAndUnusedSku`
+read one model's articles, and `DeleteInstance` and `DeleteLocate` stop scanning past
+reads their stores already had (`fetchByOwner`, `fetchByInstance`, `fetchByLocate`).
+`DeleteSku` keeps its component scan on purpose: `ISkuComponentRepository.fetchBySku`
+answers for the parent side only, and a row naming the SKU as its child would be left
+dangling. `test/narrow_reads_test.dart` holds the whole thing — each spy is the
+reference store with `fetchAll()` answering a failure, so a rule that quietly goes back
+to scanning fails the suite instead of merely getting slower.
+
+- **Decided:** **the rules read what they need; the attribute family still scans.** The
+  reads the rules were missing are in the contracts now — the entry above names them.
+  What is *not* taken is the attribute family: `AssertUniqueAttributeValues` asks which
+  holders hold any value under a key — articles, places and makers — and `DeleteTrait`
+  asks who carries a trait id. Both need an index the contract would have to describe,
+  while the comparison they serve lives in the domain (`valuesMatch` trims and folds
+  case), and no consumer is near the scale where it matters. The trigger for revisiting
+  is a real adapter at a real scale: the read *it* turns out to need is what shapes the
+  contract, in a MAJOR. The same reasoning settles the wipe — a consumer's `ClearLibrary`
+  loops the contracts inside one unit of work, and §5.6 puts that unit on the operation,
+  not the store.
 
 - **Decided:** **no bundle import/export in the package either.** A slug-stable
   export and idempotent re-import of a whole catalog — stable ids, referential

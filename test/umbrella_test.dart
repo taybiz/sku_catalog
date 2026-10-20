@@ -67,13 +67,20 @@ void main() {
           // The contract-typed local is the check: it only compiles if the
           // umbrella re-exports both the interface and the memory adapter.
           final ISkuRepository repository = InMemorySkuRepository();
-          final created = await CreateSku(repository)(
-            sku: Sku(
-              meta: newMeta(),
-              manufacturerId: 'acme',
-              modelNumber: 'NUT-1',
-            ),
-          ).run();
+          final created =
+              await CreateSku(
+                    skuRepository: repository,
+                    assertUniqueModelNumber: AssertUniqueModelNumber(
+                      repository,
+                    ),
+                  )(
+                    sku: Sku(
+                      meta: newMeta(),
+                      manufacturerId: 'acme',
+                      modelNumber: 'NUT-1',
+                    ),
+                  )
+                  .run();
 
           created.isRight().should.be(true);
           final stored = await repository.fetchAll().run();
@@ -84,7 +91,10 @@ void main() {
       test('Then every operation name resolves', () {
         final ISkuRepository repository = InMemorySkuRepository();
         final operations = <Object>[
-          CreateSku(repository),
+          CreateSku(
+            skuRepository: repository,
+            assertUniqueModelNumber: AssertUniqueModelNumber(repository),
+          ),
           CreateTrait(InMemoryTraitRepository()),
           CreateTraitAttributeDefinition(
             InMemoryTraitAttributeDefinitionRepository(),
@@ -104,8 +114,24 @@ void main() {
             ),
           ),
           AddSkuComponent(
+            unitOfWork: noOpUnitOfWork,
             repository: InMemorySkuComponentRepository(),
             skuRepository: repository,
+          ),
+          AddInstanceAssociation(
+            unitOfWork: noOpUnitOfWork,
+            repository: InMemoryInstanceAssociationRepository(),
+            instanceRepository: InMemoryInstanceRepository(),
+          ),
+          AssertUniqueModelNumber(InMemorySkuRepository()),
+          DeleteInstanceAndUnusedSku(
+            unitOfWork: noOpUnitOfWork,
+            instanceRepository: InMemoryInstanceRepository(),
+            skuRepository: repository,
+            skuComponentRepository: InMemorySkuComponentRepository(),
+            imageRepository: InMemoryImageRepository(),
+            instanceAssociationRepository:
+                InMemoryInstanceAssociationRepository(),
           ),
           AggregateBillOfMaterials(
             skuRepository: repository,
@@ -113,13 +139,14 @@ void main() {
           ),
           WouldCreateAssemblyCycle(InMemorySkuComponentRepository()),
           DeleteSku(
+            unitOfWork: noOpUnitOfWork,
             skuRepository: repository,
             instanceRepository: InMemoryInstanceRepository(),
             skuComponentRepository: InMemorySkuComponentRepository(),
           ),
         ];
 
-        operations.length.should.be(10);
+        operations.length.should.be(13);
       });
     });
 

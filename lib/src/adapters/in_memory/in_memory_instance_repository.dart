@@ -29,9 +29,16 @@ class InMemoryInstanceRepository
 
   @override
   TaskEither<DomainFailure, List<Instance>> fetchByLocate({
-    required String locateId,
+    required String? locateId,
   }) => TaskEither.of(
     table.all().where((instance) => instance.locateId == locateId).toList(),
+  );
+
+  @override
+  TaskEither<DomainFailure, List<Instance>> fetchBySku({
+    required String skuId,
+  }) => TaskEither.of(
+    table.all().where((instance) => instance.skuId == skuId).toList(),
   );
 
   @override

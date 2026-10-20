@@ -24,9 +24,17 @@ void main() {
     skus = catalog.skus;
     components = catalog.assemblies;
     instances = catalog.instances;
-    await CreateSku(skus)(
-      sku: Sku(meta: meta('rack'), manufacturerId: 'm', modelNumber: 'RACK'),
-    ).run();
+    await CreateSku(
+          skuRepository: skus,
+          assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+        )(
+          sku: Sku(
+            meta: meta('rack'),
+            manufacturerId: 'm',
+            modelNumber: 'RACK',
+          ),
+        )
+        .run();
     // An edge whose child SKU is deliberately absent from the SKU store, so the
     // SKU delete fails *after* the edge delete has already succeeded.
     await CreateSkuComponent(components)(
@@ -48,7 +56,7 @@ void main() {
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
-      unitOfWork: InMemoryUnitOfWork([skus, components]),
+      unitOfWork: inMemoryUnitOfWork([skus, components]),
     )(id: 'card').run();
 
     result.isLeft().should.beTrue();
@@ -57,6 +65,7 @@ void main() {
 
   test('without a unit of work the assembly line is already gone', () async {
     final result = await DeleteSku(
+      unitOfWork: noOpUnitOfWork,
       skuRepository: skus,
       instanceRepository: instances,
       skuComponentRepository: components,
@@ -73,6 +82,7 @@ void main() {
     () async {
       final images = InMemoryImageRepository();
       await CreateInstance(
+            unitOfWork: noOpUnitOfWork,
             instanceRepository: instances,
             assertUniqueInstanceName: AssertUniqueInstanceName(instances),
             assertUniqueAttributeValues: catalog.uniqueValues,
@@ -99,7 +109,8 @@ void main() {
       final result = await DeleteInstance(
         instanceRepository: instances,
         imageRepository: images,
-        unitOfWork: InMemoryUnitOfWork([instances, images]),
+        instanceAssociationRepository: catalog.instanceAssociations,
+        unitOfWork: inMemoryUnitOfWork([instances, images]),
       )(id: 'd1').run();
 
       result.isRight().should.beTrue();

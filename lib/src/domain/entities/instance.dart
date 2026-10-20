@@ -27,12 +27,6 @@ class Instance extends Equatable {
   /// Display name.
   final String name;
 
-  /// SKU model number, copied from the SKU for labelling.
-  final String? skuModelNumber;
-
-  /// Ids of images attached to this instance.
-  final List<String> imageIds;
-
   /// Ids of traits attached to this article.
   ///
   /// A trait is classed to a SKU, a place or a manufacturer ([TraitScope]) — there
@@ -53,8 +47,6 @@ class Instance extends Equatable {
     required this.skuId,
     required this.locateId,
     required this.name,
-    this.skuModelNumber,
-    this.imageIds = const [],
     this.traitIds = const [],
     this.attributeValues = const {},
     this.icon,
@@ -74,8 +66,6 @@ class Instance extends Equatable {
     String? skuId,
     Object? locateId = _unset,
     String? name,
-    Object? skuModelNumber = _unset,
-    List<String>? imageIds,
     List<String>? traitIds,
     Map<String, dynamic>? attributeValues,
     Object? icon = _unset,
@@ -84,10 +74,6 @@ class Instance extends Equatable {
     skuId: skuId ?? this.skuId,
     locateId: locateId == _unset ? this.locateId : locateId as String?,
     name: name ?? this.name,
-    skuModelNumber: skuModelNumber == _unset
-        ? this.skuModelNumber
-        : skuModelNumber as String?,
-    imageIds: imageIds ?? this.imageIds,
     traitIds: traitIds ?? this.traitIds,
     attributeValues: attributeValues ?? this.attributeValues,
     icon: icon == _unset ? this.icon : icon as String?,
@@ -99,8 +85,6 @@ class Instance extends Equatable {
     'sku_id': skuId,
     'locate_id': locateId,
     'name': name,
-    if (skuModelNumber != null) 'sku_model_number': skuModelNumber,
-    'image_ids': imageIds,
     'trait_ids': traitIds,
     'attribute_values': attributeValues,
     'icon': icon,
@@ -112,8 +96,6 @@ class Instance extends Equatable {
     skuId: json['sku_id'] as String? ?? '',
     locateId: json['locate_id'] as String?,
     name: json['name'] as String? ?? '',
-    skuModelNumber: json['sku_model_number'] as String?,
-    imageIds: stringListFromWire(value: json['image_ids']),
     traitIds: stringListFromWire(value: json['trait_ids']),
     attributeValues: asStringMap(value: json['attribute_values']),
     icon: json['icon'] as String?,
@@ -125,8 +107,6 @@ class Instance extends Equatable {
     skuId,
     locateId,
     name,
-    skuModelNumber,
-    imageIds,
     traitIds,
     attributeValues,
     icon,

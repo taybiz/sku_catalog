@@ -56,6 +56,25 @@ void main() {
     instanceImages.getOrElse((_) => []).map((i) => i.id).should.be(['d1a']);
   });
 
+  test('one read answers which owners have images, and tracks the store', () async {
+    await CreateImageRecord(repository)(image: record('d1a')).run();
+    await CreateImageRecord(repository)(
+      image: record('s1', owner: ImageOwner.sku, ownerId: 'sku1'),
+    ).run();
+
+    // What a "covers" count needs: one pass over the records, grouped by owner.
+    // No entity carries a list of image ids, so there is nothing to go stale.
+    final before = (await repository.fetchAll().run()).getOrElse((_) => []);
+    before.map((i) => i.ownerId).toList().should.be(['d1', 'sku1']);
+
+    await DeleteImageRecord(repository)(id: 'd1a').run();
+
+    // ...and it is true again the moment a record goes — the thing a list cached
+    // on the entity could never do.
+    final after = (await repository.fetchAll().run()).getOrElse((_) => []);
+    after.map((i) => i.ownerId).toList().should.be(['sku1']);
+  });
+
   test('deleting an image record removes it', () async {
     await CreateImageRecord(repository)(image: record('img1')).run();
 

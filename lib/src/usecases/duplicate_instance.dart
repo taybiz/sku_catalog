@@ -44,30 +44,31 @@ class DuplicateInstance {
                   },
                 )
                 .flatMap(
-                  (uniqueKeys) => _instanceRepository.fetchAll().flatMap((all) {
-                    final copy = Instance(
-                      meta: newMeta(
-                        notes: current.meta.notes,
-                        idGenerator: idGenerator,
-                      ),
-                      skuId: current.skuId,
-                      locateId: current.locateId,
-                      name: uniqueCopyName(
-                        baseName: current.name,
-                        locateId: current.locateId,
-                        all: all,
-                      ),
-                      skuModelNumber: current.skuModelNumber,
-                      traitIds: current.traitIds,
-                      attributeValues: {
-                        for (final entry in current.attributeValues.entries)
-                          if (!uniqueKeys.contains(entry.key))
-                            entry.key: entry.value,
-                      },
-                      icon: current.icon,
-                    );
-                    return _instanceRepository.create(instance: copy);
-                  }),
+                  (uniqueKeys) => _instanceRepository
+                      .fetchByLocate(locateId: current.locateId)
+                      .flatMap((all) {
+                        final copy = Instance(
+                          meta: newMeta(
+                            notes: current.meta.notes,
+                            idGenerator: idGenerator,
+                          ),
+                          skuId: current.skuId,
+                          locateId: current.locateId,
+                          name: uniqueCopyName(
+                            baseName: current.name,
+                            locateId: current.locateId,
+                            all: all,
+                          ),
+                          traitIds: current.traitIds,
+                          attributeValues: {
+                            for (final entry in current.attributeValues.entries)
+                              if (!uniqueKeys.contains(entry.key))
+                                entry.key: entry.value,
+                          },
+                          icon: current.icon,
+                        );
+                        return _instanceRepository.create(instance: copy);
+                      }),
                 ),
           );
 }

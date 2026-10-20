@@ -30,10 +30,17 @@ void main() {
   test(
     'an association can be created and fetched back, direction preserved',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final result = await AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'a1',
@@ -56,11 +63,21 @@ void main() {
   test(
     'edited and contributed_to are distinct associations, both kept',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('jones')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('jones')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'e1',
@@ -71,6 +88,7 @@ void main() {
         kind: 'edited',
       ).run();
       await AddSkuAssociation(
+            unitOfWork: noOpUnitOfWork,
             repository: associations,
             skuRepository: skus,
             idGenerator: () => 'c1',
@@ -91,10 +109,17 @@ void main() {
   test(
     'an association is returned from either end, and filterable by kind',
     () async {
-      await CreateSku(skus)(sku: sku('smith')).run();
-      await CreateSku(skus)(sku: sku('anthology-1')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('smith')).run();
+      await CreateSku(
+        skuRepository: skus,
+        assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+      )(sku: sku('anthology-1')).run();
 
       final add = AddSkuAssociation(
+        unitOfWork: noOpUnitOfWork,
         repository: associations,
         skuRepository: skus,
         idGenerator: () => 'a1',
@@ -130,6 +155,7 @@ void main() {
 
   test('an association to a SKU that does not exist is refused', () async {
     final result = await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
     )(sourceSkuId: 'ghost', targetSkuId: 'anthology-1', kind: 'edited').run();
@@ -137,10 +163,17 @@ void main() {
   });
 
   test('an empty kind is refused', () async {
-    await CreateSku(skus)(sku: sku('smith')).run();
-    await CreateSku(skus)(sku: sku('anthology-1')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('smith')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('anthology-1')).run();
 
     final result = await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
     )(sourceSkuId: 'smith', targetSkuId: 'anthology-1', kind: '   ').run();
@@ -152,10 +185,17 @@ void main() {
   });
 
   test('an association can be deleted by id', () async {
-    await CreateSku(skus)(sku: sku('smith')).run();
-    await CreateSku(skus)(sku: sku('anthology-1')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('smith')).run();
+    await CreateSku(
+      skuRepository: skus,
+      assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+    )(sku: sku('anthology-1')).run();
 
     await AddSkuAssociation(
+      unitOfWork: noOpUnitOfWork,
       repository: associations,
       skuRepository: skus,
       idGenerator: () => 'a1',

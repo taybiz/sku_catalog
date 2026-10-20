@@ -37,13 +37,17 @@ void main() {
     group('When a use case mints an id internally', () {
       test('Then DuplicateSku uses the injected generator', () async {
         final skus = InMemorySkuRepository();
-        await CreateSku(skus)(
-          sku: Sku(
-            meta: meta('qo120'),
-            manufacturerId: 'm',
-            modelNumber: 'QO120',
-          ),
-        ).run();
+        await CreateSku(
+              skuRepository: skus,
+              assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+            )(
+              sku: Sku(
+                meta: meta('qo120'),
+                manufacturerId: 'm',
+                modelNumber: 'QO120',
+              ),
+            )
+            .run();
 
         final copy = await DuplicateSku(skus, idGenerator: () => 'DEV-0007')(
           id: 'qo120',
@@ -59,13 +63,17 @@ void main() {
 
       test('Then DuplicateSku still defaults to a UUID v4', () async {
         final skus = InMemorySkuRepository();
-        await CreateSku(skus)(
-          sku: Sku(
-            meta: meta('qo120'),
-            manufacturerId: 'm',
-            modelNumber: 'QO120',
-          ),
-        ).run();
+        await CreateSku(
+              skuRepository: skus,
+              assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+            )(
+              sku: Sku(
+                meta: meta('qo120'),
+                manufacturerId: 'm',
+                modelNumber: 'QO120',
+              ),
+            )
+            .run();
 
         final copy = await DuplicateSku(skus)(id: 'qo120').run();
 
@@ -77,14 +85,19 @@ void main() {
 
       test('Then DuplicateInstance uses the injected generator', () async {
         final catalog = InMemoryCatalog();
-        await CreateSku(catalog.skus)(
-          sku: Sku(
-            meta: meta('free'),
-            manufacturerId: 'm',
-            modelNumber: 'FREE',
-          ),
-        ).run();
+        await CreateSku(
+              skuRepository: catalog.skus,
+              assertUniqueModelNumber: AssertUniqueModelNumber(catalog.skus),
+            )(
+              sku: Sku(
+                meta: meta('free'),
+                manufacturerId: 'm',
+                modelNumber: 'FREE',
+              ),
+            )
+            .run();
         await CreateInstance(
+              unitOfWork: noOpUnitOfWork,
               instanceRepository: catalog.instances,
               assertUniqueInstanceName: AssertUniqueInstanceName(
                 catalog.instances,
@@ -120,16 +133,21 @@ void main() {
           final skus = InMemorySkuRepository();
           final components = InMemorySkuComponentRepository();
           for (final id in ['rack', 'card']) {
-            await CreateSku(skus)(
-              sku: Sku(
-                meta: meta(id),
-                manufacturerId: 'm',
-                modelNumber: id.toUpperCase(),
-              ),
-            ).run();
+            await CreateSku(
+                  skuRepository: skus,
+                  assertUniqueModelNumber: AssertUniqueModelNumber(skus),
+                )(
+                  sku: Sku(
+                    meta: meta(id),
+                    manufacturerId: 'm',
+                    modelNumber: id.toUpperCase(),
+                  ),
+                )
+                .run();
           }
 
           final edge = await AddSkuComponent(
+            unitOfWork: noOpUnitOfWork,
             repository: components,
             skuRepository: skus,
             idGenerator: () => 'EDGE-1',
@@ -161,6 +179,7 @@ void main() {
 
           final updated = await UpdateSkuComponent(
             components,
+            unitOfWork: noOpUnitOfWork,
             idGenerator: () => 'EDGE-2',
           )(skuId: 'e1', quantity: 5).run();
 
