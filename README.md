@@ -19,6 +19,12 @@ runs until you `.run()` it, and `.run()` gives you back a
 Why this seam is a tuple rather than a `Future` is recorded in
 [`AGENTS.md`](https://github.com/taybiz/sku_catalog/blob/main/AGENTS.md).
 
+The failures are one vocabulary at two levels. `DomainFailure` is the **shared
+root**, and it is deliberately **open**: a product's own failure family extends
+it, so a consumer composes in the same channel instead of translating into it at
+every call into the catalog. `CatalogFailure` is the **closed set** — every way
+this package can fail — and is exhaustively switchable.
+
 ## The model in one screen
 
 | Concept | What it is |

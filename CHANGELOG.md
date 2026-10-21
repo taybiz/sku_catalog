@@ -1,5 +1,35 @@
 # sku_catalog changelog
 
+## 4.0.0
+
+**Breaking. The failure root is open; the catalog's own set is what is closed.**
+
+`DomainFailure` is `abstract base` again rather than `sealed`. A sealed class may
+only be extended from its own library, and this type is what the contracts are
+typed against — so sealing the root handed a consuming product's domain layer a
+closed set it does not own, and charged a translation at every call *into* the
+catalog instead of one at its edge. A product that keeps its own failure family
+extends the root, as it did before the hierarchy was sealed.
+
+- **New:** `CatalogFailure`, the closed set. The eleven leaves descend from it
+  now, so the package keeps an exhaustively switchable union without closing the
+  root. Switch on `CatalogFailure` to enumerate everything a catalog operation
+  can return; extend `DomainFailure` to add a product's own.
+- **Breaking for exhaustive switchers:** a `switch` over `DomainFailure` is no
+  longer exhaustive — the root is open by definition, so it needs a default.
+  Match `CatalogFailure` first, then switch *that* exhaustively.
+- **Why the seal was wrong here, in one line:** closure belongs to the set you
+  return, not to the root you expect others to compose with. The package's own
+  doc comment said so before 97da89f sealed it, and nothing in `lib/` switches on
+  a failure at all — the property was only ever useful to a consumer, and sealing
+  the root is exactly what withheld it from one.
+- `test/failure_vocabulary_test.dart` pins both halves: a product family declared
+  in the test library compiles only while the root is open, and the switch over
+  `CatalogFailure` compiles only while the set is closed and complete.
+
+The seam is unchanged: `TaskEither<DomainFailure, T>`, lazy, `.run()` for the
+tuple.
+
 ## 3.0.0
 
 **Breaking.** Two changes, and each is one half of the same idea: the edge model
