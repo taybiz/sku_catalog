@@ -9,9 +9,9 @@
 # rule added here reaches into every child directory, so keep them narrow and
 # check `dart pub publish --dry-run`'s file list.
 
-# Repo-only: agent instructions and the open-items list.
+# Repo-only: agent instructions and the open-items board.
 AGENTS.md
-BACKLOG.md
+backlog/
 
 # The reference backend and its door are REPO-ONLY. The published package is the
 # model and the operations: a consumer implements the repository contracts over

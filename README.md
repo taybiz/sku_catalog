@@ -35,7 +35,7 @@ dart pub get && dart run melos run test
 | Usage: what you get back, one package, bringing your own storage | [`docs/usage.md`](docs/usage.md) |
 | The model: entities, assembly edges, serial numbers, identity rules | [`docs/model.md`](docs/model.md) |
 | Reference in-memory backend, repo layout, working on it, publishing | [`docs/reference-backend.md`](docs/reference-backend.md), [`docs/contributing.md`](docs/contributing.md) |
-| Local wiring, deviations from the bible, architecture gates, open work | [`AGENTS.md`](AGENTS.md), [`BACKLOG.md`](BACKLOG.md) |
+| Local wiring, deviations from the bible, architecture gates, open work | [`AGENTS.md`](AGENTS.md), [`backlog/`](backlog/) |
 | Prior README text, archived 2026-10-31 | [`docs/readme-archive-2026-10-31.md`](docs/readme-archive-2026-10-31.md) |
 
 ## License

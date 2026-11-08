@@ -96,11 +96,11 @@ hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
 - `.pubignore` replaces this directory's `.gitignore` for pub, **applies to
   subdirectories**, and anchors any pattern containing a slash to this directory
   (`doc/api/` does not reach `sub/doc/api/`). It keeps out `AGENTS.md`,
-  `BACKLOG.md`, the whole `test/` tree, and the reference backend with its door and
+  the `backlog/` board, the whole `test/` tree, and the reference backend with its door and
   its example (`lib/in_memory.dart`, `lib/src/adapters/`, `example/`); check
   `dart pub publish --dry-run`'s file list before trusting it — stale untracked
   directories in a working clone get published too.
-- Open items live in `BACKLOG.md`.
+- Open items live on the `backlog/` board (`backlog task list`).
 
 ## Done means shipped
 
