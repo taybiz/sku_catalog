@@ -50,7 +50,7 @@ One package, one version, one publish — there is no dependency order to get
 right and no sibling constraint to keep in step. Check the file list the dry run
 prints: the pubspec, `lib/` (minus the adapter ring and its door), `README.md`,
 `CHANGELOG.md`, `LICENSE` and `example/` belong there; `test/`,
-`lib/in_memory.dart`, `lib/src/adapters/`, `AGENTS.md` and `BACKLOG.md` do not.
+`lib/in_memory.dart`, `lib/src/adapters/`, `AGENTS.md` and `backlog/` do not.
 
 The package holds its structural rules in `test/boundary_test.dart`, and they fail
 the build rather than waiting for review:
