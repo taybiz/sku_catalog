@@ -26,7 +26,7 @@ The backend in this repo is a **reference adapter, and it is NOT published**:
 (`test/in_memory_*_test.dart`), and kept out of the archive by `.pubignore` — together
 with `lib/in_memory.dart` — so the published package is the model and the operations, and
 no consumer inherits somebody else's storage story. `example/` *does* ship, because a
-published package is expected to carry a real, CI-tested example: it runs on the published
+published package is expected to carry a real, gate-tested example: it runs on the published
 import alone, with its own little store, and `test/example_runs_test.dart` executes it.
 2.0.0 shipped it and 3.0.0 took it back out: do not flip that again without a reason that
 survives "a package that ships one storage story makes it look like its own". It is an
@@ -72,7 +72,7 @@ hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
 
 - Melos workspace of one (bible §3.3 "Topology C"): the package *is* the workspace
   root — `melos: useRootAsPackage: true` in `pubspec.yaml`, no `melos.yaml`, no pub
-  `workspace:`. Five gate scripts, called by name in CI so one that rots fails the
+  `workspace:`. Five gate scripts, called by name in the gate so one that rots fails the
   build: `dart run melos run format`, `analyze`, `test`, `coverage`, `publish-dry`
   (after `dart pub get`; `melos bootstrap` once per clone writes `melos_<pkg>.iml` and
   `.idea/`, kept out of git and the archive by `*.iml` / `.idea/`). `coverage` runs
@@ -83,11 +83,11 @@ hierarchy gains no leaf and a consumer's exhaustive switch keeps compiling.
   and exits non-zero. One command, no dependency order.
 - The import graph of `lib/` is gated three ways, deliberately. The **gate** is
   `test/architecture_test.dart`: a `dart_arch_test` test over the *resolved* import
-  graph (bible §2.9), run by plain `dart test`, so CI already runs it. Its edge table
+  graph (bible §2.9), run by plain `dart test`, so the test run already covers it. Its edge table
   carries three areas — `domain`, `usecases` and `adapters` (the reference backend) —
   with `adapters -> usecases -> domain` and never the reverse.
   `import_rules.yaml` (wired via `plugins:` in `analysis_options.yaml`, no pubspec
-  dependency) is the as-you-type nicety, failing analyze — CI runs `--fatal-infos` —
+  dependency) is the as-you-type nicety, failing analyze — the gate runs `--fatal-infos` —
   on a wrong-way edge (`usecases -> domain`, never the reverse) or an internal file
   importing the public entry point. `test/boundary_test.dart` is the text tripwire
   that cannot fail silently if a tool stops resolving, and carries the rules no
@@ -109,7 +109,7 @@ human, not from an agent, not from a dispatched worker. Branch off `main`, commi
 the branch, open the PR.
 
 The line for "ready to report done" and "ready to open the PR" is the **same line** —
-formatted, analyzed, tested, covered to the 90% floor, `publish-dry` at 0 warnings, CI
+formatted, analyzed, tested, covered to the 90% floor, `publish-dry` at 0 warnings, the gate
 green. Work that clears it is good enough to push and open the PR: no extra review
 gate, no waiting, no "should I open a PR?". The PR body carries what was verified and
 what was left. Merge is the human's call; the branch is deleted once the PR lands.
